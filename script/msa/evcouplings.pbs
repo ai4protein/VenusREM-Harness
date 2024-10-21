@@ -12,7 +12,7 @@ source $CONDA_PREFIX/../bin/activate $CONDA_PREFIX
 # protein=VHH_tm
 # database=$UNIREF100
 evcouplings \
-    -P output_MEER/proteingym_v1/$protein/$protein \
+    -P output/proteingym_v1/$protein/$protein \
     -p $protein \
     -s data/proteingym_v1/aa_seq/$protein.fasta \
     -d $database \
