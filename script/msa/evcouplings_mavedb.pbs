@@ -1,0 +1,18 @@
+#PBS -q huge
+#PBS -l select=1:ncpus=6:mem=100gb
+#PBS -l walltime=168:00:00
+#PBS -N msa_mavedb
+#PBS -o ./log.o
+#PBS -e ./log.e
+
+cd .
+source $CONDA_PREFIX/../bin/activate $CONDA_PREFIX
+
+evcouplings \
+    -P output/mavedb/$protein/$protein \
+    -p $protein \
+    -s data/mavedb/aa_seq/${protein}.fasta \
+    -d $database \
+    -b "0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9" \
+    -n 5 \
+    src/single_config_monomer.txt

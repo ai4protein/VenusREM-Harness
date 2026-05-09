@@ -397,7 +397,7 @@ databases:
     # Sequence databases (only download the ones you want to use). You can also specify arbitrary databases in FASTA format
     # using a database name of your choice here)
     uniprot: $UNIPROT_FASTA
-    uniref100: $UNIREF100
+    uniref100: data/uniref100.fasta
     uniref90: $UNIREF90
 
     # URL do download sequences if sequence_file is not given. {} will be replaced by sequence_id.

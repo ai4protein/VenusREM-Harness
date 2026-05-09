@@ -87,7 +87,8 @@ Common branches:
 Common scripts/components:
 - `compute_fitness.py`: shared scoring entrypoint
 - `script/compute_fitness.sh`: shared basic runs
-- `script/compute_fitness_adavance.sh`: shared advanced configurable run
+- `script/compute_fitness_advance.sh`: shared advanced configurable run
+- `script/compute_fitness_calibrated.sh`: Orbit-PlusV2 + calibrated-margin scoring run
 - `data/proteingym_v1`: common benchmark input root
 - `result/`: common output root
 - `output/`: shared intermediate artifacts (e.g., homolog search outputs)
@@ -190,13 +191,59 @@ python compute_fitness.py \
     --enable_gate_diagnostics
 ```
 
-Compare v1 baseline vs Orbit:
+Orbit-PlusV2 with calibrated-margin scoring:
+```shell
+protein_dir=proteingym_v1
+python compute_fitness.py \
+    --base_dir data/$protein_dir \
+    --out_scores_dir result/${protein_dir}_orbit_plus_v2_calibrated \
+    --orbit_enable \
+    --print_compare_spearman \
+    --alpha 0.35 \
+    --logit_mode aa_seq_aln \
+    --model_out_name VenusREM-Orbit-PlusV2-Calibrated \
+    --scoring_mode calibrated_margin \
+    --background_weight 0.25 \
+    --uncertainty_weight 0.15 \
+    --wt_confidence_weight 0.1 \
+    --retriever psalor_exact \
+    --retriever2 psalor_variant \
+    --fusion adaptive_gate \
+    --fusion2 two_stage_learnable_gate \
+    --adaptive_min_gate 0.0 \
+    --adaptive_max_gate 0.85 \
+    --psalor_mix 0.35 \
+    --psalor_exact_weight 0.7 \
+    --psalor_variant_weight 0.3 \
+    --rsa_mode rsa \
+    --pdb_dir DMS_ProteinGym_substitutions_pdbs \
+    --dedup_identity_threshold 0.85 \
+    --max_sequences_for_clustering 2000 \
+    --layer2_weight 0.55 \
+    --gate_temperature 1.4 \
+    --alpha_family 0.85 \
+    --hits_dir output/$protein_dir \
+    --enable_gate_diagnostics
+```
+
+v1 baseline notes:
+- `v1` in compare tables is a hard-locked baseline: `alpha=0.8` + `aa_seq_aln` only.
+- Orbit hyperparameters do not change how `v1` is computed.
+- `--alpha` controls Orbit / Orbit-cal fusion strength only.
+- `--enhance_on_v1 --enhance_lambda <x>` enables v1-anchor enhancement:
+  final logits are blended as `(1-x) * v1_logits(fixed baseline) + x * orbit_logits`.
+
+Compare backbone/v1/orbit/orbit-cal summaries:
 ```shell
 python tools/evaluate_orbit_proteingym.py \
-    --baseline_summary result/proteingym_v1/summary_performance.csv \
+    --prosst_summary result/proteingym_v1/summary_performance.csv \
+    --venus_summary result/proteingym_v1_orbit_plus_v2_full/summary_performance.csv \
     --orbit_summary result/proteingym_v1_orbit/summary_performance.csv \
-    --baseline_col ProSST-2048 \
+    --calibrated_summary result/proteingym_v1_orbit_plus_v2_calibrated/summary_performance.csv \
+    --prosst_col ProSST-2048 \
+    --venus_col VenusREM \
     --orbit_col VenusREM-Orbit \
+    --calibrated_col VenusREM-Orbit-PlusV2-Calibrated \
     --out_file result/proteingym_v1_orbit/comparison.csv
 ```
 

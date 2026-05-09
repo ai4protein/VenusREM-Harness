@@ -179,9 +179,15 @@ data/*.fasta
 data/case
 data/uniprot_taxon
 data/my_proteins
+data/fleishman/
+data/mavedb/
+data/viro/
 
 data/proteingym_v1/aa_seq_aln_a2m.tar.gz
 data/proteingym_v1/aa_seq_aln_a3m.tar.gz
+
+experiments/
+tools/
 
 jackhmmer_results
 
@@ -191,3 +197,12 @@ result/
 output/
 output_MEER/
 leaderboard_ablation/
+experiments/*/results/
+.claude/
+
+
+# Cached model tensors
+*.pt
+
+# macOS
+.DS_Store

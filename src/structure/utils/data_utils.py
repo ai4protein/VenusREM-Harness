@@ -11,7 +11,7 @@ from typing import List
 from biotite.structure.residues import get_residues
 from biotite.sequence import ProteinSequence
 from biotite.structure.io import pdbx, pdb
-from biotite.structure import filter_backbone
+from biotite.structure import filter_peptide_backbone as filter_backbone
 from biotite.structure import get_chains
 
 def load_structure(fpath, chain=None):

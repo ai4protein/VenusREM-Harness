@@ -8,8 +8,6 @@ from src.orbit.retrievers import (
     BaseRetriever,
     HomologHitsRetriever,
     MSARetriever,
-    PSALORExactRetriever,
-    PSALORVariantRetriever,
 )
 from src.orbit.types import RetrievalOutput, merge_retrieval_outputs
 
@@ -17,8 +15,6 @@ __all__ = [
     "BaseRetriever",
     "MSARetriever",
     "HomologHitsRetriever",
-    "PSALORExactRetriever",
-    "PSALORVariantRetriever",
     "BaseFusion",
     "LinearAlphaFusion",
     "AdaptiveGateFusion",

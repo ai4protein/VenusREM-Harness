@@ -227,6 +227,36 @@ def load_residue_rsa_weights_from_pdb(
         return None
 
 
+def load_residue_plddt_from_pdb(
+    seq_len: int,
+    protein_name: Optional[str],
+    pdb_file: Optional[str] = None,
+    pdb_dir: Optional[str] = None,
+) -> Optional[torch.Tensor]:
+    resolved = resolve_pdb_file(protein_name=protein_name, pdb_file=pdb_file, pdb_dir=pdb_dir)
+    if resolved is None:
+        return None
+    try:
+        from Bio.PDB import PDBParser
+        parser_pdb = PDBParser(QUIET=True)
+        structure = parser_pdb.get_structure("prot", resolved)
+        model = list(structure.get_models())[0]
+        plddt_vals: List[float] = []
+        for chain in model:
+            for residue in chain:
+                if residue.id[0] != " ":
+                    continue
+                ca = residue["CA"] if "CA" in residue else list(residue.get_atoms())[0]
+                plddt_vals.append(float(ca.get_bfactor()))
+        weights = torch.zeros(seq_len, 1, dtype=torch.float32)
+        n = min(seq_len, len(plddt_vals))
+        if n > 0:
+            weights[:n, 0] = torch.tensor(plddt_vals[:n], dtype=torch.float32) / 100.0
+        return weights.clamp(0.0, 1.0)
+    except Exception:
+        return None
+
+
 def load_residue_accessibility_weights(
     seq_len: int,
     protein_name: Optional[str],
