@@ -1,0 +1,141 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "venus-orbit"
+version = "0.1.0"
+description = "Orbit: training-free calibration for protein language models on variant effect prediction"
+readme = "README.md"
+license = { text = "CC-BY-NC-ND-4.0" }
+requires-python = ">=3.9"
+authors = [{ name = "AI4Protein" }]
+keywords = ["protein", "PLM", "variant-effect", "DMS", "Orbit", "VenusREM"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: Other/Proprietary License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+# Core: enough for Orbit scoring on HF MLMs (ESM-2 / ProSST logits path without
+# structure-token *generation*). Install a CUDA-matching PyTorch *before* this
+# package so pip does not pull a CPU-only wheel.
+#
+# Heavy / model-specific stacks live in optional extras (see README).
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scipy>=1.10",
+  "tqdm>=4.65",
+  "torch>=2.1",
+  "transformers>=4.40",
+  "huggingface-hub>=0.23",
+  "joblib>=1.3",
+  "safetensors>=0.4",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# ProSST structure-token pipeline (GVP / static weights in package).
+prosst = [
+  "torch-geometric>=2.4",
+  "pathos>=0.3",
+  "biotite>=0.40",
+]
+# PDB / inverse-folding helpers (ESM-IF, RSA, ProteinMPNN coordinate I/O).
+structure = [
+  "biotite>=0.40",
+  "biopython>=1.80",
+]
+# Full S3F / S2F TorchDrug stack (large). Official torchdrug wheels only
+# support Python <3.11; on 3.11+ install from source, e.g.:
+#   bash script/install_s3f_deps.sh
+# Inference with precomputed surface .pkl does NOT require pykeops.
+# pykeops is only needed for on-the-fly surface generation from PDB.
+s3f = [
+  "torchdrug>=0.2.1; python_version < '3.11'",
+  "torch-geometric>=2.4",
+  "torch-scatter>=2.1",
+  "torch-cluster>=1.6",
+  "robust-laplacian>=0.2",
+  "biopython>=1.80",
+  "scikit-learn>=1.3",
+]
+# Optional: on-the-fly surface meshing for S3F (not required if using precomputed pkl).
+s3f-surface-gen = [
+  "pykeops>=2.1",
+]
+# CARP (Zenodo weights via sequence_models).
+carp = [
+  "sequence-models>=1.7",
+]
+# EvolutionaryScale ESM-3 / ESM-C package (separate from facebookresearch/esm).
+esm3 = [
+  "esm>=3.0",
+]
+# MSA / alignment utilities.
+msa = [
+  "biopython>=1.80",
+]
+# Common baseline set without S3F (S3F is opt-in due to TorchDrug weight).
+baselines = [
+  "torch-geometric>=2.4",
+  "pathos>=0.3",
+  "biotite>=0.40",
+  "biopython>=1.80",
+  "sequence-models>=1.7",
+  "esm>=3.0",
+]
+# Everything including S3F.
+all = [
+  "torch-geometric>=2.4",
+  "pathos>=0.3",
+  "biotite>=0.40",
+  "biopython>=1.80",
+  "sequence-models>=1.7",
+  "esm>=3.0",
+  "torchdrug>=0.2.1",
+  "torch-scatter>=2.1",
+  "torch-cluster>=1.6",
+  "pykeops>=2.1",
+  "robust-laplacian>=0.2",
+  "scikit-learn>=1.3",
+]
+dev = [
+  "pytest>=7.0",
+  "ruff>=0.4",
+  "build>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ai4protein/VenusREM"
+Documentation = "https://github.com/ai4protein/VenusREM"
+
+[project.scripts]
+venus-orbit = "venus_orbit.cli:main"
+venusrem-score = "venus_orbit.cli:main"
+
+# Third-party packages register ModelAdapter subclasses here, e.g.:
+#   my_plm = "mypkg.adapters:MyAdapter"
+# Built-ins register via venus_orbit.models.builtins on import.
+[project.entry-points."venus_orbit.models"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["venus_orbit*", "venusrem_orbit*"]
+exclude = ["venus_orbit.legacy*"]
+
+[tool.setuptools.package-data]
+venus_orbit = [
+  "single_config_monomer.txt",
+  "baseline/prosst/static/*",
+  "baseline/protssn/protssn_config/**/*",
+  "baseline/progen2/tokenizer.json",
+  "baseline/progen3/tokenizer.json",
+  "baseline/s2f/config/**/*",
+  "baseline/tranception/model/utils/tokenizers/**/*",
+]
