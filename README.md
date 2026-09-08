@@ -279,8 +279,8 @@ pytest test/ -v
 3. Bump `version` in `pyproject.toml` and `rem2/__init__.py` together, then tag:
 
 ```bash
-git tag v0.2.1
-git push origin v0.2.1
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 The tag workflow builds the wheel and uploads it. After that, anyone can `pip install rem2`. A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.

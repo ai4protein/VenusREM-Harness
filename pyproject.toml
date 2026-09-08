@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rem2"
-version = "0.2.1"
+version = "0.2.0"
 description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
 license = "CC-BY-NC-ND-4.0"
