@@ -188,8 +188,8 @@ def plddt_skip_reason(path: Optional[str]) -> Optional[str]:
         return None
     label = detail or "experimental"
     return (
-        f"PDB looks like a crystal/experimental structure ({label}); "
-        "pLDDT does not apply (B-factor is a temperature factor). Skipping pLDDT decay."
+        f"PDB is a crystal/experimental structure ({label}); "
+        "no pLDDT (B-factor is a temperature factor). Skipping pLDDT decay."
     )
 
 

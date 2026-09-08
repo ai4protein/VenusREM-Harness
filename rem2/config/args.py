@@ -16,11 +16,13 @@ examples:
   rem2 --model proteinmpnn-020 --base_dir data/proteingym_v1
   rem2 --model venusrem2 --base_dir data/proteingym_v1
   rem2 --model esm2 --fasta prot.fasta
+  rem2 --model saprot --pdb prot.pdb
+  rem2 --model prosst-2048 --pdb prot.pdb
 
 notes:
-  No extra flags = full rem2 on every component (need the matching folders):
-    raw logits + entropy-α (MSA) + CCD β=1-α + RSA + pLDDT.
-  Turn pieces off with --alpha 0 / --alpha 0.8, --background_weight 0 or a float,
+  Give rem2 the least you have. No extra flags = full rem2
+  (entropy-α, CCD β=1-α, RSA, pLDDT). Sequence from --fasta or --pdb.
+  Turn pieces off with --alpha 0 / --alpha 0.8, --background_weight 0,
   --no_rsa_decay, --no_plddt_decay.
 
   --scoring_strategy  wt (default) | mask | tf
@@ -29,10 +31,10 @@ notes:
     proteinmpnn                 : tf (teacher-force); wt accepted as the same pass
     esmif / causal LMs          : wt only
 
-  --base_dir needs aa_seq/ and substitutions/. Optional:
+  --base_dir needs substitutions/. aa_seq/ is optional if pdbs/ is present.
     aa_seq_aln_a2m*/  (MSA; missing → α=0)
-    pdbs*/            (RSA / pLDDT; required for saprot / esmif / proteinmpnn / protssn)
-    struc_seq*/       (required for ProSST / VenusREM2)
+    pdbs*/            enough for saprot / prosst / venusrem2 / esmif / proteinmpnn
+    struc_seq*/       optional; built from pdbs/ if missing
   Missing checkpoint: TTY asks  Download … into cache? [Y/n]
   Missing data: rem2 exits and prints the expected layout.
   scores write to result/. Column: {backbone}__rem2.
@@ -43,7 +45,7 @@ def create_parser() -> ArgumentParser:
     parser = ArgumentParser(
         prog="rem2",
         usage=(
-            "%(prog)s [--model MODEL] (--base_dir DIR | --fasta FILE) [options]\n"
+            "%(prog)s [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE) [options]\n"
             "       %(prog)s demo\n"
             "       %(prog)s doctor\n"
             "       %(prog)s --list-models"
@@ -153,14 +155,25 @@ def create_parser() -> ArgumentParser:
         help="score only the first N proteins",
     )
 
-    single = parser.add_argument_group("single protein (--fasta)")
+    single = parser.add_argument_group("single protein (--fasta / --pdb)")
     single.add_argument(
         "--fasta",
         type=str,
         default=None,
         help="one wild-type FASTA (cannot combine with --base_dir)",
     )
-    single.add_argument("--pdb", type=str, default=None, help="optional PDB for RSA / structure models")
+    single.add_argument(
+        "--pdb",
+        type=str,
+        default=None,
+        help="PDB. enough for saprot / prosst / venusrem2 (sequence from the structure; ProSST tokens are built if missing)",
+    )
+    single.add_argument(
+        "--pdb_chain",
+        type=str,
+        default=None,
+        help="PDB chain when reading sequence from --pdb (default: A, else first polymer chain)",
+    )
     single.add_argument(
         "--mutants",
         type=str,
@@ -171,7 +184,7 @@ def create_parser() -> ArgumentParser:
         "--mutant_sites",
         type=str,
         default=None,
-        help="n-point saturation if --mutants is omitted, e.g. 1 or 1,2,3 (--fasta defaults to 1)",
+        help="n-point saturation if --mutants is omitted, e.g. 1 or 1,2,3 (--fasta/--pdb defaults to 1)",
     )
     single.add_argument(
         "--positions",
@@ -538,18 +551,21 @@ def postprocess_args(args):
         raise SystemExit(str(exc)) from exc
 
     fasta = getattr(args, "fasta", None)
-    if fasta:
+    pdb = getattr(args, "pdb", None)
+    single_protein = bool(fasta or (pdb and not args.base_dir and not args.aa_seq_dir))
+    if single_protein:
         if args.base_dir or args.aa_seq_dir or args.mutant_dir:
+            flag = "--fasta" if fasta else "--pdb"
             raise SystemExit(
-                "--fasta is mutually exclusive with --base_dir / --aa_seq_dir / --mutant_dir"
+                f"{flag} is mutually exclusive with --base_dir / --aa_seq_dir / --mutant_dir"
             )
         if getattr(args, "mutants", None) and getattr(args, "mutant_sites", None):
             raise SystemExit("Use either --mutants (existing CSV) or --mutant_sites (auto-generate), not both")
         if not getattr(args, "mutants", None) and not getattr(args, "mutant_sites", None):
             args.mutant_sites = "1"
-    elif getattr(args, "mutant_sites", None) or getattr(args, "mutants", None) or getattr(args, "pdb", None):
+    elif getattr(args, "mutant_sites", None) or getattr(args, "mutants", None):
         if not args.base_dir and not args.aa_seq_dir:
-            raise SystemExit("--mutant_sites / --mutants / --pdb require --fasta or --base_dir / --aa_seq_dir")
+            raise SystemExit("--mutant_sites / --mutants require --fasta, --pdb, or --base_dir / --aa_seq_dir")
 
     if args.base_dir:
         if args.aa_seq_dir is None:

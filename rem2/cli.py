@@ -137,14 +137,22 @@ def _print_model_table():
         print(f"{s.name:<{name_w}}  {pdb:<3}  {fwd:<9}  {auto:<4}  {extra}")
 
 
-def _prepare_single_protein(args, logger):
+def _is_single_protein(args) -> bool:
+    return bool(
+        getattr(args, "fasta", None)
+        or (getattr(args, "pdb", None) and not getattr(args, "base_dir", None))
+    )
+
+
+def _prepare_single_protein(args, logger, model_key=None):
     """Materialize --fasta/--pdb/--mutants|--mutant_sites into a mini dataset layout."""
     from rem2.data.mutagenesis import materialize_single_protein_inputs
+    from rem2.naming import is_prosst_key
 
     inputs_root = os.path.join(args.out_scores_dir, "_inputs")
     try:
         meta = materialize_single_protein_inputs(
-            fasta_path=args.fasta,
+            fasta_path=getattr(args, "fasta", None),
             out_root=inputs_root,
             pdb_path=getattr(args, "pdb", None),
             mutants_path=getattr(args, "mutants", None),
@@ -152,6 +160,7 @@ def _prepare_single_protein(args, logger):
             positions=getattr(args, "positions", None),
             residue_range=getattr(args, "residue_range", None),
             max_mutants=getattr(args, "max_mutants", 1_000_000),
+            pdb_chain=getattr(args, "pdb_chain", None),
         )
     except Exception as exc:
         raise SystemExit(f"Single-protein setup failed: {exc}") from exc
@@ -161,20 +170,122 @@ def _prepare_single_protein(args, logger):
     if meta["pdb_dir"]:
         args.pdb_dir = meta["pdb_dir"]
     args.protein_list = meta["name"]
+    src = "PDB" if not getattr(args, "fasta", None) else "FASTA"
+    extra = ""
+    if meta.get("pdb_chain"):
+        extra = f", chain={meta['pdb_chain']}"
     logger.info(
-        f"Single-protein mode: {meta['name']} (L={len(meta['sequence'])}, "
-        f"mutants={meta['n_mutants']})"
+        f"Single-protein mode ({src}): {meta['name']} (L={len(meta['sequence'])}, "
+        f"mutants={meta['n_mutants']}{extra})"
     )
+    if (
+        getattr(args, "fasta", None)
+        and meta.get("pdb_sequence")
+        and meta["pdb_sequence"] != meta["sequence"]
+    ):
+        logger.warn(
+            f"FASTA and PDB sequences differ (L={len(meta['sequence'])} vs "
+            f"{len(meta['pdb_sequence'])}); using FASTA for mutants"
+        )
     logger.info(f"Materialized inputs under {inputs_root}")
     if getattr(args, "mutant_sites", None) and not getattr(args, "mutants", None):
         logger.info(
             f"Generated saturation library (--mutant_sites {args.mutant_sites}) "
             f"-> {meta['mutant_csv']}"
         )
+    if is_prosst_key(model_key) and meta.get("pdb_dir"):
+        from rem2.baseline.prosst.structure_tokens import (
+            generate_struc_seq_from_pdb,
+            needed_structure_vocab_sizes,
+            resolve_structure_fasta_path,
+        )
+
+        vocabs = needed_structure_vocab_sizes(model_key, args)
+        already = None
+        if getattr(args, "struc_seq_dir", None):
+            already = resolve_structure_fasta_path(
+                args, meta["name"], f"AI4Protein/ProSST-{vocabs[0]}"
+            )
+        if already:
+            logger.info(f"Using existing ProSST structure tokens: {already}")
+        else:
+            pdb_file = os.path.join(meta["pdb_dir"], f"{meta['name']}.pdb")
+            struc_dir = os.path.join(inputs_root, "struc_seq")
+            logger.info(
+                f"Building ProSST structure tokens from PDB (K={','.join(str(v) for v in vocabs)})"
+            )
+            try:
+                generate_struc_seq_from_pdb(pdb_file, struc_dir, meta["name"], vocabs)
+            except Exception as exc:
+                raise SystemExit(
+                    f"Could not build ProSST structure tokens from {pdb_file}: {exc}\n"
+                    "Install extras with pip install -e '.[prosst]', or pass --struc_seq_dir."
+                ) from exc
+            args.struc_seq_dir = struc_dir
     return meta
 
 
-def _log_available_inputs(args, logger):
+def _pdb_paths_for_run(args, protein_names=None):
+    paths = []
+    pdb_file = getattr(args, "pdb", None)
+    if pdb_file and os.path.isfile(pdb_file):
+        paths.append(pdb_file)
+    pdb_dir = getattr(args, "pdb_dir", None)
+    names = list(protein_names or [])
+    if pdb_dir and names:
+        for name in names:
+            cand = os.path.join(pdb_dir, f"{name}.pdb")
+            if os.path.isfile(cand):
+                paths.append(cand)
+    elif pdb_dir and os.path.isdir(pdb_dir):
+        try:
+            listed = sorted(os.listdir(pdb_dir))
+        except OSError:
+            listed = []
+        paths.extend(os.path.join(pdb_dir, name) for name in listed if name.endswith(".pdb"))
+    seen = set()
+    unique = []
+    for path in paths:
+        key = os.path.realpath(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(path)
+    return unique
+
+
+def _crystal_plddt_skip_paths(args, protein_names=None):
+    if not getattr(args, "use_plddt_decay", True):
+        return []
+    from rem2.scoring.structure_weights import plddt_skip_reason
+
+    skipped = []
+    for path in _pdb_paths_for_run(args, protein_names):
+        reason = plddt_skip_reason(path)
+        if reason:
+            skipped.append((path, reason))
+    return skipped
+
+
+def _warn_crystal_no_plddt(args, logger, protein_names=None):
+    skipped = _crystal_plddt_skip_paths(args, protein_names)
+    if not skipped:
+        return False
+    why = (
+        "You enabled pLDDT"
+        if getattr(args, "plddt_explicit", False)
+        else "Full rem2 includes pLDDT"
+    )
+    preview = ", ".join(os.path.basename(path) for path, _ in skipped[:5])
+    more = f" (+{len(skipped) - 5} more)" if len(skipped) > 5 else ""
+    logger.warn(
+        f"{why}, but {preview}{more} is a crystal/experimental structure with no pLDDT "
+        "(B-factor is a temperature factor). Skipping pLDDT decay."
+    )
+    return True
+
+
+def _log_available_inputs(args, logger, protein_names=None):
     msa_dir = getattr(args, "aa_seq_aln_dir", None)
     pdb_dir = getattr(args, "pdb_dir", None)
     pdb_file = getattr(args, "pdb", None)
@@ -187,6 +298,7 @@ def _log_available_inputs(args, logger):
         logger.warn("No MSA files found; entropy-α will use α=0")
     if (getattr(args, "use_rsa_decay", True) or getattr(args, "use_plddt_decay", True)) and not has_pdb:
         logger.warn("No PDB files found; RSA / pLDDT decay will be skipped")
+    _warn_crystal_no_plddt(args, logger, protein_names)
 
 
 def _write_run_meta(args, model_key, protein_names):
@@ -229,6 +341,10 @@ def main(argv=None):
         return
 
     args = postprocess_args(raw_args)
+    args.plddt_explicit = any(
+        item == "--use_plddt_decay" or item.startswith("--plddt_decay_mode")
+        for item in argv
+    )
     set_deterministic_inference(args.seed)
     logger = CliLogger(level=args.log_level, use_color=should_use_color(args.no_color))
 
@@ -248,18 +364,23 @@ def main(argv=None):
     except UnsupportedScoringStrategy as exc:
         raise SystemExit(str(exc)) from exc
 
-    if getattr(args, "fasta", None):
+    if _is_single_protein(args):
         os.makedirs(args.out_scores_dir, exist_ok=True)
-        _prepare_single_protein(args, logger)
+        _prepare_single_protein(args, logger, model_key=model_key)
+    else:
+        os.makedirs(args.out_scores_dir, exist_ok=True)
+        from rem2.data.inputs import fill_aa_seq_from_pdb
+
+        fill_aa_seq_from_pdb(args, logger)
 
     if not args.aa_seq_dir:
         raise SystemExit(
-            "No data: provide --base_dir / --aa_seq_dir, or --fasta for single-protein mode.\n"
+            "No data: provide --base_dir, --fasta, or --pdb.\n"
             + expected_layout_text(model_key)
         )
     if not args.mutant_dir:
         raise SystemExit(
-            "No data: provide --mutant_dir (via --base_dir) or use --fasta.\n"
+            "No data: provide substitutions/ via --base_dir, or use --fasta / --pdb.\n"
             + expected_layout_text(model_key)
         )
 
@@ -271,12 +392,22 @@ def main(argv=None):
         protein_names = protein_names[: args.max_proteins]
     if not protein_names and args.protein_list:
         raise SystemExit(
-            f"No data: --protein_list matched no FASTA files in {args.aa_seq_dir}."
+            f"No data: --protein_list matched no proteins in {args.aa_seq_dir}."
         )
+    if not _is_single_protein(args):
+        from rem2.data.inputs import fill_prosst_tokens_from_pdb
+
+        try:
+            fill_prosst_tokens_from_pdb(args, model_key, protein_names, logger)
+        except Exception as exc:
+            raise SystemExit(
+                f"Could not build ProSST structure tokens from PDB: {exc}\n"
+                "Install extras with pip install -e '.[prosst]', or pass --struc_seq_dir."
+            ) from exc
     require_run_inputs(args, model_key, protein_names)
     if not protein_names:
         raise SystemExit(
-            "No data: no proteins to score. Need FASTA files in aa_seq/.\n"
+            "No data: no proteins to score. Pass --fasta, --pdb, or aa_seq/ / pdbs/ under --base_dir.\n"
             + expected_layout_text(model_key)
         )
 
@@ -320,7 +451,13 @@ def main(argv=None):
             "Prefer {backbone}__rem2 unless this is a ProSST ensemble."
         )
     rsa = "RSA" if getattr(args, "use_rsa_decay", True) else "no RSA"
-    plddt = "pLDDT" if getattr(args, "use_plddt_decay", True) else "no pLDDT"
+    crystal_skip = bool(_crystal_plddt_skip_paths(args, protein_names))
+    if not getattr(args, "use_plddt_decay", True):
+        plddt = "no pLDDT"
+    elif crystal_skip:
+        plddt = "pLDDT skipped (crystal, no pLDDT)"
+    else:
+        plddt = "pLDDT"
     logger.info(
         f"rem2 recipe: α={args.alpha}, β={args.background_weight}, "
         f"{args.scoring_mode}, {rsa}, {plddt}"
@@ -333,7 +470,7 @@ def main(argv=None):
             f"pdb={args.pdb_dir}  struc={args.struc_seq_dir}"
         )
     logger.info(f"Total proteins: {len(protein_names)}")
-    _log_available_inputs(args, logger)
+    _log_available_inputs(args, logger, protein_names)
     logger.debug(f"Protein preview: {format_name_preview(protein_names)}")
 
     official = is_official_venusrem2(model_key, args)

@@ -25,6 +25,10 @@ def test_build_score_argv_fasta_and_dataset():
     argv = build_score_argv(fasta="prot.fasta", mutants="m.csv", model="esm2-8m", out_dir="out")
     assert argv[:4] == ["--model", "esm2-8m", "--out_scores_dir", "out"]
     assert "--fasta" in argv and "prot.fasta" in argv
+    pdb_only = build_score_argv(pdb="prot.pdb", mutants="m.csv", model="saprot", out_dir="out")
+    assert "--pdb" in pdb_only and "prot.pdb" in pdb_only
+    assert "--fasta" not in pdb_only
+    assert "--model" in pdb_only and "saprot" in pdb_only
     dataset = build_score_argv(base_dir="data/foo", extra_argv=["--alpha", "0"])
     assert "--base_dir" in dataset and "data/foo" in dataset
     assert dataset[-2:] == ["--alpha", "0"]

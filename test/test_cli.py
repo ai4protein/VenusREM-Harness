@@ -14,6 +14,7 @@ def test_bare_rem2_prints_getting_started(capsys):
     assert "rem2 demo" in out
     assert "from rem2 import score" in out
     assert "--model venusrem2" in out
+    assert "--model saprot --pdb prot.pdb" in out
     assert "wt (default)" in out
     assert "type y to download" in out
 
@@ -135,7 +136,7 @@ def test_prosst_requires_struc_seq(tmp_path, capsys):
     (base / "substitutions").mkdir()
     (base / "aa_seq" / "p.fasta").write_text(">p\nACDE\n")
     (base / "substitutions" / "p.csv").write_text("mutant\nA1C\n")
-    with pytest.raises(SystemExit, match="structure-token") as exc:
+    with pytest.raises(SystemExit, match="structure tokens") as exc:
         main(
             [
                 "--model",

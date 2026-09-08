@@ -205,9 +205,16 @@ def read_fasta_sequence(fasta_path: Union[str, Path]) -> tuple[str, str]:
     return name, sequence
 
 
+def write_fasta(path: Union[str, Path], name: str, sequence: str) -> Path:
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(f">{name}\n{sequence}\n")
+    return dest
+
+
 def materialize_single_protein_inputs(
     *,
-    fasta_path: Union[str, Path],
+    fasta_path: Optional[Union[str, Path]] = None,
     out_root: Union[str, Path],
     pdb_path: Optional[Union[str, Path]] = None,
     mutants_path: Optional[Union[str, Path]] = None,
@@ -215,17 +222,37 @@ def materialize_single_protein_inputs(
     positions: Optional[str] = None,
     residue_range: Optional[str] = None,
     max_mutants: int = DEFAULT_MAX_MUTANTS,
+    pdb_chain: Optional[str] = None,
 ) -> dict:
     """Build a mini ``base_dir`` layout under ``out_root`` for single-protein scoring.
 
+    ``fasta_path`` or ``pdb_path`` is required. PDB-only mode writes a FASTA
+    from the structure sequence (chain A, or ``pdb_chain``).
+
     Returns dict with keys: name, sequence, aa_seq_dir, mutant_dir, pdb_dir,
-    mutant_csv, n_mutants.
+    mutant_csv, n_mutants, pdb_chain.
     """
     import shutil
 
-    fasta_path = Path(fasta_path)
+    from rem2.data.pdb_sequence import extract_sequence_from_pdb
+
+    if not fasta_path and not pdb_path:
+        raise ValueError("Need --fasta or --pdb")
+
     out_root = Path(out_root)
-    name, sequence = read_fasta_sequence(fasta_path)
+    pdb_seq = None
+    used_chain = None
+    if pdb_path:
+        pdb_path = Path(pdb_path)
+        if not pdb_path.is_file():
+            raise FileNotFoundError(f"PDB not found: {pdb_path}")
+        _pdb_name, pdb_seq, used_chain = extract_sequence_from_pdb(pdb_path, chain=pdb_chain)
+
+    if fasta_path:
+        fasta_path = Path(fasta_path)
+        name, sequence = read_fasta_sequence(fasta_path)
+    else:
+        name, sequence = Path(pdb_path).stem, pdb_seq
 
     aa_seq_dir = out_root / "aa_seq"
     mutant_dir = out_root / "substitutions"
@@ -235,14 +262,14 @@ def materialize_single_protein_inputs(
     mutant_dir.mkdir(parents=True, exist_ok=True)
 
     dest_fasta = aa_seq_dir / f"{name}.fasta"
-    if fasta_path.resolve() != dest_fasta.resolve():
-        shutil.copy2(fasta_path, dest_fasta)
+    if fasta_path:
+        if fasta_path.resolve() != dest_fasta.resolve():
+            shutil.copy2(fasta_path, dest_fasta)
+    else:
+        write_fasta(dest_fasta, name, sequence)
 
     dest_pdb = None
     if pdb_path:
-        pdb_path = Path(pdb_path)
-        if not pdb_path.is_file():
-            raise FileNotFoundError(f"PDB not found: {pdb_path}")
         pdb_dir.mkdir(parents=True, exist_ok=True)
         dest_pdb = pdb_dir / f"{name}.pdb"
         if pdb_path.resolve() != dest_pdb.resolve():
@@ -287,4 +314,6 @@ def materialize_single_protein_inputs(
         "pdb_dir": str(pdb_dir) if dest_pdb else None,
         "mutant_csv": str(dest_csv),
         "n_mutants": n_mutants,
+        "pdb_chain": used_chain,
+        "pdb_sequence": pdb_seq,
     }

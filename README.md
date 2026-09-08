@@ -14,13 +14,14 @@ Python import: `rem2`. Default backbone: ESM-2 650M.
 ```bash
 rem2 doctor
 rem2 demo
-rem2 --model esm2 --fasta prot.fasta --mutants mutants.csv
+rem2 --fasta prot.fasta
+rem2 --model saprot --pdb prot.pdb
 rem2 --model venusrem2 --base_dir data/proteingym_v1
 ```
 
 ## News
 
-- **2026.09** Package and CLI are `rem2`. Defaults: dynamic α, β = 1 − α, CCD on raw logits. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
+- **2026.09** Package and CLI are `rem2`. Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
 - **2026.08** Weight cache standardized at `~/.cache/rem2/weights` (old `~/.cache/venusrem2` still read).
 - **2026.07** Installable package. VenusREM frozen on `v1` / `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
@@ -41,7 +42,7 @@ rem2 demo
 |-------|-----|
 | (core) | ESM-2 and other HF sequence LMs |
 | `[recommended]` | biotite (RSA / PDB helpers) |
-| `[prosst]` | Official VenusREM2 (ProSST ensemble); needs `struc_seq/` |
+| `[prosst]` | Official VenusREM2 (ProSST ensemble). Single-protein `--pdb` builds tokens |
 | `[carp]`, `[esm3]`, `[s3f]` | Other backbones (`[s3f]` requires Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
 
@@ -56,8 +57,13 @@ Portable conda stub: `environment-minimal.yml`. `environment.yml` is a pinned la
 rem2 --fasta prot.fasta --mutants mutants.csv
 rem2 --fasta prot.fasta --mutants mutants.csv --pdb prot.pdb
 
+# SaProt / ProSST / VenusREM2: PDB is enough (sequence is read from the structure)
+rem2 --model saprot --pdb prot.pdb --mutants mutants.csv
+rem2 --model prosst-2048 --pdb prot.pdb --mutants mutants.csv
+
 # single-site saturation (omit --mutants)
 rem2 --fasta prot.fasta
+rem2 --model saprot --pdb prot.pdb
 
 # dataset
 rem2 --base_dir data/my_assay
@@ -68,6 +74,7 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 from rem2 import score
 
 df = score("prot.fasta", mutants="mutants.csv", pdb="prot.pdb")
+df = score(pdb="prot.pdb", mutants="mutants.csv", model="saprot")
 summary = score(base_dir="data/my_assay")
 ```
 
@@ -83,22 +90,22 @@ Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 w
 
 ## Data
 
-**Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is used only for Spearman.
+**Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is used only for Spearman. SaProt / ProSST / VenusREM2 can take `--pdb` without `--fasta`: the wild-type sequence is read from the structure (chain A, or `--pdb_chain`). ProSST tokens are built from that PDB when `struc_seq/` is missing.
 
 **Dataset** (`--base_dir`):
 
 ```
 data/my_assay/
-  aa_seq/              # wild-type FASTA, one file per protein
-  substitutions/       # mutant CSV, same stem as the FASTA
+  substitutions/       # required: mutant CSV, same stem as the protein
+  aa_seq/              # optional if pdbs/ is present
+  pdbs/                # enough for saprot / prosst / venusrem2
   aa_seq_aln_a2m/      # optional MSA (a2m / a3m)
-  pdbs/                # optional structures
-  struc_seq/           # ProSST structure tokens (VenusREM2 / --model prosst-2048)
+  struc_seq/           # optional; built from pdbs/ if missing
 ```
 
 `--base_dir` also accepts ProteinGym layout names (`aa_seq_aln_a2m_af2cf/`, `pdbs_af2_assay_resolved_full/`, …) and uses the first match.
 
-MSA / PDB / `struc_seq` are optional. Missing inputs drop the corresponding terms and emit a warning; rem2 does not silently claim the full recipe.
+MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
 ProteinGym alignments: [a2m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a2m.tar.gz), [a3m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a3m.tar.gz).
 

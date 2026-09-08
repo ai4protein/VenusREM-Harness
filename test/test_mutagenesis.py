@@ -84,6 +84,30 @@ def test_materialize_single_protein(tmp_path: Path):
     assert gen.is_file()
 
 
+def test_materialize_from_pdb_only(tmp_path: Path):
+    from rem2.data.pdb_sequence import extract_sequence_from_pdb
+
+    pdb = Path(__file__).resolve().parent / "fixtures" / "trp_cage" / "pdbs" / "trp_cage.pdb"
+    name, sequence, chain = extract_sequence_from_pdb(pdb)
+    assert name == "trp_cage"
+    assert sequence.startswith("NLYIQ")
+    assert chain == "A"
+
+    out = tmp_path / "_inputs"
+    meta = materialize_single_protein_inputs(
+        pdb_path=pdb,
+        out_root=out,
+        mutant_sites="1",
+        max_mutants=1_000_000,
+    )
+    assert meta["name"] == "trp_cage"
+    assert meta["sequence"] == sequence
+    assert meta["pdb_chain"] == "A"
+    assert Path(meta["aa_seq_dir"], "trp_cage.fasta").is_file()
+    assert Path(meta["pdb_dir"], "trp_cage.pdb").is_file()
+    assert meta["n_mutants"] == len(sequence) * 19
+
+
 def test_write_mutant_csv(tmp_path: Path):
     path = write_mutant_csv(["A1C", "A1C:D2E"], tmp_path / "m.csv")
     text = path.read_text()

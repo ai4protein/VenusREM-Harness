@@ -30,7 +30,7 @@ def test_xray_crystal_skips_plddt(tmp_path):
     assert "X-RAY" in detail
     reason = plddt_skip_reason(pdb)
     assert reason is not None
-    assert "pLDDT does not apply" in reason
+    assert "no pLDDT" in reason
     assert load_residue_plddt_from_pdb(2, protein_name="xtal", pdb_file=pdb) is None
 
 
@@ -71,3 +71,38 @@ def test_headerless_af_like_bfactors_allowed(tmp_path):
     assert classify_pdb_origin(pdb)[0] == "unknown"
     assert plddt_skip_reason(pdb) is None
     assert load_residue_plddt_from_pdb(2, protein_name="plain", pdb_file=pdb) is not None
+
+
+def test_cli_warns_crystal_when_plddt_on(tmp_path):
+    from types import SimpleNamespace
+
+    from rem2.cli import _crystal_plddt_skip_paths, _warn_crystal_no_plddt
+
+    xtal = _write(
+        tmp_path / "xtal.pdb",
+        "EXPDTA    X-RAY DIFFRACTION\n",
+        bfactor=20.0,
+    )
+
+    class _Log:
+        def __init__(self):
+            self.msgs = []
+
+        def warn(self, msg):
+            self.msgs.append(msg)
+
+    on = SimpleNamespace(use_plddt_decay=True, plddt_explicit=False, pdb=xtal, pdb_dir=None)
+    assert _crystal_plddt_skip_paths(on)
+    log = _Log()
+    assert _warn_crystal_no_plddt(on, log) is True
+    assert "Full rem2 includes pLDDT" in log.msgs[0]
+    assert "no pLDDT" in log.msgs[0]
+
+    off = SimpleNamespace(use_plddt_decay=False, plddt_explicit=False, pdb=xtal, pdb_dir=None)
+    assert _crystal_plddt_skip_paths(off) == []
+    assert _warn_crystal_no_plddt(off, _Log()) is False
+
+    explicit = SimpleNamespace(use_plddt_decay=True, plddt_explicit=True, pdb=xtal, pdb_dir=None)
+    log2 = _Log()
+    assert _warn_crystal_no_plddt(explicit, log2) is True
+    assert "You enabled pLDDT" in log2.msgs[0]

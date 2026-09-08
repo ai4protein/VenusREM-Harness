@@ -26,15 +26,17 @@ def build_score_argv(
     out_dir: str = "result",
     extra_argv: Optional[Sequence[str]] = None,
 ) -> list[str]:
-    if bool(fasta) == bool(base_dir):
-        raise ValueError("Pass exactly one of fasta= or base_dir=")
+    if base_dir and fasta:
+        raise ValueError("Pass fasta= or base_dir=, not both")
+    if not fasta and not base_dir and not pdb:
+        raise ValueError("Pass fasta=, pdb=, or base_dir=")
     argv = ["--model", model, "--out_scores_dir", out_dir]
-    if fasta:
-        argv += ["--fasta", fasta]
+    if base_dir:
+        argv += ["--base_dir", base_dir]
+    else:
+        argv += _flag("--fasta", fasta)
         argv += _flag("--mutants", mutants)
         argv += _flag("--pdb", pdb)
-    else:
-        argv += ["--base_dir", base_dir]
     if extra_argv:
         argv.extend(list(extra_argv))
     return argv
@@ -64,7 +66,7 @@ def score(
     )
     main(argv)
     scores_dir = os.path.join(out_dir, "scores")
-    if fasta and os.path.isdir(scores_dir):
+    if (fasta or pdb) and not base_dir and os.path.isdir(scores_dir):
         tables = sorted(
             os.path.join(scores_dir, name)
             for name in os.listdir(scores_dir)

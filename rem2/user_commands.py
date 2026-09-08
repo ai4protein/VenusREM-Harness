@@ -14,6 +14,8 @@ rem2 — calibrate a protein language model for variant effect prediction
   rem2 doctor              check install (torch, extras, cache)
   rem2 demo                score the bundled trp-cage with ESM-2 8M
   rem2 --model esm2 --fasta prot.fasta
+  rem2 --model saprot --pdb prot.pdb
+  rem2 --model prosst-2048 --pdb prot.pdb
   rem2 --model esm2 --base_dir data/proteingym_v1
   rem2 --model saprot --base_dir data/proteingym_v1
   rem2 --model venusrem2 --base_dir data/proteingym_v1
@@ -22,7 +24,7 @@ rem2 — calibrate a protein language model for variant effect prediction
 
 Python:  from rem2 import score
 Default model is esm2. Official VenusREM2 is --model venusrem2 (ProSST ensemble).
-No extra flags = full rem2 (entropy-α, β=1-α, calibrated_margin CCD, RSA, pLDDT). Need aa_seq/ + substitutions/.
+No extra flags = full rem2. Sequence from FASTA or PDB. Dataset: substitutions/ plus aa_seq/ or pdbs/.
 --scoring_strategy wt (default) | mask (esm2/saprot/…) | tf (proteinmpnn). ProSST is wt only.
 Missing checkpoint: type y to download. Missing data: rem2 prints the expected folders.
 """
@@ -75,7 +77,7 @@ def build_demo_argv(user_argv: Optional[list[str]] = None) -> list[str]:
     injected: list[str] = []
     if not _has_flag(user_argv, "--model", "--baseline_type"):
         injected.extend(["--model", "esm2-8m"])
-    if not _has_flag(user_argv, "--base_dir", "--fasta", "--aa_seq_dir"):
+    if not _has_flag(user_argv, "--base_dir", "--fasta", "--aa_seq_dir", "--pdb"):
         injected.extend(["--base_dir", str(demo_dir)])
     if not _has_flag(user_argv, "--out_scores_dir"):
         injected.extend(["--out_scores_dir", "result/demo"])

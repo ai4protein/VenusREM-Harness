@@ -17,7 +17,7 @@ def test_cli_prog_is_rem2():
 
 def test_help_shows_short_usage_and_examples():
     help_text = create_parser().format_help()
-    assert "usage: rem2 [--model MODEL] (--base_dir DIR | --fasta FILE)" in help_text
+    assert "usage: rem2 [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE)" in help_text
     assert "rem2 --model esm2 --base_dir data/proteingym_v1" in help_text
     assert "rem2 --model venusrem2 --base_dir data/proteingym_v1" in help_text
     assert "rem2 --model prosst-4096 --base_dir data/proteingym_v1" in help_text
@@ -32,12 +32,16 @@ def test_help_shows_short_usage_and_examples():
     assert "rem2 doctor" in help_text
     assert "common:" in help_text
     assert "dataset (--base_dir):" in help_text
-    assert "single protein (--fasta):" in help_text
+    assert "single protein (--fasta / --pdb):" in help_text
+    assert "rem2 --model saprot --pdb prot.pdb" in help_text
+    assert "rem2 --model prosst-2048 --pdb prot.pdb" in help_text
     assert "rem2 scoring:" in help_text
     assert "per-protein entropy-α" in help_text
     assert "wt-marginals" in help_text
     assert "{backbone}__rem2" in help_text
     assert "other names are ablations" in help_text
+    assert "Give rem2 the least you have" in help_text
+    assert "aa_seq/ is optional" in help_text
     assert "coherence gate" in help_text
 
 
@@ -54,6 +58,12 @@ def test_out_scores_dir_defaults_to_result():
 def test_fasta_defaults_to_single_site_saturation():
     args = _parse("--model", "esm2", "--fasta", "prot.fasta")
     assert args.mutant_sites == "1"
+
+
+def test_pdb_defaults_to_single_site_saturation():
+    args = _parse("--model", "saprot", "--pdb", "prot.pdb")
+    assert args.mutant_sites == "1"
+    assert args.fasta is None
 
 
 def test_fasta_keeps_explicit_mutant_sites():
@@ -116,3 +126,11 @@ def test_fasta_rejects_mutants_and_mutant_sites_together():
             "--mutant_sites",
             "1",
         )
+
+
+def test_needed_structure_vocab_sizes():
+    from rem2.baseline.prosst.structure_tokens import needed_structure_vocab_sizes
+
+    assert needed_structure_vocab_sizes("prosst-4096") == [4096]
+    assert needed_structure_vocab_sizes("prosst") == [2048]
+    assert needed_structure_vocab_sizes("venusrem2") == [20, 128, 512, 1024, 2048, 4096]
