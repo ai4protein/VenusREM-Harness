@@ -103,7 +103,8 @@ data/my_assay/
   substitutions/       # required: mutant CSV, same stem as the protein
   aa_seq/              # optional if pdbs/ is present
   pdbs/                # enough for saprot / prosst / venusrem2
-  aa_seq_aln_a2m/      # optional MSA (a2m / a3m)
+  aa_seq_aln_a2m_af2cf/  # paper default MSA (`rem2 download`)
+  aa_seq_aln_a2m/        # older EVC MSA fallback
   struc_seq/           # optional; built from pdbs/ if missing
 ```
 
@@ -114,7 +115,7 @@ MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a war
 **Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `export HF_TOKEN=...` or `hf auth login` (token at `~/.cache/huggingface/token`). Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` uses the ProteinGym assay (`HCP_LAMBD_Tsuboyama_2023_2L6Q`, 55 aa) shipped in the wheel; `rem2 download example` can also fetch it into `~/.cache/rem2/examples/HCP_LAMBD_Tsuboyama_2023_2L6Q`.
 
 ```bash
-rem2 download                 # ProteinGym 217 → data/proteingym_v1
+rem2 download                 # ProteinGym 217 + paper MSA → data/proteingym_v1
 rem2 download example         # ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q for rem2 demo
 rem2 download ProteinGym      # same
 rem2 download VenusMutHub     # or muthub → data/VenusMutHub
@@ -128,7 +129,7 @@ rem2 --model esm2 --base_dir data/proteingym_v1
 
 Names are case-insensitive (`ProteinGym`, `venusmuthub`, `MutHub`, …).
 
-ProteinGym still falls back to [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) MSAs and [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym) substitutions / AF2 PDBs if the VenusREM2 archives are missing. `--msa a3m` / `--msa both` fetches ColabFold a3m. Already-complete folders are skipped unless `--force`.
+`rem2 download` (default `--msa a2m`) fetches the paper MSA archive `aa_seq_aln_a2m_af2cf/`. If that archive is missing, it falls back to the older [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) EVC a2m. Substitutions / AF2 PDBs still fall back to [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym). `--msa a3m` / `--msa both` fetches ColabFold a3m. Already-complete folders are skipped unless `--force`.
 
 **Structures.** RSA is computed for any PDB. pLDDT decay uses the B-factor column and is applied only to predicted models (AlphaFold / ColabFold / ESMFold). Crystal, NMR, and cryo-EM structures skip pLDDT (B-factor is a temperature factor) and print a warning.
 

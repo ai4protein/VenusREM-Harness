@@ -46,6 +46,7 @@ DATASETS = {
             "aa_seq": ("aa_seq.tar.gz", (".fasta", ".fa")),
             "substitutions": ("substitutions.tar.gz", (".csv",)),
             "pdbs": ("pdbs.tar.gz", (".pdb",)),
+            "aa_seq_aln_a2m_af2cf": ("aa_seq_aln_a2m_af2cf.tar.gz", (".a2m", ".a3m", ".fasta")),
             "aa_seq_aln_a2m": ("aa_seq_aln_a2m.tar.gz", (".a2m", ".a3m", ".fasta")),
             "aa_seq_aln_a3m": ("aa_seq_aln_a3m.tar.gz", (".a3m", ".a2m", ".fasta")),
         },
@@ -185,11 +186,16 @@ def download_hub_dataset(
 
     if dataset == "proteingym":
         if msa == "none":
+            archives.pop("aa_seq_aln_a2m_af2cf", None)
             archives.pop("aa_seq_aln_a2m", None)
             archives.pop("aa_seq_aln_a3m", None)
         elif msa == "a2m":
+            archives.pop("aa_seq_aln_a2m", None)
             archives.pop("aa_seq_aln_a3m", None)
         elif msa == "a3m":
+            archives.pop("aa_seq_aln_a2m_af2cf", None)
+            archives.pop("aa_seq_aln_a2m", None)
+        elif msa == "both":
             archives.pop("aa_seq_aln_a2m", None)
 
     if dry_run:
@@ -274,10 +280,11 @@ def _fill_proteingym_gaps(
         counts["aa_seq"] = pg._fill_aa_seq(dest, cache, reference, force, log)
     if counts.get("pdbs", 0) < pg.EXPECTED_ASSAYS:
         counts["pdbs"] = pg._fill_pdbs(dest, cache, reference, force, log)
-    if msa in {"a2m", "both"} and counts.get("aa_seq_aln_a2m", 0) < pg.EXPECTED_ASSAYS:
-        counts["aa_seq_aln_a2m"] = pg._fill_hf_folder(
-            dest, cache, "aa_seq_aln_a2m", (".a2m", ".a3m", ".fasta"), force, log
-        )
+    if msa in {"a2m", "both"} and counts.get("aa_seq_aln_a2m_af2cf", 0) < pg.EXPECTED_ASSAYS:
+        if counts.get("aa_seq_aln_a2m", 0) < pg.EXPECTED_ASSAYS:
+            counts["aa_seq_aln_a2m"] = pg._fill_hf_folder(
+                dest, cache, "aa_seq_aln_a2m", (".a2m", ".a3m", ".fasta"), force, log
+            )
     if msa in {"a3m", "both"} and counts.get("aa_seq_aln_a3m", 0) < pg.EXPECTED_ASSAYS:
         counts["aa_seq_aln_a3m"] = pg._fill_hf_folder(
             dest, cache, "aa_seq_aln_a3m", (".a3m", ".a2m", ".fasta"), force, log
@@ -322,7 +329,7 @@ def build_download_parser() -> argparse.ArgumentParser:
         "--msa",
         choices=["a2m", "a3m", "both", "none"],
         default="a2m",
-        help="ProteinGym MSA archive (default: a2m); ignored for other datasets",
+        help="ProteinGym MSA archive (default: a2m = paper aa_seq_aln_a2m_af2cf); ignored for other datasets",
     )
     parser.add_argument("--force", action="store_true", help="re-download even if files exist")
     parser.add_argument("--dry-run", action="store_true", help="print the plan and exit")

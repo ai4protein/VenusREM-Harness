@@ -73,7 +73,8 @@ def test_cli_download_dry_run(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "AI4Protein/VenusREM2" in out
     assert "tyang816/VenusREM2" in out
-    assert "ProteinGym/aa_seq_aln_a2m.tar.gz" in out
+    assert "ProteinGym/aa_seq_aln_a2m_af2cf.tar.gz" in out
+    assert "ProteinGym/aa_seq_aln_a2m.tar.gz" not in out
     assert "AI4Protein/VenusREM" in out
     assert "DMS_ProteinGym_substitutions.zip" in out
     assert "ProteinGym_AF2_structures.zip" in out
