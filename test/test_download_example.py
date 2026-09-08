@@ -6,6 +6,7 @@ from rem2.cli import main
 from rem2.download.example import (
     EXAMPLE_FILES,
     EXAMPLE_NAME,
+    bundled_example_dir,
     ensure_demo_dataset,
 )
 
@@ -43,11 +44,19 @@ def test_ensure_demo_uses_cache_then_hf(tmp_path, monkeypatch):
     assert calls == []
 
 
-def test_ensure_demo_fails_without_huggingface(tmp_path, monkeypatch):
+def test_ensure_demo_uses_bundled_without_dest(tmp_path, monkeypatch):
+    bundled = bundled_example_dir()
+    assert bundled is not None
+    monkeypatch.setattr(
+        "rem2.download.example.default_example_dir", lambda explicit=None: tmp_path / "cache"
+    )
+    got = ensure_demo_dataset(log=lambda *_: None)
+    assert got == bundled
+
+
+def test_ensure_demo_falls_back_to_bundled(tmp_path, monkeypatch):
+    bundled = bundled_example_dir()
+    assert bundled is not None
     monkeypatch.setattr("rem2.download.example.download_from_venusrem2", lambda *a, **k: None)
-    try:
-        ensure_demo_dataset(dest=str(tmp_path / "empty"), log=lambda *_: None)
-    except SystemExit as exc:
-        assert "Hugging Face" in str(exc) or "VenusREM2" in str(exc)
-    else:
-        raise AssertionError("expected SystemExit when Hugging Face download fails")
+    got = ensure_demo_dataset(dest=str(tmp_path / "empty"), log=lambda *_: None)
+    assert got == bundled

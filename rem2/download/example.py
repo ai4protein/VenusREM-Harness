@@ -36,6 +36,15 @@ EXAMPLE_ALIASES = frozenset(
 )
 
 
+def bundled_example_dir() -> Optional[Path]:
+    from rem2.examples import bundled_demo_dir
+
+    path = bundled_demo_dir()
+    if _example_complete(path):
+        return path
+    return None
+
+
 def default_example_dir(explicit: Optional[str] = None) -> Path:
     if explicit:
         return Path(os.path.expanduser(explicit))
@@ -84,11 +93,12 @@ def ensure_demo_dataset(
     dry_run: bool = False,
     log=print,
 ) -> Path:
-    """Download the ProteinGym demo assay from Hugging Face, or reuse cache."""
+    """Use the wheel-bundled demo, a cache, or download from Hugging Face."""
     out = default_example_dir(dest)
+    bundled = bundled_example_dir()
     print_plan(
         f"Demo example {EXAMPLE_NAME} → {out}",
-        example_plan_rows(out),
+        example_plan_rows(out if _example_complete(out) else (bundled or out)),
         log=log,
     )
     log(f"VenusREM2 mirrors: {' then '.join(VENUSREM2_REPOS)}")
@@ -97,6 +107,9 @@ def ensure_demo_dataset(
     if (not force) and _example_complete(out):
         log(f"Using cached demo: {out}")
         return out
+    if dest is None and (not force) and bundled is not None:
+        log(f"Using bundled demo: {bundled}")
+        return bundled
 
     missing = [
         remote
@@ -125,6 +138,9 @@ def ensure_demo_dataset(
     if _example_complete(out):
         log(f"Demo ready: {out}")
         return out
+    if (not force) and bundled is not None:
+        log(f"Using bundled demo: {bundled}")
+        return bundled
     raise SystemExit(
         "Could not download the rem2 demo example from "
         f"{' or '.join(VENUSREM2_REPOS)} ({EXAMPLE_PREFIX}/). "

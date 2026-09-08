@@ -67,10 +67,16 @@ def _has_flag(argv: list[str], *names: str) -> bool:
 
 
 def demo_dataset_dir() -> Path:
-    """Cached example dir (``rem2 demo`` / ``rem2 download example`` fill it)."""
-    from rem2.download.example import default_example_dir
+    """Cached example dir, or the copy shipped in the rem2 wheel."""
+    from rem2.download.example import bundled_example_dir, default_example_dir
 
-    return default_example_dir()
+    cache = default_example_dir()
+    if (cache / "aa_seq").is_dir() or (cache / "pdbs").is_dir():
+        return cache
+    bundled = bundled_example_dir()
+    if bundled is not None:
+        return bundled
+    return cache
 
 
 def build_demo_argv(user_argv: Optional[list[str]] = None) -> list[str]:
