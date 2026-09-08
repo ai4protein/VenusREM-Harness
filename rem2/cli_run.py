@@ -69,6 +69,7 @@ from rem2.scoring import (
     format_name_preview,
     print_compare_table_header,
     print_compare_table_row,
+    print_score_preview,
     read_names,
     score_protein,
     set_deterministic_inference,
@@ -709,7 +710,22 @@ def run_score(argv=None):
                 )
             else:
                 logger.success(f"{model_out_name} Spearman={corr:.4f}", protein=protein_name)
-            mutant_df.to_csv(f"{args.out_scores_dir}/scores/{protein_name}.csv", index=False)
+            score_path = f"{args.out_scores_dir}/scores/{protein_name}.csv"
+            mutant_df.to_csv(score_path, index=False)
+            if idx == 0:
+                print_score_preview(
+                    logger,
+                    mutant_df,
+                    venusrem2_col,
+                    protein_name,
+                    n=5,
+                    path=score_path,
+                )
+                if len(protein_names) > 1:
+                    logger.info(
+                        f"Remaining {len(protein_names) - 1} assays write the same columns "
+                        f"under {args.out_scores_dir}/scores/"
+                    )
 
         if compare_table_printed:
             logger.info("+" + "-" * 42 + "+" + "-" * 11 + "+" + "-" * 11 + "+" + "-" * 10 + "+")

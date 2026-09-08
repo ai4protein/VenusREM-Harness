@@ -105,6 +105,61 @@ def clone_args_with_overrides(args, **kwargs):
     return copied
 
 
+def format_score_cell(value, width=12):
+    if value is None or (isinstance(value, float) and value != value):
+        text = "NA"
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+        text = f"{float(value):.4f}"
+    else:
+        text = str(value)
+    return _fit_text(text, width)
+
+
+def format_score_preview(frame, score_col, n=5):
+    """Return aligned preview lines: mutant, DMS (if any), predicted score."""
+    if frame is None or len(frame) == 0 or "mutant" not in getattr(frame, "columns", []):
+        return []
+    cols = ["mutant"]
+    if "DMS_score" in frame.columns:
+        cols.append("DMS_score")
+    if score_col and score_col in frame.columns and score_col not in cols:
+        cols.append(score_col)
+    view = frame.loc[:, cols].head(int(n))
+    widths = {
+        "mutant": max(8, min(24, max(len("mutant"), *(len(str(v)) for v in view["mutant"])))),
+        "DMS_score": 12,
+    }
+    if score_col in cols:
+        widths[score_col] = max(12, min(28, len(str(score_col))))
+    header = "  ".join(_fit_text(col, widths[col]) for col in cols)
+    lines = [header]
+    for _, row in view.iterrows():
+        cells = []
+        for col in cols:
+            if col == "mutant":
+                cells.append(_fit_text(row[col], widths[col]))
+            else:
+                cells.append(format_score_cell(row[col], widths[col]))
+        lines.append("  ".join(cells))
+    return lines
+
+
+def print_score_preview(logger, frame, score_col, protein_name, n=5, path=None):
+    """Print the first few mutant / DMS / score rows as a reference."""
+    lines = format_score_preview(frame, score_col, n=n)
+    if not lines:
+        return
+    total = len(frame)
+    shown = min(int(n), total)
+    extra = f" → {path}" if path else ""
+    logger.info(
+        f"Sample scores ({shown} of {total} mutants){extra}",
+        protein=protein_name,
+    )
+    for line in lines:
+        logger.info(line)
+
+
 def format_name_preview(names, max_items=8):
     if len(names) <= max_items:
         return ", ".join(names)
