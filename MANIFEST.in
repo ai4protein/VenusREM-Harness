@@ -15,4 +15,9 @@ prune data
 prune docs
 prune experiments
 prune script
+prune img
+prune tools
 prune .github
+global-exclude *.png
+global-exclude *.jpg
+global-exclude *.jpeg
