@@ -21,8 +21,37 @@ HF_DEFAULT_MIRROR = "https://hf-mirror.com"
 HF_DOWNLOAD_ATTEMPTS = 3
 
 
+def hf_token_paths() -> tuple[Path, ...]:
+    """Default files written by ``hf auth login`` / ``huggingface-cli login``."""
+    hf_home = Path(os.environ.get("HF_HOME") or (Path.home() / ".cache" / "huggingface"))
+    return (
+        hf_home / "token",
+        Path.home() / ".huggingface" / "token",
+    )
+
+
 def hf_token() -> Optional[str]:
-    return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    """Env first (``HF_TOKEN``), then the Hugging Face CLI login token."""
+    for key in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+        value = (os.environ.get(key) or "").strip()
+        if value:
+            return value
+    try:
+        from huggingface_hub import get_token
+
+        token = get_token()
+        if token:
+            return token
+    except Exception:
+        pass
+    for path in hf_token_paths():
+        try:
+            text = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if text:
+            return text
+    return None
 
 
 def hf_headers() -> dict[str, str]:

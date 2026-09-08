@@ -232,7 +232,7 @@ def download_hub_dataset(
             raise SystemExit(
                 f"Could not download {venusrem2_path(dataset, archive_name)} "
                 f"from {' or '.join(VENUSREM2_REPOS)}. "
-                "Private repos need HF_TOKEN."
+                "Private repos: export HF_TOKEN=... or run `hf auth login`."
             )
         counts[folder] = n
 

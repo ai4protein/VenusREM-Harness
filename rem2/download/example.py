@@ -129,5 +129,6 @@ def ensure_demo_dataset(
         "Could not download the rem2 demo example from "
         f"{' or '.join(VENUSREM2_REPOS)} ({EXAMPLE_PREFIX}/). "
         f"Missing: {', '.join(failed) or 'download failed'}. "
-        "Private repos need HF_TOKEN."
+        "Private repos need a token: export HF_TOKEN=... "
+        "or run `hf auth login` (saved at ~/.cache/huggingface/token)."
     )

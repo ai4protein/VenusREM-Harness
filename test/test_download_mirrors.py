@@ -11,9 +11,28 @@ from rem2.data.mirrors import (
     download_from_venusrem2,
     first_venusrem2_repo,
     hf_endpoints,
+    hf_token,
+    hf_token_paths,
     is_hf_network_error,
     rewrite_hf_url,
 )
+
+
+def test_hf_token_prefers_env(monkeypatch):
+    monkeypatch.setenv("HF_TOKEN", "hf_from_env")
+    monkeypatch.setenv("HUGGING_FACE_HUB_TOKEN", "hf_other")
+    assert hf_token() == "hf_from_env"
+
+
+def test_hf_token_reads_cli_file(monkeypatch, tmp_path):
+    token_file = tmp_path / "token"
+    token_file.write_text("hf_from_file\n", encoding="utf-8")
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGING_FACE_HUB_TOKEN", raising=False)
+    monkeypatch.setenv("HF_HOME", str(tmp_path))
+    monkeypatch.setattr("huggingface_hub.get_token", lambda: None)
+    assert hf_token_paths()[0] == token_file
+    assert hf_token() == "hf_from_file"
 
 
 def test_first_repo_prefers_ai4protein():

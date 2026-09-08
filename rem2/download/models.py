@@ -350,12 +350,15 @@ def list_downloadable_models() -> list[str]:
 
 
 def _hf_token() -> Optional[str]:
-    return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    from rem2.data.mirrors import hf_token
+
+    return hf_token()
 
 
 def _hf_headers() -> dict[str, str]:
-    token = _hf_token()
-    return {"Authorization": f"Bearer {token}"} if token else {}
+    from rem2.data.mirrors import hf_headers
+
+    return hf_headers()
 
 
 def _prefetch_hf_repo(repo_id: str, desc: str, force: bool) -> str:

@@ -111,7 +111,7 @@ data/my_assay/
 
 MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
-**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`. Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` / `rem2 download example` fetch one official ProteinGym assay (`HCP_LAMBD_Tsuboyama_2023_2L6Q`, 55 aa, real DMS + PDB + MSA) into `~/.cache/rem2/examples/HCP_LAMBD_Tsuboyama_2023_2L6Q`.
+**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `export HF_TOKEN=...` or `hf auth login` (token at `~/.cache/huggingface/token`). Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` / `rem2 download example` fetch one official ProteinGym assay (`HCP_LAMBD_Tsuboyama_2023_2L6Q`, 55 aa, real DMS + PDB + MSA) into `~/.cache/rem2/examples/HCP_LAMBD_Tsuboyama_2023_2L6Q`.
 
 ```bash
 rem2 download                 # ProteinGym 217 → data/proteingym_v1
