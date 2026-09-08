@@ -30,16 +30,17 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 
 ## Installation
 
-PyPI name is **`rem2`**. Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
+Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-pip install "rem2[recommended]"
+pip install "rem2[recommended] @ git+https://github.com/tyang816/VenusREM2.git"
+# later, from PyPI: pip install "rem2[recommended]"
 rem2 doctor
 rem2 demo
 ```
 
-Upgrade later with `pip install -U rem2`. From a clone (editable): `pip install -e ".[recommended]"`.
+From a clone (editable): `pip install -e ".[recommended]"`.
 
 | Extra | Use |
 |-------|-----|
