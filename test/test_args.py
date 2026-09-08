@@ -15,6 +15,15 @@ def test_cli_prog_is_rem2():
     assert create_parser().prog == "rem2"
 
 
+def test_package_version_matches_pyproject():
+    import rem2
+    from pathlib import Path
+
+    text = Path(__file__).resolve().parents[1].joinpath("pyproject.toml").read_text()
+    line = next(item for item in text.splitlines() if item.startswith("version = "))
+    assert rem2.__version__ == line.split("=", 1)[1].strip().strip('"')
+
+
 def test_help_shows_short_usage_and_examples():
     help_text = create_parser().format_help()
     assert "usage: rem2 [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE)" in help_text

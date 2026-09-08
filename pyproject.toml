@@ -1,21 +1,25 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "rem2"
-version = "0.1.0"
+version = "0.2.1"
 description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
-license = { text = "CC-BY-NC-ND-4.0" }
+license = "CC-BY-NC-ND-4.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
-authors = [{ name = "AI4Protein" }]
+authors = [{ name = "Yang Tan", email = "ty_ang@163.com" }]
 keywords = ["protein", "PLM", "variant-effect", "DMS", "VenusREM2", "VenusREM"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "License :: Other/Proprietary License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 # Core: enough for VenusREM2 scoring on HF MLMs (ESM-2 / ProSST logits path without
@@ -115,8 +119,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ai4protein/VenusREM"
-Documentation = "https://github.com/ai4protein/VenusREM"
+Homepage = "https://github.com/tyang816/VenusREM2"
+Repository = "https://github.com/tyang816/VenusREM2"
+Issues = "https://github.com/tyang816/VenusREM2/issues"
+Changelog = "https://github.com/tyang816/VenusREM2/releases"
 
 [project.scripts]
 rem2 = "rem2.cli:main"
@@ -146,3 +152,6 @@ rem2 = [
   "baseline/s2f/config/**/*",
   "examples/**/*",
 ]
+
+[tool.setuptools.exclude-package-data]
+rem2 = ["**/__pycache__/*", "**/*.py[cod]"]

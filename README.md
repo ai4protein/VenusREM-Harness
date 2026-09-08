@@ -22,7 +22,7 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 
 ## News
 
-- **2026.09** Package and CLI are `rem2`. Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
+- **2026.09** Package and CLI are `rem2` (PyPI name `rem2`). Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
 - **2026.08** Weight cache standardized at `~/.cache/rem2/weights` (old `~/.cache/venusrem2` still read).
 - **2026.07** Installable package. VenusREM frozen on `v1` / `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
@@ -30,14 +30,16 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 
 ## Installation
 
-Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
+PyPI name is **`rem2`**. Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-pip install -e ".[recommended]"
+pip install "rem2[recommended]"
 rem2 doctor
 rem2 demo
 ```
+
+Upgrade later with `pip install -U rem2`. From a clone (editable): `pip install -e ".[recommended]"`.
 
 | Extra | Use |
 |-------|-----|
@@ -269,6 +271,19 @@ rem2 --model prosst-2048 --base_dir data/proteingym_v1 \
 pip install -e ".[prosst,dev]"
 pytest test/ -v
 ```
+
+**Publish to PyPI.** First upload creates the `rem2` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
+
+1. On [pypi.org](https://pypi.org) → Publishing → add a pending publisher: project `rem2`, owner `tyang816`, repo `VenusREM2`, workflow `publish-pypi.yml`, environment `pypi`.
+2. In GitHub: Settings → Environments → create `pypi`.
+3. Bump `version` in `pyproject.toml` and `rem2/__init__.py` together, then tag:
+
+```bash
+git tag v0.2.1
+git push origin v0.2.1
+```
+
+The tag workflow builds the wheel and uploads it. After that, anyone can `pip install rem2`. A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.
 
 ## Citation
 
