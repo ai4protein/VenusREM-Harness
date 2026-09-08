@@ -76,7 +76,6 @@ MODELS = [
     "protgpt2",
     "rita",
     "esm3",
-    "tranception",
     "carp",
     "s2f",
     "s3f",

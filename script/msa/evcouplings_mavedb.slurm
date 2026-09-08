@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --partition=all
-#SBATCH --account=root
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=16G
 #SBATCH --time=168:00:00
@@ -8,12 +7,14 @@
 #SBATCH --error=log/%x.e
 
 WORKDIR="$(cd "$(dirname "$0")/../.." && pwd)"
-CONDA_BIN=$CONDA_PREFIX/bin
-DATABASE=$UNIREF100
+CONDA_BIN="${VENUSREM_CONDA_BIN:-${CONDA_PREFIX:+$CONDA_PREFIX/bin}}"
+DATABASE="${UNIREF100:?Set UNIREF100 to a UniRef FASTA path}"
 BITSCORES="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9"
 
-export PATH=$CONDA_BIN:$PATH
-cd $WORKDIR
+if [ -n "$CONDA_BIN" ]; then
+    export PATH="$CONDA_BIN:$PATH"
+fi
+cd "$WORKDIR"
 
 outdir="output/mavedb/$protein"
 

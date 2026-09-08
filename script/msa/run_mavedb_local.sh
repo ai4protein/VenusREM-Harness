@@ -3,9 +3,10 @@
 # Each protein job is pinned to dedicated CPU cores via taskset.
 # Usage: nohup bash script/msa/run_mavedb_local.sh > log/run_mavedb.log 2>&1 &
 
-CONDA_BIN=$CONDA_PREFIX/bin
-DATABASE=$UNIREF100
-WORKDIR=.
+WORKDIR="$(cd "$(dirname "$0")/../.." && pwd)"
+WORKDIR="${VENUSREM_ROOT:-$WORKDIR}"
+CONDA_BIN="${VENUSREM_CONDA_BIN:-${CONDA_PREFIX:+$CONDA_PREFIX/bin}}"
+DATABASE="${UNIREF100:?Set UNIREF100 to a UniRef FASTA path}"
 UNIQUE_LIST=$WORKDIR/data/mavedb/unique_proteins.txt
 BITSCORES="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9"
 
@@ -13,8 +14,10 @@ BITSCORES="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9"
 CORES_PER_JOB=8
 PARALLEL=12               # 12 jobs × 8 cores = 96 / 128 cores
 
-export PATH=$CONDA_BIN:$PATH
-cd $WORKDIR
+if [ -n "$CONDA_BIN" ]; then
+    export PATH="$CONDA_BIN:$PATH"
+fi
+cd "$WORKDIR"
 mkdir -p log
 
 TOTAL_CORES=$(nproc)

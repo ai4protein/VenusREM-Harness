@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from venusrem2.config import create_parser, postprocess_args
+from rem2.config import create_parser, postprocess_args
 
 
 def _parse(*argv):
@@ -17,9 +17,15 @@ def test_cli_prog_is_rem2():
 
 def test_help_shows_short_usage_and_examples():
     help_text = create_parser().format_help()
-    assert "usage: rem2 --model MODEL (--base_dir DIR | --fasta FILE)" in help_text
+    assert "usage: rem2 [--model MODEL] (--base_dir DIR | --fasta FILE)" in help_text
     assert "rem2 --model esm2 --base_dir data/proteingym_v1" in help_text
     assert "rem2 --model venusrem2 --base_dir data/proteingym_v1" in help_text
+    assert "rem2 --model prosst-4096 --base_dir data/proteingym_v1" in help_text
+    assert "rem2 --model saprot --base_dir data/proteingym_v1" in help_text
+    assert "rem2 --model proteinmpnn-020 --base_dir data/proteingym_v1" in help_text
+    assert "--scoring_strategy  wt (default) | mask | tf" in help_text
+    assert "Missing checkpoint" in help_text
+    assert "Missing data" in help_text
     assert "rem2 --model esm2 --fasta prot.fasta" in help_text
     assert "rem2 --list-models" in help_text
     assert "rem2 demo" in help_text
@@ -28,6 +34,11 @@ def test_help_shows_short_usage_and_examples():
     assert "dataset (--base_dir):" in help_text
     assert "single protein (--fasta):" in help_text
     assert "rem2 scoring:" in help_text
+    assert "per-protein entropy-α" in help_text
+    assert "wt-marginals" in help_text
+    assert "{backbone}__rem2" in help_text
+    assert "other names are ablations" in help_text
+    assert "coherence gate" in help_text
 
 
 def test_invalid_alpha_exits():

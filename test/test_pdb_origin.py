@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from venusrem2.scoring.structure_weights import (
+from rem2.scoring.structure_weights import (
     classify_pdb_origin,
     load_residue_plddt_from_pdb,
     plddt_skip_reason,

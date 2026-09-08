@@ -3,7 +3,7 @@
 # Only one job per unique sequence; duplicates share the first protein's output.
 # Usage: bash script/msa/submit_mavedb.sh
 
-cd .
+cd "$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p log
 
 declare -A seq_representative

@@ -1,7 +1,8 @@
 #!/bin/bash
 # Periodically check for completed proteins and generate their summary CSVs
-WORKDIR=.
-PYTHON=python3
+WORKDIR="$(cd "$(dirname "$0")/../.." && pwd)"
+WORKDIR="${VENUSREM_ROOT:-$WORKDIR}"
+PYTHON="${VENUSREM_PYTHON:-python3}"
 
 while true; do
     generated=0

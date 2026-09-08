@@ -156,9 +156,13 @@ script/**/*sweep*
 script/**/*hparam*
 script/**/*_grid.sh
 script/**/*ablation*
+script/compute_fitness_advance.sh
+script/compute_fitness_calibrated.sh
+script/compare_backbone_scoring.sh
 
 # Legacy code trees (pre-package layout)
 src/
+rem2/legacy/
 venusrem2/legacy/
 
 # VenusREM-Orbit leftovers (old package name / scripts / local dumps)
@@ -167,11 +171,14 @@ venusrem_orbit/
 
 # Model tensor caches / checkpoints (allow package-shipped static weights only)
 *.pt
+!rem2/**/static/*.pt
+!rem2/**/protssn_config/**/*.pt
 !venusrem2/**/static/*.pt
 !venusrem2/**/protssn_config/**/*.pt
 *.pth
 *.ckpt
 *.bin
+!rem2/**/tokenizers/**
 !venusrem2/**/tokenizers/**
 
 # ---------------------------------------------------------------------------

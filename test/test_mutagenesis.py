@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from venusrem2.data.mutagenesis import (
+from rem2.data.mutagenesis import (
     estimate_mutant_count,
     generate_npoint_saturation,
     materialize_single_protein_inputs,

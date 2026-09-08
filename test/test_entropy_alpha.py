@@ -6,7 +6,7 @@ import math
 
 import torch
 
-from venusrem2.scoring.entropy_alpha import (
+from rem2.scoring.entropy_alpha import (
     AA20,
     beta_to_raw_alpha,
     entropy_weighted_rho,
@@ -64,7 +64,7 @@ def test_cli_zmean_columns():
     import numpy as np
     import pandas as pd
 
-    from venusrem2.cli import _zmean_columns
+    from rem2.cli import _zmean_columns
 
     frame = pd.DataFrame({
         "a": [1.0, 2.0, 3.0],

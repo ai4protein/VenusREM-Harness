@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from venusrem2.api import build_score_argv
-from venusrem2.scoring.logits_cache import load_cached_logits
-from venusrem2.user_commands import build_demo_argv, demo_dataset_dir
+from rem2.api import build_score_argv
+from rem2.scoring.logits_cache import load_cached_logits
+from rem2.user_commands import build_demo_argv, demo_dataset_dir
 
 
 def test_demo_argv_injects_small_model_and_fixture():

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from venusrem2.models import (
+from rem2.models import (
     apply_model_defaults,
     get_model,
     list_models,
     resolve_model_name,
 )
-from venusrem2.config import create_parser
+from rem2.config import create_parser
 
 from helpers import make_args
 
@@ -19,19 +19,52 @@ EXPECTED_MODELS = {
     "esm1b",
     "esm1v",
     "esm2",
+    "esm2-8m",
+    "esm2-35m",
+    "esm2-150m",
+    "esm2-3b",
     "esm3",
+    "esmc",
+    "esmc-600m",
     "esm_if",
+    "mifst",
     "progen2",
+    "progen2-s",
+    "progen2-m",
+    "progen2-b",
+    "progen2-xl",
     "progen3",
+    "progen3-112m",
+    "progen3-219m",
+    "progen3-339m",
+    "progen3-762m",
+    "progen3-3b",
     "prosst",
+    "prosst-20",
+    "prosst-128",
+    "prosst-512",
+    "prosst-1024",
+    "prosst-2048",
+    "prosst-4096",
     "protein_mpnn",
+    "protein_mpnn-v_48_002",
+    "protein_mpnn-v_48_010",
+    "protein_mpnn-v_48_030",
+    "protein_mpnn-soluble-v_48_002",
+    "protein_mpnn-soluble-v_48_010",
+    "protein_mpnn-soluble-v_48_020",
+    "protein_mpnn-soluble-v_48_030",
     "protgpt2",
     "protssn",
     "rita",
+    "rita-s",
+    "rita-m",
+    "rita-l",
     "s2f",
     "s3f",
     "saprot",
-    "tranception",
+    "saprot-35m-af2",
+    "saprot-650m-pdb",
 }
 
 
@@ -46,6 +79,18 @@ def test_get_model_roundtrip():
         cls = get_model(name)
         assert cls.spec.name == name or name in cls.spec.aliases
     assert get_model("venusrem2").spec.name == "prosst"
+    assert get_model("prosst_ensemble").spec.name == "prosst"
+    assert get_model("prosst-2048").spec.name == "prosst-2048"
+    assert get_model("prosst-4096").spec.name == "prosst-4096"
+    assert get_model("prosst_k4096").spec.name == "prosst-4096"
+    assert get_model("prosst-k4096").spec.name == "prosst-4096"
+    assert get_model("esmif").spec.name == "esm_if"
+    assert get_model("pmpnn_soluble_v_48_002").spec.name == "protein_mpnn-soluble-v_48_002"
+    assert get_model("protssn-ensemble").spec.name == "protssn"
+    assert get_model("prosst-ensemble").spec.name == "prosst"
+    assert get_model("proteinmpnn-020").spec.name == "protein_mpnn"
+    assert get_model("proteinmpnn-v_48_002").spec.name == "protein_mpnn-v_48_002"
+    assert get_model("esm2-650m").spec.name == "esm2"
 
 
 def test_resolve_model_prefers_model_flag():
@@ -59,6 +104,14 @@ def test_resolve_model_defaults_to_esm2():
 
 
 def test_resolve_model_env_override(monkeypatch):
+    monkeypatch.delenv("VENUSREM2_MODEL", raising=False)
+    monkeypatch.setenv("REM2_MODEL", "esm2-8m")
+    args = make_args()
+    assert resolve_model_name(args) == "esm2-8m"
+
+
+def test_resolve_model_legacy_env_override(monkeypatch):
+    monkeypatch.delenv("REM2_MODEL", raising=False)
     monkeypatch.setenv("VENUSREM2_MODEL", "esm2-8m")
     args = make_args()
     assert resolve_model_name(args) == "esm2-8m"
@@ -78,8 +131,50 @@ def test_apply_model_defaults_esm2():
     assert args.model_out_name == ["esm2_t33_650M_UR50D__rem2"]
 
 
+def test_apply_model_defaults_prosst_2048():
+    args = make_args(model="prosst-2048")
+    apply_model_defaults(args, "prosst-2048")
+    assert args.backbone_mode == "prosst"
+    assert args.model_name == ["AI4Protein/ProSST-2048"]
+    assert args.model_out_name == ["ProSST-2048__rem2"]
+
+
+def test_apply_model_defaults_size_specific_keys():
+    args = make_args(model="prosst-4096")
+    apply_model_defaults(args, "prosst-4096")
+    assert args.backbone_mode == "prosst"
+    assert args.model_name == ["AI4Protein/ProSST-4096"]
+    assert args.model_out_name == ["ProSST-4096__rem2"]
+
+    args = make_args(model="prosst_k4096")
+    apply_model_defaults(args, "prosst_k4096")
+    assert args.model_name == ["AI4Protein/ProSST-4096"]
+
+    args = make_args(model="progen2-xl")
+    apply_model_defaults(args, "progen2-xl")
+    assert args.progen2_model_name_or_path == "hugohrban/progen2-xlarge"
+
+    args = make_args(model="esm3")
+    apply_model_defaults(args, "esm3")
+    assert args.esm3_model_name == "esm3_sm_open_v1"
+
+    args = make_args(model="esmc-600m")
+    apply_model_defaults(args, "esmc-600m")
+    assert args.esm3_model_name == "esmc_600m"
+
+    args = make_args(model="protein_mpnn-soluble-v_48_002")
+    apply_model_defaults(args, "protein_mpnn-soluble-v_48_002")
+    assert args.protein_mpnn_checkpoint.endswith("soluble_v_48_002.pt")
+
+    args = make_args(model="proteinmpnn-020", scoring_strategy="tf")
+    args.protein_mpnn_scoring_mode = "random_order"
+    apply_model_defaults(args, "proteinmpnn-020")
+    assert args.scoring_strategy == "teacher-force"
+    assert args.protein_mpnn_scoring_mode == "teacher_force"
+
+
 def test_venusrem2_expands_prosst_ensemble():
-    from venusrem2.naming import PROSST_ENSEMBLE_IDS, is_official_venusrem2
+    from rem2.naming import PROSST_ENSEMBLE_IDS, is_official_venusrem2
 
     args = make_args(model="venusrem2")
     apply_model_defaults(args, "venusrem2")
@@ -87,9 +182,82 @@ def test_venusrem2_expands_prosst_ensemble():
     assert is_official_venusrem2("venusrem2", args)
     assert args.model_out_name[0].startswith("VenusREM2__")
 
+    args = make_args(model="prosst_ensemble")
+    apply_model_defaults(args, "prosst_ensemble")
+    assert list(args.model_name) == list(PROSST_ENSEMBLE_IDS)
+    assert is_official_venusrem2("prosst_ensemble", args)
+
+    args = make_args(model="prosst-ensemble")
+    apply_model_defaults(args, "prosst-ensemble")
+    assert list(args.model_name) == list(PROSST_ENSEMBLE_IDS)
+
+
+def test_experiment_csv_backbone_keys_resolve():
+    """ProteinGym ablation keys (mask/wt stripped) resolve as --model."""
+    from rem2.models.scoring_strategy import spec_supports_mask
+
+    # Unique model_key stems from staged_ablation_59.csv (not _mask/_wt).
+    experiment_keys = [
+        "prosst_ensemble",
+        "carp_640m",
+        "esm1b",
+        "esm1v",
+        "esm2_8m",
+        "esm2_35m",
+        "esm2_150m",
+        "esm2_650m",
+        "esm2_3b",
+        "esm3",
+        "esmc",
+        "esmc_600m",
+        "esmif",
+        "mifst",
+        "progen2",
+        "progen2_s",
+        "progen2_m",
+        "progen2_b",
+        "progen2_xl",
+        "progen3",
+        "progen3_112m",
+        "progen3_219m",
+        "progen3_339m",
+        "progen3_762m",
+        "progen3_3b",
+        "prosst_k20",
+        "prosst_k128",
+        "prosst_k512",
+        "prosst_k1024",
+        "prosst_k2048",
+        "prosst_k4096",
+        "proteinmpnn",
+        "pmpnn_v_48_002",
+        "pmpnn_v_48_010",
+        "pmpnn_v_48_030",
+        "pmpnn_soluble_v_48_002",
+        "pmpnn_soluble_v_48_010",
+        "pmpnn_soluble_v_48_020",
+        "pmpnn_soluble_v_48_030",
+        "protssn",
+        "rita_s",
+        "rita_m",
+        "rita_l",
+        "rita_xl",
+        "s3f",
+        "saprot",
+        "saprot35m_af2",
+        "saprot650m_pdb",
+    ]
+    for key in experiment_keys:
+        spec = get_model(key).spec
+        assert spec.name
+        if key in {"esmif", "mifst", "proteinmpnn"} or key.startswith("pmpnn") or key.startswith("progen") or key.startswith("rita"):
+            assert not spec_supports_mask(key)
+        if key.startswith("esm2") or key.startswith("saprot") or key in {"esm1b", "esm1v", "s3f"}:
+            assert spec_supports_mask(key)
+
 
 def test_score_label_rem2_vs_venusrem2_ensemble():
-    from venusrem2.naming import (
+    from rem2.naming import (
         default_score_label,
         is_official_venusrem2,
         run_banner,
@@ -124,7 +292,7 @@ def test_apply_model_defaults_auto_cache_for_mpnn_and_protssn():
 
 
 def test_mask_capability_and_refuse():
-    from venusrem2.models.scoring_strategy import (
+    from rem2.models.scoring_strategy import (
         UnsupportedScoringStrategy,
         models_supporting_mask,
         require_scoring_strategy,
@@ -132,18 +300,33 @@ def test_mask_capability_and_refuse():
     )
 
     masked = set(models_supporting_mask())
-    assert {"esm2", "esm1b", "esm1v", "prosst", "auto", "saprot", "protssn", "carp", "esm3", "s3f"} <= masked
-    for name in ("progen2", "progen3", "protgpt2", "rita", "tranception", "protein_mpnn", "esm_if", "mifst", "s2f"):
+    assert {"esm2", "esm1b", "esm1v", "auto", "saprot", "protssn", "carp", "esm3", "s3f"} <= masked
+    assert "prosst" not in masked
+    for name in ("progen2", "progen3", "protgpt2", "rita", "protein_mpnn", "esm_if", "mifst", "s2f", "prosst", "prosst-4096"):
         assert not spec_supports_mask(name)
-        require_scoring_strategy(name, "wt-marginals")
+        require_scoring_strategy(name, "wt")
         try:
-            require_scoring_strategy(name, "masked-marginals")
+            require_scoring_strategy(name, "mask")
         except UnsupportedScoringStrategy as exc:
             assert "refusing" in str(exc).lower() or "not supported" in str(exc).lower()
         else:
-            raise AssertionError(f"{name} should refuse masked-marginals")
-    require_scoring_strategy("esm2", "masked-marginals")
-    require_scoring_strategy("venusrem2", "masked-marginals")
+            raise AssertionError(f"{name} should refuse mask")
+    require_scoring_strategy("esm2", "mask")
+    require_scoring_strategy("esm2", "wt")
+    require_scoring_strategy("protein_mpnn", "tf")
+    require_scoring_strategy("proteinmpnn-020", "teacher-force")
+    try:
+        require_scoring_strategy("venusrem2", "mask")
+    except UnsupportedScoringStrategy:
+        pass
+    else:
+        raise AssertionError("venusrem2 / ProSST should refuse mask")
+    try:
+        require_scoring_strategy("esm2", "tf")
+    except UnsupportedScoringStrategy as exc:
+        assert "tf" in str(exc).lower()
+    else:
+        raise AssertionError("esm2 should refuse tf")
 
 
 def test_cli_parser_list_models_flag():
@@ -156,8 +339,8 @@ def test_cli_parser_rem2_defaults():
     parser = create_parser()
     args = parser.parse_args([])
     assert args.alpha == "entropy"
+    assert args.scoring_strategy == "wt-marginals"
     assert args.background_weight == "one_minus_alpha"
-    assert args.wt_confidence_weight == 0.0
     assert args.scoring_mode == "calibrated_margin"
     assert args.calibrate_on_raw is True
     assert args.use_rsa_decay is True
@@ -180,7 +363,7 @@ def test_fixture_files_exist(fasta_path, pdb_path, mutant_csv, msa_path, struc_f
 
 
 def test_resolve_existing_weight_falls_back_to_orbit_cache(tmp_path, monkeypatch):
-    from venusrem2.models.weights import resolve_existing_weight
+    from rem2.models.weights import resolve_existing_weight
 
     rem2 = tmp_path / "venusrem2" / "weights"
     orbit = tmp_path / "venus_orbit" / "weights"
@@ -189,7 +372,7 @@ def test_resolve_existing_weight_falls_back_to_orbit_cache(tmp_path, monkeypatch
     ckpt.write_bytes(b"orbit-weight")
     rem2.mkdir(parents=True)
     monkeypatch.setattr(
-        "venusrem2.models.weights.legacy_weight_cache_dirs",
+        "rem2.models.weights.legacy_weight_cache_dirs",
         lambda: [str(orbit)],
     )
     found = resolve_existing_weight(

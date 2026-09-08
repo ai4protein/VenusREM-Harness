@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "venusrem2"
+name = "rem2"
 version = "0.1.0"
 description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
@@ -118,12 +118,13 @@ Homepage = "https://github.com/ai4protein/VenusREM"
 Documentation = "https://github.com/ai4protein/VenusREM"
 
 [project.scripts]
-rem2 = "venusrem2.cli:main"
-venusrem2 = "venusrem2.cli:main"
-venusrem-score = "venusrem2.cli:main"
+rem2 = "rem2.cli:main"
+venusrem2 = "rem2.cli:main"
+venusrem-score = "rem2.cli:main"
 # Third-party packages register ModelAdapter subclasses here, e.g.:
 #   my_plm = "mypkg.adapters:MyAdapter"
-# Built-ins register via venusrem2.models.builtins on import.
+# Built-ins register via rem2.models.builtins on import.
+[project.entry-points."rem2.models"]
 [project.entry-points."venusrem2.models"]
 
 [tool.setuptools]
@@ -131,17 +132,16 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["venusrem2*"]
-exclude = ["venusrem2.legacy*"]
+include = ["rem2*"]
+exclude = ["rem2.legacy*"]
 
 [tool.setuptools.package-data]
-venusrem2 = [
+rem2 = [
   "single_config_monomer.txt",
   "baseline/prosst/static/*",
   "baseline/protssn/protssn_config/**/*",
   "baseline/progen2/tokenizer.json",
   "baseline/progen3/tokenizer.json",
   "baseline/s2f/config/**/*",
-  "baseline/tranception/model/utils/tokenizers/**/*",
   "examples/**/*",
 ]

@@ -41,8 +41,6 @@ def make_args(**overrides):
         protgpt2_model_name_or_path="nferruz/ProtGPT2",
         rita_model_name_or_path="lightonai/RITA_s",
         esm3_model_name="esmc_300m",
-        tranception_checkpoint="OATML-Markslab/Tranception_Small",
-        tranception_no_mirror=False,
         carp_model_name="carp_600k",
         s2f_config=None,
         s2f_checkpoint=None,

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from venusrem2.config import create_parser
-from venusrem2.models.download_policy import (
+from rem2.config import create_parser
+from rem2.models.download_policy import (
     DownloadRefused,
     apply_download_policy_from_args,
     confirm_download,
     set_download_policy,
 )
-from venusrem2.models.weights import (
+from rem2.models.weights import (
     cache_search_roots,
     resolve_existing_dir,
     resolve_existing_weight,
@@ -34,7 +34,7 @@ def test_parser_auto_download_flags():
 def test_policy_from_args():
     parser = create_parser()
     apply_download_policy_from_args(parser.parse_args([]))
-    from venusrem2.models.download_policy import get_download_policy
+    from rem2.models.download_policy import get_download_policy
 
     assert get_download_policy() == "ask"
     apply_download_policy_from_args(parser.parse_args(["--auto_download"]))

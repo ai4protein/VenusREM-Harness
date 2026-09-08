@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
 
-BASE_DIR="./data/proteingym_v1"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+BASE_DIR="${PROTEINGYM_DIR:-$ROOT/data/proteingym_v1}"
 MODEL_NAME="westlake-repl/SaProt_650M_AF2"
-FOLDSEEK_BIN="foldseek"
+FOLDSEEK_BIN="${FOLDSEEK_BIN:-foldseek}"
 
 # A: Vanilla (no VenusREM2, no alignment prior)
 echo "=== SaProt 650M: Vanilla ==="

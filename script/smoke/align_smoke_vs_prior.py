@@ -50,7 +50,7 @@ PRIOR_FULL_VENUSREM2_COL = {
 MODEL_ORDER = [
     "prosst", "esm2", "esm1b", "esm1v", "saprot", "protssn", "esm_if",
     "protein_mpnn", "progen2", "progen3", "protgpt2", "rita", "esm3",
-    "tranception", "carp", "s2f", "s3f",
+    "carp", "s2f", "s3f",
 ]
 
 
@@ -229,7 +229,7 @@ def main():
         "- **s3f**: full TorchDrug path; surface↔residue KNN uses pure PyTorch (no PyKeOps).",
         "  On-the-fly surface generation still needs `.[s3f-surface-gen]` / pykeops.",
         "- **s2f**: lightweight ESM2 fallback (scores match esm2); not in official prior table",
-        "- **protgpt2 / tranception**: no official prior column (smoke-only regression)",
+        "- **protgpt2**: no official prior column (smoke-only regression)",
         "- **smoke_msa vs full VenusREM2**: expected gap (~0.03–0.10); smoke is MSA α=0.8 `log_odds` only",
         "",
         "Artifacts: `scores/{model}/scores/PIN1_….csv`, `records.jsonl`, `summary.csv`, `logs/`",

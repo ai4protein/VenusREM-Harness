@@ -13,13 +13,33 @@ import pandas as pd
 import pytest
 import torch
 
-from venusrem2.models import apply_model_defaults, get_model, list_models
-from venusrem2.scoring import score_protein
-from venusrem2.scoring.score_protein import read_seq
+from rem2.models import apply_model_defaults, get_model
+from rem2.scoring import score_protein
+from rem2.scoring.score_protein import read_seq
 
 from helpers import SEQUENCE, NullLogger, make_args
 
-ALL_MODELS = sorted({s.name for s in list_models()})
+# One representative per family. Size variants (prosst-4096, esm2-3b, …)
+# are covered by registry tests without downloading extra checkpoints.
+ALL_MODELS = [
+    "auto",
+    "carp",
+    "esm1b",
+    "esm1v",
+    "esm2",
+    "esm3",
+    "esm_if",
+    "progen2",
+    "progen3",
+    "prosst",
+    "protein_mpnn",
+    "protgpt2",
+    "protssn",
+    "rita",
+    "s2f",
+    "s3f",
+    "saprot",
+]
 
 
 def _skip_reason(model_name: str) -> Optional[str]:
@@ -132,7 +152,7 @@ def test_model_forward_log_probs_on_real_fasta_pdb(
         if fwd is not None:
             logits = fwd(sequence=sequence)
         else:
-            from venusrem2.backbone.forward_utils import forward_sequence_logits
+            from rem2.backbone.forward_utils import forward_sequence_logits
 
             use_structure = model_name == "prosst"
             structure_sequence = None

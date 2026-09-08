@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-BASE_DIR="./data/proteingym_v1"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+BASE_DIR="${PROTEINGYM_DIR:-$ROOT/data/proteingym_v1}"
 MODEL_NAME="facebook/esm1v_t33_650M_UR90S_1"
 
 # A: Vanilla (no VenusREM2, no alignment prior)

@@ -2,17 +2,22 @@
 #PBS -l select=1:ncpus=6:mem=100gb
 #PBS -l walltime=168:00:00
 #PBS -N msa_mavedb
-#PBS -o ./log.o
-#PBS -e ./log.e
+#PBS -o log/msa_mavedb.o
+#PBS -e log/msa_mavedb.e
 
-cd .
-source $CONDA_PREFIX/../bin/activate $CONDA_PREFIX
+set -euo pipefail
+cd "${PBS_O_WORKDIR:-.}"
+if [ -n "${CONDA_PREFIX:-}" ]; then
+    export PATH="$CONDA_PREFIX/bin:$PATH"
+fi
+
+DATABASE="${UNIREF100:?Set UNIREF100 to a UniRef FASTA path}"
 
 evcouplings \
     -P output/mavedb/$protein/$protein \
     -p $protein \
     -s data/mavedb/aa_seq/${protein}.fasta \
-    -d $database \
+    -d "$DATABASE" \
     -b "0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9" \
     -n 5 \
     src/single_config_monomer.txt

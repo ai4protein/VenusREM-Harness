@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from venusrem2.cli import main
+from rem2.cli import main
 
 
 def test_bare_rem2_prints_getting_started(capsys):
@@ -12,19 +12,27 @@ def test_bare_rem2_prints_getting_started(capsys):
     out = capsys.readouterr().out
     assert "rem2 doctor" in out
     assert "rem2 demo" in out
-    assert "from venusrem2 import score" in out
+    assert "from rem2 import score" in out
+    assert "--model venusrem2" in out
+    assert "wt (default)" in out
+    assert "type y to download" in out
 
 
 def test_list_models_cli(capsys):
     main(["--list-models"])
     out = capsys.readouterr().out
-    assert "MASK" in out
+    assert "FWD" in out
     assert "esm2" in out
     assert "prosst" in out
     assert "protein_mpnn" in out
     assert "esm2-8m" in out
+    assert "prosst-4096" in out
+    assert "esmc-600m" in out
+    assert "progen2-xl" in out
     assert "rem2 backbones" in out
-    assert "venusrem2 = rem2 on the official ProSST ensemble" in out
+    assert "venusrem2 = official ProSST ensemble" in out
+    assert "proteinmpnn" in out
+    assert "*_mask / *_wt" in out
 
 
 def test_unknown_model_is_systemexit():
@@ -47,7 +55,7 @@ def test_doctor_cli(capsys):
 
 
 def test_cli_refuses_masked_marginals_on_causal_lm():
-    with pytest.raises(SystemExit, match="masked-marginals is not supported") as exc:
+    with pytest.raises(SystemExit, match="mask is not supported") as exc:
         main(
             [
                 "--model",
@@ -58,4 +66,86 @@ def test_cli_refuses_masked_marginals_on_causal_lm():
                 "/tmp/venusrem2_should_not_score",
             ]
         )
-    assert "wt-marginals" in str(exc.value)
+    assert "wt" in str(exc.value).lower()
+
+
+def test_cli_refuses_mask_on_prosst():
+    with pytest.raises(SystemExit, match="mask is not supported"):
+        main(
+            [
+                "--model",
+                "prosst-4096",
+                "--scoring_strategy",
+                "mask",
+                "--out_scores_dir",
+                "/tmp/rem2_should_not_score",
+            ]
+        )
+
+
+def test_cli_refuses_tf_on_esm2():
+    with pytest.raises(SystemExit, match="tf is not supported"):
+        main(
+            [
+                "--model",
+                "esm2",
+                "--scoring_strategy",
+                "tf",
+                "--out_scores_dir",
+                "/tmp/rem2_should_not_score",
+            ]
+        )
+
+
+def test_missing_base_dir_data_is_systemexit(tmp_path, capsys):
+    empty = tmp_path / "empty_assay"
+    empty.mkdir()
+    with pytest.raises(SystemExit, match="No data") as exc:
+        main(["--model", "esm2", "--base_dir", str(empty), "--out_scores_dir", str(tmp_path / "out")])
+    assert "aa_seq" in str(exc.value)
+    out = capsys.readouterr().out
+    assert "Scoring proteins" not in out
+    assert "rem2 scoring run" not in out
+
+
+def test_structure_model_requires_pdb(tmp_path):
+    base = tmp_path / "assay"
+    (base / "aa_seq").mkdir(parents=True)
+    (base / "substitutions").mkdir()
+    (base / "aa_seq" / "p.fasta").write_text(">p\nACDE\n")
+    (base / "substitutions" / "p.csv").write_text("mutant\nA1C\n")
+    with pytest.raises(SystemExit, match="needs PDB") as exc:
+        main(
+            [
+                "--model",
+                "esmif",
+                "--base_dir",
+                str(base),
+                "--out_scores_dir",
+                str(tmp_path / "out"),
+                "--no_auto_download",
+            ]
+        )
+    assert "pdb" in str(exc.value).lower()
+
+
+def test_prosst_requires_struc_seq(tmp_path, capsys):
+    base = tmp_path / "assay"
+    (base / "aa_seq").mkdir(parents=True)
+    (base / "substitutions").mkdir()
+    (base / "aa_seq" / "p.fasta").write_text(">p\nACDE\n")
+    (base / "substitutions" / "p.csv").write_text("mutant\nA1C\n")
+    with pytest.raises(SystemExit, match="structure-token") as exc:
+        main(
+            [
+                "--model",
+                "prosst-2048",
+                "--base_dir",
+                str(base),
+                "--out_scores_dir",
+                str(tmp_path / "out"),
+                "--no_auto_download",
+            ]
+        )
+    assert "struc" in str(exc.value).lower()
+    assert "Scoring proteins" not in capsys.readouterr().out
