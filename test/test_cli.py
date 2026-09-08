@@ -25,6 +25,34 @@ def test_help_does_not_import_torch():
     subprocess.check_call([sys.executable, "-c", script])
 
 
+def test_download_help_does_not_import_torch():
+    script = (
+        "import sys\n"
+        "from rem2.cli import main\n"
+        "try:\n"
+        "    main(['download', '--help'])\n"
+        "except SystemExit:\n"
+        "    pass\n"
+        "assert 'torch' not in sys.modules\n"
+        "assert 'transformers' not in sys.modules\n"
+    )
+    subprocess.check_call([sys.executable, "-c", script])
+
+
+def test_download_model_dry_run_does_not_import_torch():
+    script = (
+        "import sys\n"
+        "from rem2.cli import main\n"
+        "try:\n"
+        "    main(['download', 'esm2', '--dry-run'])\n"
+        "except SystemExit:\n"
+        "    pass\n"
+        "assert 'torch' not in sys.modules\n"
+        "assert 'transformers' not in sys.modules\n"
+    )
+    subprocess.check_call([sys.executable, "-c", script])
+
+
 def test_bare_rem2_prints_getting_started(capsys):
     main([])
     out = capsys.readouterr().out

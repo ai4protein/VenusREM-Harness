@@ -7,8 +7,12 @@ examples:
   rem2 demo
   rem2 doctor
   rem2 download
+  rem2 download example
   rem2 download muthub
   rem2 download virohub
+  rem2 download benchmark-all
+  rem2 download esm2
+  rem2 download model-all
   rem2 --list-models
   rem2 --model esm2 --base_dir data/proteingym_v1
   rem2 --model esm2 --scoring_strategy mask --base_dir data/proteingym_v1

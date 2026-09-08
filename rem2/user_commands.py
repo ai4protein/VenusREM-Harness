@@ -12,11 +12,16 @@ GETTING_STARTED = """\
 rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
-  rem2 demo                score the bundled trp-cage with ESM-2 8M
+  rem2 demo                download trp-cage (DMS/PDB/MSA) from HF, score with ESM-2 8M
   rem2 download                 ProteinGym 217 → data/proteingym_v1
   rem2 download ProteinGym      same
   rem2 download VenusMutHub     or muthub → data/VenusMutHub
   rem2 download VenusViroHub    or virohub → data/venusvirohub
+  rem2 download benchmark-all   ProteinGym + MutHub + ViroHub
+  rem2 download example         unzipped trp-cage (DMS / PDB / MSA)
+  rem2 download esm2            prefetch ESM-2 650M into the default cache
+  rem2 download venusrem2       official 6 ProSST checkpoints + tokenizer
+  rem2 download model-all       every rem2 backbone (tens of GB)
   rem2 --model esm2 --fasta prot.fasta
   rem2 --model saprot --pdb prot.pdb
   rem2 --model prosst-2048 --pdb prot.pdb
@@ -62,21 +67,30 @@ def _has_flag(argv: list[str], *names: str) -> bool:
 
 
 def demo_dataset_dir() -> Path:
-    from rem2.examples import bundled_trp_cage_dir
+    """Local example dir without downloading (cache, then bundled / fixtures)."""
+    from rem2.download.example import bundled_example_dir, default_example_dir
 
-    bundled = bundled_trp_cage_dir()
-    if (bundled / "aa_seq").is_dir():
+    cache = default_example_dir()
+    if (cache / "aa_seq").is_dir():
+        return cache
+    bundled = bundled_example_dir()
+    if bundled is not None:
         return bundled
-    repo = Path(__file__).resolve().parents[1] / "test" / "fixtures" / "trp_cage"
-    return repo
+    return cache
 
 
 def build_demo_argv(user_argv: Optional[list[str]] = None) -> list[str]:
     user_argv = list(user_argv or [])
-    demo_dir = demo_dataset_dir()
-    if not (demo_dir / "aa_seq").is_dir():
+    if not _has_flag(user_argv, "--base_dir", "--fasta", "--aa_seq_dir", "--pdb"):
+        from rem2.download.example import ensure_demo_dataset
+
+        demo_dir = ensure_demo_dataset()
+    else:
+        demo_dir = demo_dataset_dir()
+    if not (Path(demo_dir) / "aa_seq").is_dir() and not (Path(demo_dir) / "pdbs").is_dir():
         raise SystemExit(
-            "Bundled demo dataset is missing. Reinstall the package or pass --base_dir yourself."
+            "Demo dataset is missing. rem2 demo downloads it from Hugging Face, "
+            "or pass --base_dir yourself."
         )
     injected: list[str] = []
     if not _has_flag(user_argv, "--model", "--baseline_type"):
@@ -176,6 +190,8 @@ def run_doctor(argv: Optional[list[str]] = None) -> int:
     print()
     print("Next: rem2 demo")
     print("      rem2 download")
+    print("      rem2 download benchmark-all")
+    print("      rem2 download model-all")
     print("      rem2 --model esm2 --base_dir data/proteingym_v1")
     if problems:
         print("problems: " + ", ".join(problems))

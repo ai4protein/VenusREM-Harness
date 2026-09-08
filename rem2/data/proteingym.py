@@ -151,20 +151,11 @@ def _assert_safe_member(dest: Path, name: str) -> None:
         raise ValueError(f"Refusing archive member outside dest: {name}")
 
 
-def download_url(url: str, dest: Path, force: bool = False) -> Path:
+def download_url(url: str, dest: Path, force: bool = False, *, desc: Optional[str] = None) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.is_file() and dest.stat().st_size > 0 and not force:
-        return dest
-    tmp = dest.with_suffix(dest.suffix + ".part")
-    try:
-        with urllib.request.urlopen(url) as response, tmp.open("wb") as handle:
-            shutil.copyfileobj(response, handle)
-        tmp.replace(dest)
-    except Exception:
-        if tmp.exists():
-            tmp.unlink()
-        raise
-    return dest
+    from rem2.download.progress import download_url_with_progress
+
+    return download_url_with_progress(url, dest, desc=desc or dest.name, force=force)
 
 
 def download_hf_archive(filename: str, dest: Path, force: bool = False) -> Path:

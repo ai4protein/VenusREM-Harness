@@ -385,12 +385,17 @@ class SSTPredictor:
         assert structure_vocab_size in [20, 64, 128, 512, 1024, 2048, 4096]
         
         if model_path is None:
-            self.model_path = str(Path(__file__).parent / "static" / "AE.pt")
+            from rem2.models.weights import resolve_prosst_static_file
+
+            self.model_path = resolve_prosst_static_file("AE.pt")
         else:
             self.model_path = model_path
-            
+
         if cluster_dir is None:
-            self.cluster_dir = str(Path(__file__).parent / "static")
+            from rem2.models.weights import resolve_prosst_static_file
+
+            cluster_path = resolve_prosst_static_file(f"{structure_vocab_size}.joblib")
+            self.cluster_dir = str(Path(cluster_path).parent)
             self.cluster_model = [f"{structure_vocab_size}.joblib"]
         else:
             self.cluster_dir = cluster_dir

@@ -46,6 +46,8 @@ Dataset (--base_dir):
   struc_seq*/                         optional; built from pdbs/ if missing
 
   rem2 download
+  rem2 download benchmark-all
+  rem2 download model-all
   rem2 --model {model_key} --base_dir data/proteingym_v1
 """
 

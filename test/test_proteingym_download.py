@@ -97,5 +97,67 @@ def test_cli_download_virohub_dry_run(tmp_path, capsys):
 def test_cli_download_unknown_dataset():
     import pytest
 
-    with pytest.raises(SystemExit, match="Unknown dataset"):
+    with pytest.raises(SystemExit, match="Unknown download target"):
         main(["download", "not-a-hub"])
+
+
+def test_cli_download_benchmark_all_dry_run(tmp_path, capsys):
+    main(["download", "benchmark-all", "--dry-run"])
+    out = capsys.readouterr().out
+    assert "Will download 3 benchmark" in out
+    assert "proteingym" in out
+    assert "muthub" in out
+    assert "virohub" in out
+    assert "ProteinGym/aa_seq.tar.gz" in out
+    assert "VenusMutHub/substitutions.tar.gz" in out
+    assert "VenusViroHub/aa_seq.tar.gz" in out
+
+
+def test_cli_download_all_still_means_benchmarks(capsys):
+    main(["download", "all", "--dry-run"])
+    out = capsys.readouterr().out
+    assert "Will download 3 benchmark" in out
+
+
+def test_cli_download_esm2_dry_run(capsys):
+    main(["download", "esm2", "--dry-run"])
+    out = capsys.readouterr().out
+    assert "Will download 1 model" in out
+    assert "facebook/esm2_t33_650M_UR50D" in out
+    assert "huggingface" in out.lower()
+
+
+def test_cli_download_venusrem2_dry_run(capsys):
+    main(["download", "venusrem2", "--dry-run"])
+    out = capsys.readouterr().out
+    assert "venusrem2" in out
+    assert "AI4Protein/ProSST-2048" in out
+    assert "AI4Protein/ProSST-20" in out
+
+
+def test_cli_download_model_all_dry_run(capsys):
+    main(["download", "model-all", "--dry-run"])
+    out = capsys.readouterr().out
+    assert "Will download" in out
+    assert "model" in out
+    assert "esm2" in out
+    assert "venusrem2" in out
+    assert "saprot" in out
+    assert "tens of GB" in out
+
+
+def test_cli_download_help_lists_model_and_benchmark():
+    import pytest
+
+    with pytest.raises(SystemExit) as exc:
+        main(["download", "--help"])
+    assert exc.value.code == 0
+
+
+def test_download_help_text():
+    from rem2.data.download import build_download_parser
+
+    text = build_download_parser().format_help()
+    assert "model-all" in text
+    assert "benchmark-all" in text
+    assert "esm2" in text

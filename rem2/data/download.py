@@ -1,8 +1,11 @@
-"""``rem2 download``: ProteinGym, VenusMutHub, VenusViroHub.
+"""``rem2 download``: benchmarks and model weights.
 
 Archives are fetched from ``AI4Protein/VenusREM2``, then
 ``tyang816/VenusREM2``. ProteinGym still falls back to
 ``AI4Protein/VenusREM`` and official ProteinGym v1.3.
+
+Model checkpoints go to the Hugging Face hub cache and
+``~/.cache/rem2/weights``.
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from rem2.data.mirrors import (
     download_from_venusrem2,
 )
 from rem2.data import proteingym as pg
+from rem2.download.progress import print_plan
 
 ALIASES = {
     "proteingym": "proteingym",
@@ -29,6 +33,8 @@ ALIASES = {
     "venusvirohub": "virohub",
     "vvh": "virohub",
     "all": "all",
+    "benchmarkall": "all",
+    "benchmarks": "all",
 }
 
 DATASETS = {
@@ -79,9 +85,37 @@ def _fold_name(name: str) -> str:
 def normalize_dataset(name: str) -> str:
     key = _fold_name(name)
     if key not in ALIASES:
-        known = "ProteinGym | VenusMutHub | VenusViroHub | all"
+        known = "ProteinGym | VenusMutHub | VenusViroHub | benchmark-all"
         raise SystemExit(f"Unknown dataset {name!r}. Use: rem2 download [{known}]")
     return ALIASES[key]
+
+
+def _known_targets_text() -> str:
+    return (
+        "benchmarks: ProteinGym | VenusMutHub | VenusViroHub | benchmark-all\n"
+        "example:    rem2 download example  (unzipped trp-cage for rem2 demo)\n"
+        "models:     esm2 | venusrem2 | saprot | … | model-all\n"
+        "            rem2 download --help"
+    )
+
+
+def resolve_download_target(name: str) -> tuple[str, str]:
+    """Return ``(\"benchmark\"|\"model\", key)``."""
+    key = _fold_name(name)
+    if key in {"modelall", "models"}:
+        return "model", "all"
+    if key == "model":
+        return "model", "list"
+    if key in {"example", "examples", "demo", "trpcage"}:
+        return "example", "trp_cage"
+    if key in ALIASES:
+        return "benchmark", ALIASES[key]
+    from rem2.download.models import resolve_model_key
+
+    model = resolve_model_key(name)
+    if model:
+        return "model", model
+    raise SystemExit(f"Unknown download target {name!r}.\n{_known_targets_text()}")
 
 
 def default_dest(dataset: str) -> Path:
@@ -110,10 +144,22 @@ def _fill_from_venusrem2(
 ) -> Optional[int]:
     out = dest / folder
     if (not force) and pg.count_files(out, suffixes) >= expected:
-        log(f"{folder}/ already has {pg.count_files(out, suffixes)} files")
-        return pg.count_files(out, suffixes)
+        n = pg.count_files(out, suffixes)
+        from rem2.download.progress import tqdm_bar
+
+        with tqdm_bar(f"{folder}/ (cached, {n} files)", 1, unit="file") as bar:
+            bar.update(1)
+        log(f"{folder}/ already has {n} files")
+        return n
     remote = venusrem2_path(dataset, archive_name)
-    archive = download_from_venusrem2(remote, cache / archive_name, force=force, log=log)
+    archive = download_from_venusrem2(
+        remote,
+        cache / archive_name,
+        force=force,
+        log=log,
+        progress=True,
+        desc=archive_name,
+    )
     if archive is None:
         return None
     _extract_archive(archive, dest, log)
@@ -160,7 +206,21 @@ def download_hub_dataset(
         return counts
 
     dest.mkdir(parents=True, exist_ok=True)
-    for folder, (archive_name, suffixes) in archives.items():
+    jobs = [(folder, archive_name, suffixes) for folder, (archive_name, suffixes) in archives.items()]
+    sidecars = list(spec["sidecar"])
+    n_jobs = len(jobs) + len(sidecars)
+    log(f"{dataset} → {dest}  ({n_jobs} file(s), {expected} assays)")
+    print_plan(
+        f"{dataset} files",
+        [
+            (archive_name, "archive", venusrem2_path(dataset, archive_name))
+            for _folder, archive_name, _suf in jobs
+        ]
+        + [(name, "sidecar", venusrem2_path(dataset, name)) for name in sidecars],
+        log=log,
+    )
+    for i, (folder, archive_name, suffixes) in enumerate(jobs, 1):
+        log(f"[{i}/{n_jobs}] {dataset}  {archive_name}")
         n = _fill_from_venusrem2(
             dataset, dest, cache, folder, archive_name, suffixes, expected, force, log
         )
@@ -174,10 +234,13 @@ def download_hub_dataset(
             )
         counts[folder] = n
 
-    for name in spec["sidecar"]:
+    for j, name in enumerate(sidecars, len(jobs) + 1):
+        log(f"[{j}/{n_jobs}] {dataset}  {name}")
         target = dest / name
         remote = venusrem2_path(dataset, name)
-        got = download_from_venusrem2(remote, target, force=force, log=log)
+        got = download_from_venusrem2(
+            remote, target, force=force, log=log, progress=True, desc=name
+        )
         if got is None and dataset != "proteingym":
             log(f"optional sidecar missing: {remote}")
         elif got is not None:
@@ -222,26 +285,36 @@ def _fill_proteingym_gaps(
 def build_download_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rem2 download",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
-            "Fetch ProteinGym, VenusMutHub, or VenusViroHub into a rem2 --base_dir. "
-            "Looks in AI4Protein/VenusREM2 then tyang816/VenusREM2. "
-            "Private datasets need HF_TOKEN. ProteinGym still falls back to "
-            "AI4Protein/VenusREM and official ProteinGym v1.3."
+            "Fetch a benchmark into a rem2 --base_dir, or prefetch model weights. "
+            "Benchmarks: rem2 download benchmark-all "
+            "(AI4Protein/VenusREM2 then tyang816/VenusREM2; "
+            "private repos need HF_TOKEN; ProteinGym still falls back to "
+            "AI4Protein/VenusREM and official ProteinGym v1.3). "
+            "Models: rem2 download model-all "
+            "(Hugging Face hub cache + ~/.cache/rem2/weights)."
         ),
     )
     parser.add_argument(
-        "dataset",
+        "target",
         nargs="?",
         default="proteingym",
         help=(
-            "ProteinGym | VenusMutHub | VenusViroHub | all "
-            "(case-insensitive; muthub / virohub aliases; default: ProteinGym)"
+            "ProteinGym | VenusMutHub | VenusViroHub | benchmark-all | "
+            "example | esm2 | venusrem2 | saprot | … | model-all "
+            "(default: ProteinGym)"
         ),
     )
     parser.add_argument(
         "--dest",
         default=None,
-        help="output directory (default depends on dataset)",
+        help="benchmark output directory, or rem2 weight cache for models",
+    )
+    parser.add_argument(
+        "--cache_dir",
+        default=None,
+        help="rem2 weight cache for model downloads (default: ~/.cache/rem2/weights)",
     )
     parser.add_argument(
         "--msa",
@@ -250,23 +323,101 @@ def build_download_parser() -> argparse.ArgumentParser:
         help="ProteinGym MSA archive (default: a2m); ignored for other datasets",
     )
     parser.add_argument("--force", action="store_true", help="re-download even if files exist")
-    parser.add_argument("--dry-run", action="store_true", help="print sources and exit")
+    parser.add_argument("--dry-run", action="store_true", help="print the plan and exit")
+    parser.epilog = (
+        "examples:\n"
+        "  rem2 download\n"
+        "  rem2 download example\n"
+        "  rem2 download benchmark-all\n"
+        "  rem2 download esm2\n"
+        "  rem2 download venusrem2\n"
+        "  rem2 download model-all"
+    )
     return parser
+
+
+def _run_benchmarks(
+    names: list[str],
+    *,
+    dest: Optional[str],
+    force: bool,
+    dry_run: bool,
+    msa: str,
+    log=print,
+) -> int:
+    if dest and len(names) > 1:
+        raise SystemExit("--dest cannot be used with rem2 download benchmark-all")
+    rows = []
+    for name in names:
+        spec = DATASETS[name]
+        n_files = len(spec["archives"]) + len(spec["sidecar"])
+        rows.append((name, f"{spec['expected']} assays", f"{n_files} files → {dest or default_dest(name)}"))
+    print_plan(f"Will download {len(names)} benchmark(s)", rows, log=log)
+    for i, name in enumerate(names, 1):
+        log(f"benchmark [{i}/{len(names)}] {name}")
+        download_hub_dataset(
+            name,
+            Path(dest) if dest else default_dest(name),
+            force=force,
+            dry_run=dry_run,
+            msa=msa,
+            log=log,
+        )
+    return 0
+
+
+def _run_models(
+    key: str,
+    *,
+    dest: Optional[str],
+    cache_dir: Optional[str],
+    force: bool,
+    dry_run: bool,
+) -> int:
+    from rem2.download.models import download_models, list_downloadable_models
+
+    if key == "list":
+        print("rem2 download <model> | rem2 download model-all")
+        print("Downloadable models:")
+        for name in list_downloadable_models():
+            print(f"  {name}")
+        return 0
+    keys = list_downloadable_models() if key == "all" else [key]
+    download_models(
+        keys,
+        cache_dir=cache_dir or dest,
+        force=force,
+        dry_run=dry_run,
+    )
+    return 0
 
 
 def run_download(argv: Optional[Iterable[str]] = None) -> int:
     args = build_download_parser().parse_args(list(argv or []))
-    names = normalize_dataset(args.dataset)
-    selected = list(DATASETS) if names == "all" else [names]
-    if args.dest and len(selected) > 1:
-        raise SystemExit("--dest cannot be used with rem2 download all")
-    for name in selected:
-        dest = Path(args.dest) if args.dest else default_dest(name)
-        download_hub_dataset(
-            name,
-            dest,
+    raw = getattr(args, "target", None) or getattr(args, "dataset", None) or "proteingym"
+    kind, key = resolve_download_target(raw)
+    if kind == "example":
+        from rem2.download.example import ensure_demo_dataset
+
+        ensure_demo_dataset(
+            dest=args.dest,
             force=args.force,
             dry_run=args.dry_run,
-            msa=args.msa,
         )
-    return 0
+        return 0
+    if kind == "model":
+        return _run_models(
+            key,
+            dest=args.dest,
+            cache_dir=getattr(args, "cache_dir", None),
+            force=args.force,
+            dry_run=args.dry_run,
+        )
+    selected = list(DATASETS) if key == "all" else [key]
+    return _run_benchmarks(
+        selected,
+        dest=args.dest,
+        force=args.force,
+        dry_run=args.dry_run,
+        msa=args.msa,
+    )

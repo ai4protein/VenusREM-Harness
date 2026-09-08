@@ -58,11 +58,33 @@ def download_hf_file(
     filename: str,
     dest: Path,
     force: bool = False,
+    *,
+    progress: bool = False,
+    desc: Optional[str] = None,
 ) -> Path:
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
+    label = desc or filename
     if dest.is_file() and dest.stat().st_size > 0 and not force:
+        if progress:
+            from rem2.download.progress import tqdm_bar
+
+            with tqdm_bar(f"{label} (cached)", dest.stat().st_size) as bar:
+                bar.update(dest.stat().st_size)
         return dest
+    if progress:
+        from rem2.download.progress import download_url_with_progress
+
+        try:
+            return download_url_with_progress(
+                hf_resolve_url(repo, filename),
+                dest,
+                desc=label,
+                headers=hf_headers(),
+                force=force,
+            )
+        except Exception:
+            pass
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
@@ -85,17 +107,9 @@ def _download_url(url: str, dest: Path, force: bool = False) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.is_file() and dest.stat().st_size > 0 and not force:
         return dest
-    tmp = dest.with_suffix(dest.suffix + ".part")
-    req = urllib.request.Request(url, headers=hf_headers())
-    try:
-        with urllib.request.urlopen(req) as response, tmp.open("wb") as handle:
-            shutil.copyfileobj(response, handle)
-        tmp.replace(dest)
-    except Exception:
-        if tmp.exists():
-            tmp.unlink()
-        raise
-    return dest
+    from rem2.download.progress import download_url_with_progress
+
+    return download_url_with_progress(url, dest, desc=dest.name, headers=hf_headers(), force=force)
 
 
 def first_venusrem2_repo(
@@ -115,10 +129,18 @@ def download_from_venusrem2(
     force: bool = False,
     repos: tuple[str, ...] = VENUSREM2_REPOS,
     log=print,
+    *,
+    progress: bool = False,
+    desc: Optional[str] = None,
 ) -> Optional[Path]:
     """Download ``filename`` from the first working VenusREM2 mirror."""
     dest = Path(dest)
     if dest.is_file() and dest.stat().st_size > 0 and not force:
+        if progress:
+            from rem2.download.progress import tqdm_bar
+
+            with tqdm_bar(f"{(desc or dest.name)} (cached)", dest.stat().st_size) as bar:
+                bar.update(dest.stat().st_size)
         return dest
     errors: list[str] = []
     for repo in repos:
@@ -127,7 +149,9 @@ def download_from_venusrem2(
             continue
         try:
             log(f"Using {repo}/{filename}")
-            return download_hf_file(repo, filename, dest, force=force)
+            return download_hf_file(
+                repo, filename, dest, force=force, progress=progress, desc=desc or dest.name
+            )
         except Exception as exc:
             errors.append(f"{repo}: {exc}")
             log(f"{repo}/{filename} failed ({exc}); trying next mirror")

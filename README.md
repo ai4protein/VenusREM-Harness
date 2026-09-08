@@ -22,7 +22,7 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 
 ## News
 
-- **2026.09** Package and CLI are `rem2` (PyPI name `rem2`). Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
+- **2026.09** Package and CLI are `rem2` (PyPI name `rem2`). Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble. ProSST tokenizer files (`AE.pt`, `{K}.joblib`) are no longer shipped in the pip wheel; they download from [`tyang816/ProSST`](https://huggingface.co/tyang816/ProSST) on first use.
 - **2026.08** Weight cache standardized at `~/.cache/rem2/weights` (old `~/.cache/venusrem2` still read).
 - **2026.07** Installable package. VenusREM frozen on `v1` / `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
@@ -45,7 +45,7 @@ Upgrade later with `pip install -U rem2`. From a clone (editable): `pip install 
 |-------|-----|
 | (core) | ESM-2 and other HF sequence LMs |
 | `[recommended]` | biotite (RSA / PDB helpers) |
-| `[prosst]` | Official VenusREM2 (ProSST ensemble). Single-protein `--pdb` builds tokens |
+| `[prosst]` | Official VenusREM2 (ProSST ensemble). Single-protein `--pdb` builds tokens. Tokenizer files (`AE.pt`, `{K}.joblib`) download from [`tyang816/ProSST`](https://huggingface.co/tyang816/ProSST) on first use |
 | `[carp]`, `[esm3]`, `[s3f]` | Other backbones (`[s3f]` requires Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
 
@@ -110,14 +110,18 @@ data/my_assay/
 
 MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
-**Benchmarks.** `rem2 download` writes a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`.
+**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`. Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` / `rem2 download example` fetch the unzipped trp-cage (`example/trp_cage/`, DMS + PDB + MSA, not a zip) into `~/.cache/rem2/examples/trp_cage`.
 
 ```bash
 rem2 download                 # ProteinGym 217 → data/proteingym_v1
+rem2 download example         # unzipped trp-cage (DMS / PDB / MSA) for rem2 demo
 rem2 download ProteinGym      # same
 rem2 download VenusMutHub     # or muthub → data/VenusMutHub
 rem2 download VenusViroHub    # or virohub → data/venusvirohub
-rem2 download all
+rem2 download benchmark-all   # all three hubs
+rem2 download esm2            # prefetch ESM-2 650M
+rem2 download venusrem2       # 6 official ProSST checkpoints + tokenizer
+rem2 download model-all       # every rem2 backbone (tens of GB)
 rem2 --model esm2 --base_dir data/proteingym_v1
 ```
 

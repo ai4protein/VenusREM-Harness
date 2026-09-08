@@ -34,7 +34,7 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
         lambda repo, filename: repo.startswith("tyang816"),
     )
 
-    def fake_download(repo, filename, dest, force=False):
+    def fake_download(repo, filename, dest, force=False, **_kwargs):
         calls.append(repo)
         Path(dest).write_text("ok")
         return Path(dest)
@@ -60,3 +60,5 @@ def test_dataset_aliases():
     assert normalize_dataset("virohub") == "virohub"
     assert normalize_dataset("vvh") == "virohub"
     assert normalize_dataset("ALL") == "all"
+    assert normalize_dataset("benchmark-all") == "all"
+    assert normalize_dataset("benchmarks") == "all"

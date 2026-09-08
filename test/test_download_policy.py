@@ -15,6 +15,7 @@ from rem2.models.weights import (
     cache_search_roots,
     resolve_existing_dir,
     resolve_existing_weight,
+    resolve_prosst_static_file,
 )
 
 
@@ -120,3 +121,31 @@ def test_resolve_weight_from_parent_cache_layout(tmp_path):
     ckpt.write_bytes(b"s3f")
     found = resolve_existing_weight("s3f", "s3f.pth", cache_dir=str(root))
     assert found == str(ckpt)
+
+
+def test_resolve_prosst_static_uses_cache_then_hf(tmp_path, monkeypatch):
+    monkeypatch.setattr("rem2.models.weights.bundled_prosst_static", lambda name: None)
+    cache = tmp_path / "cache"
+    static = cache / "prosst" / "static"
+    static.mkdir(parents=True)
+    (static / "2048.joblib").write_bytes(b"joblib")
+    found = resolve_prosst_static_file("2048.joblib", cache_dir=str(cache))
+    assert found == str(static / "2048.joblib")
+
+    called = {}
+
+    def fake_hf(repo, filename, local_dir, logger=None, name=None, looked_in=None):
+        called["repo"] = repo
+        called["filename"] = filename
+        dest = tmp_path / "dl" / filename
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"ae")
+        return str(dest)
+
+    monkeypatch.setattr("rem2.models.weights.resolve_existing_weight", lambda *a, **k: None)
+    monkeypatch.setattr("rem2.models.weights.default_cache_dir", lambda explicit=None: str(tmp_path / "empty"))
+    monkeypatch.setattr("rem2.models.weights._hf_download", fake_hf)
+    path = resolve_prosst_static_file("AE.pt", cache_dir=str(tmp_path / "empty"))
+    assert called["repo"] == "tyang816/ProSST"
+    assert called["filename"] == "static/AE.pt"
+    assert path.endswith("AE.pt")

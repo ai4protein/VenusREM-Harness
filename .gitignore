@@ -169,12 +169,13 @@ venusrem2/legacy/
 venusrem_orbit/
 *orbit*
 
-# Model tensor caches / checkpoints (allow package-shipped static weights only)
+# Model tensor caches / checkpoints
 *.pt
-!rem2/**/static/*.pt
 !rem2/**/protssn_config/**/*.pt
-!venusrem2/**/static/*.pt
 !venusrem2/**/protssn_config/**/*.pt
+rem2/baseline/prosst/static/
+venusrem2/baseline/prosst/static/
+*.joblib
 *.pth
 *.ckpt
 *.bin

@@ -17,6 +17,18 @@ FOLDSEEK_URL = (
 
 S3F_HF_REPO = "tyang816/S3F_weights"
 S3F_HF_FILE = "s3f.pth"
+S3F_ZENODO_URL = "https://zenodo.org/records/14257708/files/s3f.pth?download=1"
+PROSST_STATIC_REPO = "tyang816/ProSST"
+PROSST_STATIC_NAMES = (
+    "AE.pt",
+    "20.joblib",
+    "64.joblib",
+    "128.joblib",
+    "512.joblib",
+    "1024.joblib",
+    "2048.joblib",
+    "4096.joblib",
+)
 ESM_IF_URL = (
     "https://dl.fbaipublicfiles.com/fair-esm/models/esm_if1_gvp4_t16_142M_UR50.pt"
 )
@@ -329,7 +341,7 @@ def ensure_s3f_checkpoint(
 
     dest_dir = ensure_dir(os.path.join(cache, "s3f"))
     dest = os.path.join(dest_dir, "s3f.pth")
-    url = os.environ.get("S3F_CHECKPOINT_URL")
+    url = os.environ.get("S3F_CHECKPOINT_URL") or S3F_ZENODO_URL
     try:
         return _hf_download(
             S3F_HF_REPO,
@@ -344,16 +356,9 @@ def ensure_s3f_checkpoint(
 
         if isinstance(hf_exc, DownloadRefused):
             raise
-        if url:
-            return ensure_url_file(
-                url, dest, logger=logger, name="S3F checkpoint", looked_in=candidates
-            )
-        raise FileNotFoundError(
-            "S3F checkpoint not found. Place s3f.pth at data/s3f_weights/s3f.pth "
-            f"or {dest}, set S3F_CHECKPOINT / S3F_CHECKPOINT_URL, pass "
-            "--s2f_checkpoint / --cache_dir, or allow download from "
-            f"hf://{S3F_HF_REPO}/{S3F_HF_FILE}. Last error: {hf_exc}"
-        ) from hf_exc
+        return ensure_url_file(
+            url, dest, logger=logger, name="S3F checkpoint", looked_in=candidates
+        )
 
 
 def ensure_esm_if_checkpoint(cache_dir: Optional[str] = None, logger=None) -> str:
@@ -416,3 +421,35 @@ def ensure_fair_esm_source(cache_dir: Optional[str] = None, logger=None) -> str:
     if os.path.isfile(marker):
         return repo_dir
     raise FileNotFoundError("Failed to obtain facebookresearch/esm sources for ESM-IF")
+
+
+def bundled_prosst_static(name: str) -> Optional[str]:
+    path = package_root() / "baseline" / "prosst" / "static" / name
+    if path.is_file() and path.stat().st_size > 0:
+        return str(path)
+    return None
+
+
+def resolve_prosst_static_file(
+    name: str,
+    cache_dir: Optional[str] = None,
+    logger=None,
+) -> str:
+    """AE.pt / {K}.joblib: bundled copy, rem2 cache, then ``tyang816/ProSST``."""
+    filename = Path(name).name
+    bundled = bundled_prosst_static(filename)
+    if bundled:
+        return log_cache_hit(f"ProSST {filename}", bundled, logger)
+    existing = resolve_existing_weight("prosst", "static", filename, cache_dir=cache_dir)
+    if existing:
+        return log_cache_hit(f"ProSST {filename}", existing, logger)
+    cache = default_cache_dir(cache_dir)
+    local_dir = ensure_dir(os.path.join(cache, "prosst"))
+    return _hf_download(
+        PROSST_STATIC_REPO,
+        f"static/{filename}",
+        local_dir,
+        logger=logger,
+        name=f"ProSST {filename}",
+        looked_in=weight_candidates("prosst", "static", filename, cache_dir=cache_dir),
+    )

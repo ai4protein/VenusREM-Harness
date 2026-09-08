@@ -42,7 +42,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# ProSST structure-token pipeline (GVP / static weights in package).
+# ProSST structure-token pipeline. Tokenizer weights download from
+# tyang816/ProSST on first --model prosst / venusrem2 use.
 prosst = [
   "torch-geometric>=2.4",
   "pathos>=0.3",
@@ -144,8 +145,6 @@ exclude = ["rem2.legacy*"]
 
 [tool.setuptools.package-data]
 rem2 = [
-  "single_config_monomer.txt",
-  "baseline/prosst/static/*",
   "baseline/protssn/protssn_config/**/*",
   "baseline/progen2/tokenizer.json",
   "baseline/progen3/tokenizer.json",
@@ -154,4 +153,9 @@ rem2 = [
 ]
 
 [tool.setuptools.exclude-package-data]
-rem2 = ["**/__pycache__/*", "**/*.py[cod]"]
+rem2 = [
+  "**/__pycache__/*",
+  "**/*.py[cod]",
+  "baseline/prosst/static/*",
+  "legacy/**",
+]
