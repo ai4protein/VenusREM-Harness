@@ -13,15 +13,16 @@ from rem2.download.example import (
 def test_example_dry_run(capsys):
     main(["download", "example", "--dry-run"])
     out = capsys.readouterr().out
-    assert "example/trp_cage/aa_seq/trp_cage.fasta" in out
-    assert "example/trp_cage/substitutions/trp_cage.csv" in out
-    assert "example/trp_cage/pdbs/trp_cage.pdb" in out
-    assert "example/trp_cage/aa_seq_aln_a2m/trp_cage.a2m" in out
+    assay = "SDA_BACSU_Tsuboyama_2023_1PV0"
+    assert f"example/{assay}/aa_seq/{assay}.fasta" in out
+    assert f"example/{assay}/substitutions/{assay}.csv" in out
+    assert f"example/{assay}/pdbs/{assay}.pdb" in out
+    assert f"example/{assay}/aa_seq_aln_a2m/{assay}.a2m" in out
     assert "tyang816/VenusREM2" in out
 
 
 def test_ensure_demo_uses_cache_then_hf(tmp_path, monkeypatch):
-    dest = tmp_path / "trp_cage"
+    dest = tmp_path / "SDA_BACSU_Tsuboyama_2023_1PV0"
     calls = []
 
     def fake_download(filename, target, force=False, log=print, progress=False, desc=None):
@@ -34,7 +35,7 @@ def test_ensure_demo_uses_cache_then_hf(tmp_path, monkeypatch):
     got = ensure_demo_dataset(dest=str(dest), log=lambda *_: None)
     assert got == dest
     assert calls == list(EXAMPLE_FILES)
-    assert (dest / "pdbs" / "trp_cage.pdb").is_file()
+    assert (dest / "pdbs" / "SDA_BACSU_Tsuboyama_2023_1PV0.pdb").is_file()
 
     calls.clear()
     again = ensure_demo_dataset(dest=str(dest), log=lambda *_: None)

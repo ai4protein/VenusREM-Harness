@@ -22,9 +22,10 @@ def test_resolve_benchmark_and_model_targets():
     assert resolve_download_target("esm2") == ("model", "esm2")
     assert resolve_download_target("venusrem2") == ("model", "venusrem2")
     assert resolve_download_target("proteinmpnn-020") == ("model", "protein_mpnn")
-    assert resolve_download_target("example") == ("example", "trp_cage")
-    assert resolve_download_target("demo") == ("example", "trp_cage")
-    assert resolve_download_target("trp_cage") == ("example", "trp_cage")
+    assay = "SDA_BACSU_Tsuboyama_2023_1PV0"
+    assert resolve_download_target("example") == ("example", assay)
+    assert resolve_download_target("demo") == ("example", assay)
+    assert resolve_download_target("SDA_BACSU_Tsuboyama_2023_1PV0") == ("example", assay)
 
 
 def test_resolve_model_key_keeps_ensemble():

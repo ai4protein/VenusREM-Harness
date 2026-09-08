@@ -110,11 +110,11 @@ data/my_assay/
 
 MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
-**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`. Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` / `rem2 download example` fetch the unzipped trp-cage (`example/trp_cage/`, DMS + PDB + MSA, not a zip) into `~/.cache/rem2/examples/trp_cage`.
+**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`. Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` / `rem2 download example` fetch one official ProteinGym assay (`SDA_BACSU_Tsuboyama_2023_1PV0`, 44 aa, real DMS + PDB + MSA) into `~/.cache/rem2/examples/SDA_BACSU_Tsuboyama_2023_1PV0`.
 
 ```bash
 rem2 download                 # ProteinGym 217 → data/proteingym_v1
-rem2 download example         # unzipped trp-cage (DMS / PDB / MSA) for rem2 demo
+rem2 download example         # ProteinGym SDA_BACSU_Tsuboyama_2023_1PV0 for rem2 demo
 rem2 download ProteinGym      # same
 rem2 download VenusMutHub     # or muthub → data/VenusMutHub
 rem2 download VenusViroHub    # or virohub → data/venusvirohub

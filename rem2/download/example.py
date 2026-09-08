@@ -1,7 +1,7 @@
-"""Unzipped single-protein example on the VenusREM2 Hugging Face dataset.
+"""Unzipped single-assay example on the VenusREM2 Hugging Face dataset.
 
 ``rem2 demo`` fetches these loose files (DMS / PDB / MSA / FASTA) into
-``~/.cache/rem2/examples/trp_cage`` with one progress bar per file.
+``~/.cache/rem2/examples/<assay>`` with one progress bar per file.
 """
 
 from __future__ import annotations
@@ -12,15 +12,28 @@ from typing import Optional
 
 from rem2.data.mirrors import VENUSREM2_REPOS, download_from_venusrem2
 from rem2.download.progress import format_bytes, print_plan
+from rem2.examples import DEMO_ASSAY, bundled_demo_dir
 
-EXAMPLE_NAME = "trp_cage"
+EXAMPLE_NAME = DEMO_ASSAY
 EXAMPLE_PREFIX = f"example/{EXAMPLE_NAME}"
 EXAMPLE_FILES = (
     f"{EXAMPLE_PREFIX}/aa_seq/{EXAMPLE_NAME}.fasta",
     f"{EXAMPLE_PREFIX}/substitutions/{EXAMPLE_NAME}.csv",
     f"{EXAMPLE_PREFIX}/pdbs/{EXAMPLE_NAME}.pdb",
     f"{EXAMPLE_PREFIX}/aa_seq_aln_a2m/{EXAMPLE_NAME}.a2m",
-    f"{EXAMPLE_PREFIX}/struc_seq/{EXAMPLE_NAME}.fasta",
+)
+EXAMPLE_ALIASES = frozenset(
+    {
+        "example",
+        "examples",
+        "demo",
+        "trpcage",
+        "sda",
+        "sdabacsu",
+        "proteingymexample",
+        "sda_bacsu_tsuboyama_2023_1pv0",
+        "sdabacsutsuboyama20231pv0",
+    }
 )
 
 
@@ -38,9 +51,7 @@ def default_example_dir(explicit: Optional[str] = None) -> Path:
 
 
 def bundled_example_dir() -> Optional[Path]:
-    from rem2.examples import bundled_trp_cage_dir
-
-    path = bundled_trp_cage_dir()
+    path = bundled_demo_dir()
     if _example_complete(path):
         return path
     repo = Path(__file__).resolve().parents[2] / "test" / "fixtures" / EXAMPLE_NAME
@@ -58,7 +69,11 @@ def _rel_from_remote(remote: str) -> str:
 
 def _example_complete(dest: Path) -> bool:
     dest = Path(dest)
-    return all((dest / _rel_from_remote(name)).is_file() and (dest / _rel_from_remote(name)).stat().st_size > 0 for name in EXAMPLE_FILES)
+    return all(
+        (dest / _rel_from_remote(name)).is_file()
+        and (dest / _rel_from_remote(name)).stat().st_size > 0
+        for name in EXAMPLE_FILES
+    )
 
 
 def example_plan_rows(dest: Path) -> list[tuple[str, str, str]]:
@@ -80,7 +95,7 @@ def ensure_demo_dataset(
     dry_run: bool = False,
     log=print,
 ) -> Path:
-    """Download the unzipped trp-cage example, or reuse cache / bundled copy."""
+    """Download the ProteinGym demo assay, or reuse cache / bundled copy."""
     out = default_example_dir(dest)
     print_plan(
         f"Demo example {EXAMPLE_NAME} → {out}",
@@ -97,7 +112,11 @@ def ensure_demo_dataset(
     missing = [
         remote
         for remote in EXAMPLE_FILES
-        if force or not ((out / _rel_from_remote(remote)).is_file() and (out / _rel_from_remote(remote)).stat().st_size > 0)
+        if force
+        or not (
+            (out / _rel_from_remote(remote)).is_file()
+            and (out / _rel_from_remote(remote)).stat().st_size > 0
+        )
     ]
     failed: list[str] = []
     for i, remote in enumerate(missing, 1):
@@ -120,7 +139,10 @@ def ensure_demo_dataset(
 
     bundled = bundled_example_dir()
     if bundled is not None and not force:
-        log(f"Hugging Face example unavailable ({', '.join(failed) or 'download failed'}); using bundled {bundled}")
+        log(
+            f"Hugging Face example unavailable ({', '.join(failed) or 'download failed'}); "
+            f"using bundled {bundled}"
+        )
         return bundled
     raise SystemExit(
         "Could not download the rem2 demo example from "

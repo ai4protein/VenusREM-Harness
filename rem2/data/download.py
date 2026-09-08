@@ -93,7 +93,7 @@ def normalize_dataset(name: str) -> str:
 def _known_targets_text() -> str:
     return (
         "benchmarks: ProteinGym | VenusMutHub | VenusViroHub | benchmark-all\n"
-        "example:    rem2 download example  (unzipped trp-cage for rem2 demo)\n"
+        "example:    rem2 download example  (ProteinGym SDA_BACSU_Tsuboyama_2023_1PV0)\n"
         "models:     esm2 | venusrem2 | saprot | … | model-all\n"
         "            rem2 download --help"
     )
@@ -106,8 +106,10 @@ def resolve_download_target(name: str) -> tuple[str, str]:
         return "model", "all"
     if key == "model":
         return "model", "list"
-    if key in {"example", "examples", "demo", "trpcage"}:
-        return "example", "trp_cage"
+    from rem2.download.example import EXAMPLE_ALIASES, EXAMPLE_NAME
+
+    if key in EXAMPLE_ALIASES:
+        return "example", EXAMPLE_NAME
     if key in ALIASES:
         return "benchmark", ALIASES[key]
     from rem2.download.models import resolve_model_key
