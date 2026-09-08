@@ -74,6 +74,7 @@ carp = [
 # EvolutionaryScale ESM-3 / ESM-C package (separate from facebookresearch/esm).
 esm3 = [
   "esm>=3.0",
+  "httpx>=0.27",
 ]
 # MSA / alignment utilities.
 msa = [

@@ -30,6 +30,7 @@ def test_help_shows_short_usage_and_examples():
     assert "rem2 --list-models" in help_text
     assert "rem2 demo" in help_text
     assert "rem2 doctor" in help_text
+    assert "rem2 download" in help_text
     assert "common:" in help_text
     assert "dataset (--base_dir):" in help_text
     assert "single protein (--fasta / --pdb):" in help_text

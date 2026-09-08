@@ -6,6 +6,7 @@ examples:
   rem2
   rem2 demo
   rem2 doctor
+  rem2 download
   rem2 --list-models
   rem2 --model esm2 --base_dir data/proteingym_v1
   rem2 --model esm2 --scoring_strategy mask --base_dir data/proteingym_v1
@@ -48,6 +49,7 @@ def create_parser() -> ArgumentParser:
             "%(prog)s [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE) [options]\n"
             "       %(prog)s demo\n"
             "       %(prog)s doctor\n"
+            "       %(prog)s download\n"
             "       %(prog)s --list-models"
         ),
         description=(

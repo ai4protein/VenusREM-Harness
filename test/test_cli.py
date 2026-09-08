@@ -2,9 +2,27 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
+
 import pytest
 
 from rem2.cli import main
+
+
+def test_help_does_not_import_torch():
+    script = (
+        "import sys\n"
+        "from rem2.cli import main\n"
+        "try:\n"
+        "    main(['--help'])\n"
+        "except SystemExit:\n"
+        "    pass\n"
+        "assert 'torch' not in sys.modules\n"
+        "assert 'transformers' not in sys.modules\n"
+        "assert 'rem2.cli_run' not in sys.modules\n"
+    )
+    subprocess.check_call([sys.executable, "-c", script])
 
 
 def test_bare_rem2_prints_getting_started(capsys):
@@ -12,6 +30,7 @@ def test_bare_rem2_prints_getting_started(capsys):
     out = capsys.readouterr().out
     assert "rem2 doctor" in out
     assert "rem2 demo" in out
+    assert "rem2 download" in out
     assert "from rem2 import score" in out
     assert "--model venusrem2" in out
     assert "--model saprot --pdb prot.pdb" in out
@@ -53,6 +72,7 @@ def test_doctor_cli(capsys):
     assert "rem2 " in out
     assert "torch" in out
     assert "demo" in out.lower()
+    assert "download" in out.lower()
 
 
 def test_cli_refuses_masked_marginals_on_causal_lm():

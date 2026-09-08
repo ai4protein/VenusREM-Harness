@@ -13,6 +13,7 @@ rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
   rem2 demo                score the bundled trp-cage with ESM-2 8M
+  rem2 download            ProteinGym 217 assays → data/proteingym_v1
   rem2 --model esm2 --fasta prot.fasta
   rem2 --model saprot --pdb prot.pdb
   rem2 --model prosst-2048 --pdb prot.pdb
@@ -104,6 +105,32 @@ def model_size_hint(model_key: str) -> Optional[str]:
     return None
 
 
+def print_model_table() -> None:
+    from rem2.models import list_models
+    from rem2.models.scoring_strategy import forward_modes_label
+
+    specs = list_models()
+    name_w = max(len(s.name) for s in specs)
+    print("rem2 backbones. FWD = allowed --scoring_strategy (wt / mask / tf).")
+    print("venusrem2 = official ProSST ensemble (VenusREM2), wt only.")
+    print("Aliases work as --model: saprot, esmif, protssn-ensemble,")
+    print("  prosst-{k}, esm2-{size}m, proteinmpnn-{xx} (e.g. proteinmpnn-020).")
+    print("CSV *_mask / *_wt is --scoring_strategy, not a second --model.")
+    print()
+    print(f"{'MODEL':<{name_w}}  PDB  FWD       AUTO  DEFAULT_ID / NOTES")
+    print("-" * (name_w + 70))
+    for spec in specs:
+        pdb = "yes" if spec.needs_pdb else "no"
+        fwd = forward_modes_label(spec)
+        auto = "yes" if spec.auto_download else "no"
+        extra = spec.default_model_id or ""
+        if spec.notes:
+            extra = f"{extra}  ({spec.notes})" if extra else spec.notes
+        if spec.extras:
+            extra = f"{extra}  [extras:{spec.extras}]"
+        print(f"{spec.name:<{name_w}}  {pdb:<3}  {fwd:<9}  {auto:<4}  {extra}")
+
+
 def run_doctor(argv: Optional[list[str]] = None) -> int:
     from rem2 import __version__
     from rem2.models.weights import default_cache_dir
@@ -145,7 +172,8 @@ def run_doctor(argv: Optional[list[str]] = None) -> int:
     print(f"demo dataset  {demo_dataset_dir()}")
     print()
     print("Next: rem2 demo")
-    print("      rem2 --model esm2 --fasta prot.fasta")
+    print("      rem2 download")
+    print("      rem2 --model esm2 --base_dir data/proteingym_v1")
     if problems:
         print("problems: " + ", ".join(problems))
         if strict:

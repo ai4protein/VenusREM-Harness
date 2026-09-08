@@ -14,6 +14,7 @@ Python import: `rem2`. Default backbone: ESM-2 650M.
 ```bash
 rem2 doctor
 rem2 demo
+rem2 download
 rem2 --fasta prot.fasta
 rem2 --model saprot --pdb prot.pdb
 rem2 --model venusrem2 --base_dir data/proteingym_v1
@@ -107,7 +108,14 @@ data/my_assay/
 
 MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
-ProteinGym alignments: [a2m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a2m.tar.gz), [a3m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a3m.tar.gz).
+**ProteinGym (217 assays).** One command writes `data/proteingym_v1` in the v1 layout (`aa_seq/`, `substitutions/`, `pdbs/`, `aa_seq_aln_a2m/`):
+
+```bash
+rem2 download
+rem2 --model esm2 --base_dir data/proteingym_v1
+```
+
+MSAs come from Hugging Face [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) (`aa_seq_aln_a2m.tar.gz`; `--msa a3m` / `--msa both` for ColabFold). v1 also documented `aa_seq.tar.gz`, `pdbs.tar.gz`, `struc_seq.tar.gz`, and `substitutions.tar.gz` on that dataset; those archives are not public, so the script falls back to [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym) substitutions and AF2 structures, and writes FASTA from the reference table. ProSST tokens are built from `pdbs/` when `struc_seq/` is missing. Already-complete folders are skipped unless `--force`.
 
 **Structures.** RSA is computed for any PDB. pLDDT decay uses the B-factor column and is applied only to predicted models (AlphaFold / ColabFold / ESMFold). Crystal, NMR, and cryo-EM structures skip pLDDT (B-factor is a temperature factor) and print a warning.
 

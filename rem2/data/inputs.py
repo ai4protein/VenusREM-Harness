@@ -45,7 +45,8 @@ Dataset (--base_dir):
   aa_seq_aln_a2m*/<protein>.a2m       optional MSA (missing → α=0)
   struc_seq*/                         optional; built from pdbs/ if missing
 
-  rem2 --model {model_key} --base_dir data/my_assay
+  rem2 download
+  rem2 --model {model_key} --base_dir data/proteingym_v1
 """
 
 
