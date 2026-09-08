@@ -136,7 +136,8 @@ venusrem-score = "rem2.cli:main"
 [project.entry-points."venusrem2.models"]
 
 [tool.setuptools]
-include-package-data = true
+# Do not auto-include leftover on-disk weights (ProSST static/*.joblib, AE.pt).
+include-package-data = false
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -156,6 +157,7 @@ rem2 = [
 rem2 = [
   "**/__pycache__/*",
   "**/*.py[cod]",
-  "baseline/prosst/static/*",
+  "baseline/prosst/static/**",
+  "**/*.joblib",
   "legacy/**",
 ]

@@ -184,11 +184,8 @@ venusrem2/baseline/prosst/static/
 
 # ---------------------------------------------------------------------------
 # Project: data/
-# All local datasets stay untracked. Small metadata CSVs may be allowlisted.
-# Large tarballs / UniProt dumps belong on HF / external storage — not git.
+# Local datasets stay untracked. Only data/.keep is committed.
+# Benchmarks come from `rem2 download` (Hugging Face), not git.
 # ---------------------------------------------------------------------------
 data/*
-!data/proteingym_v1/
-data/proteingym_v1/*
-!data/proteingym_v1/DMS_substitutions.csv
-!data/proteingym_v1/protein_info.csv
+!data/.keep

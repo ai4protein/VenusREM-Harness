@@ -1,10 +1,12 @@
 include LICENSE
 include README.md
 include pyproject.toml
+include data/.keep
 recursive-include rem2 *
 global-exclude __pycache__
 global-exclude *.py[cod]
 global-exclude *.joblib
+global-exclude rem2/baseline/prosst/static/*
 prune rem2/baseline/prosst/static
 prune rem2/legacy
 prune test
