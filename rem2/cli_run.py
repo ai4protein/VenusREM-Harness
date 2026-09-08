@@ -318,7 +318,7 @@ def run_score(argv=None):
             raise SystemExit(code)
         return
     elif argv and argv[0] in {"download", "download-proteingym"}:
-        from rem2.data.proteingym import run_download
+        from rem2.data.download import run_download
 
         code = run_download(argv[1:])
         if code:

@@ -389,14 +389,6 @@ def build_download_parser() -> argparse.ArgumentParser:
 
 
 def run_download(argv: Optional[Iterable[str]] = None) -> int:
-    args = build_download_parser().parse_args(list(argv or []))
-    dataset = str(args.dataset).lower().replace("-", "_")
-    if dataset not in {"proteingym", "proteingym_v1"}:
-        raise SystemExit(f"Unknown dataset {args.dataset!r}. Use: rem2 download proteingym")
-    download_proteingym(
-        Path(args.dest),
-        msa=args.msa,
-        force=args.force,
-        dry_run=args.dry_run,
-    )
-    return 0
+    from rem2.data.download import run_download as run_hub_download
+
+    return run_hub_download(argv)

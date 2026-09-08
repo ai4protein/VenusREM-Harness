@@ -13,7 +13,10 @@ rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
   rem2 demo                score the bundled trp-cage with ESM-2 8M
-  rem2 download            ProteinGym 217 assays → data/proteingym_v1
+  rem2 download                 ProteinGym 217 → data/proteingym_v1
+  rem2 download ProteinGym      same
+  rem2 download VenusMutHub     or muthub → data/VenusMutHub
+  rem2 download VenusViroHub    or virohub → data/venusvirohub
   rem2 --model esm2 --fasta prot.fasta
   rem2 --model saprot --pdb prot.pdb
   rem2 --model prosst-2048 --pdb prot.pdb

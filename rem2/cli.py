@@ -42,7 +42,7 @@ def main(argv: Optional[Iterable[str]] = None):
             raise SystemExit(code)
         return
     if head in {"download", "download-proteingym"}:
-        from rem2.data.proteingym import run_download
+        from rem2.data.download import run_download
 
         code = run_download(argv[1:])
         if code:

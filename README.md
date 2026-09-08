@@ -110,14 +110,20 @@ data/my_assay/
 
 MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
 
-**ProteinGym (217 assays).** One command writes `data/proteingym_v1` in the v1 layout (`aa_seq/`, `substitutions/`, `pdbs/`, `aa_seq_aln_a2m/`):
+**Benchmarks.** `rem2 download` writes a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos need `HF_TOKEN`.
 
 ```bash
-rem2 download
+rem2 download                 # ProteinGym 217 → data/proteingym_v1
+rem2 download ProteinGym      # same
+rem2 download VenusMutHub     # or muthub → data/VenusMutHub
+rem2 download VenusViroHub    # or virohub → data/venusvirohub
+rem2 download all
 rem2 --model esm2 --base_dir data/proteingym_v1
 ```
 
-MSAs come from Hugging Face [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) (`aa_seq_aln_a2m.tar.gz`; `--msa a3m` / `--msa both` for ColabFold). v1 also documented `aa_seq.tar.gz`, `pdbs.tar.gz`, `struc_seq.tar.gz`, and `substitutions.tar.gz` on that dataset; those archives are not public, so the script falls back to [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym) substitutions and AF2 structures, and writes FASTA from the reference table. ProSST tokens are built from `pdbs/` when `struc_seq/` is missing. Already-complete folders are skipped unless `--force`.
+Names are case-insensitive (`ProteinGym`, `venusmuthub`, `MutHub`, …).
+
+ProteinGym still falls back to [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) MSAs and [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym) substitutions / AF2 PDBs if the VenusREM2 archives are missing. `--msa a3m` / `--msa both` fetches ColabFold a3m. Already-complete folders are skipped unless `--force`.
 
 **Structures.** RSA is computed for any PDB. pLDDT decay uses the B-factor column and is applied only to predicted models (AlphaFold / ColabFold / ESMFold). Crystal, NMR, and cryo-EM structures skip pLDDT (B-factor is a temperature factor) and print a warning.
 
