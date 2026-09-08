@@ -150,7 +150,6 @@ rem2 = [
   "baseline/progen2/tokenizer.json",
   "baseline/progen3/tokenizer.json",
   "baseline/s2f/config/**/*",
-  "examples/**/*",
 ]
 
 [tool.setuptools.exclude-package-data]

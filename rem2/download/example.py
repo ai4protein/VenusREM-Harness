@@ -12,9 +12,9 @@ from typing import Optional
 
 from rem2.data.mirrors import VENUSREM2_REPOS, download_from_venusrem2
 from rem2.download.progress import format_bytes, print_plan
-from rem2.examples import DEMO_ASSAY, bundled_demo_dir
 
-EXAMPLE_NAME = DEMO_ASSAY
+# ProteinGym substitution assay (Tsuboyama 2023, PDB 2L6Q, 55 aa).
+EXAMPLE_NAME = "HCP_LAMBD_Tsuboyama_2023_2L6Q"
 EXAMPLE_PREFIX = f"example/{EXAMPLE_NAME}"
 EXAMPLE_FILES = (
     f"{EXAMPLE_PREFIX}/aa_seq/{EXAMPLE_NAME}.fasta",
@@ -27,12 +27,11 @@ EXAMPLE_ALIASES = frozenset(
         "example",
         "examples",
         "demo",
-        "trpcage",
-        "sda",
-        "sdabacsu",
+        "hcp",
+        "hcplambd",
         "proteingymexample",
-        "sda_bacsu_tsuboyama_2023_1pv0",
-        "sdabacsutsuboyama20231pv0",
+        "hcp_lambd_tsuboyama_2023_2l6q",
+        "hcplambdtsuboyama20232l6q",
     }
 )
 
@@ -48,16 +47,6 @@ def default_example_dir(explicit: Optional[str] = None) -> Path:
     else:
         root = Path.home() / ".cache" / "rem2"
     return root / "examples" / EXAMPLE_NAME
-
-
-def bundled_example_dir() -> Optional[Path]:
-    path = bundled_demo_dir()
-    if _example_complete(path):
-        return path
-    repo = Path(__file__).resolve().parents[2] / "test" / "fixtures" / EXAMPLE_NAME
-    if _example_complete(repo):
-        return repo
-    return None
 
 
 def _rel_from_remote(remote: str) -> str:
@@ -95,7 +84,7 @@ def ensure_demo_dataset(
     dry_run: bool = False,
     log=print,
 ) -> Path:
-    """Download the ProteinGym demo assay, or reuse cache / bundled copy."""
+    """Download the ProteinGym demo assay from Hugging Face, or reuse cache."""
     out = default_example_dir(dest)
     print_plan(
         f"Demo example {EXAMPLE_NAME} → {out}",
@@ -136,16 +125,9 @@ def ensure_demo_dataset(
     if _example_complete(out):
         log(f"Demo ready: {out}")
         return out
-
-    bundled = bundled_example_dir()
-    if bundled is not None and not force:
-        log(
-            f"Hugging Face example unavailable ({', '.join(failed) or 'download failed'}); "
-            f"using bundled {bundled}"
-        )
-        return bundled
     raise SystemExit(
         "Could not download the rem2 demo example from "
         f"{' or '.join(VENUSREM2_REPOS)} ({EXAMPLE_PREFIX}/). "
+        f"Missing: {', '.join(failed) or 'download failed'}. "
         "Private repos need HF_TOKEN."
     )

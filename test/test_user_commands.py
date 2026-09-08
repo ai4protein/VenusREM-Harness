@@ -2,26 +2,23 @@ from __future__ import annotations
 
 from rem2.api import build_score_argv
 from rem2.scoring.logits_cache import load_cached_logits
-from rem2.download.example import bundled_example_dir
-from rem2.user_commands import build_demo_argv, demo_dataset_dir
+from rem2.user_commands import build_demo_argv
 
 
-def test_demo_argv_injects_small_model_and_fixture(monkeypatch):
-    bundled = bundled_example_dir()
-    assert bundled is not None
-    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: bundled)
+def test_demo_argv_injects_small_model_and_fixture(tmp_path, monkeypatch):
+    (tmp_path / "aa_seq").mkdir()
+    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: tmp_path)
     argv = build_demo_argv([])
     assert "--model" in argv
     assert "esm2-8m" in argv
     assert "--base_dir" in argv
     base = argv[argv.index("--base_dir") + 1]
-    assert (bundled / "aa_seq").is_dir()
-    assert base == str(bundled)
+    assert base == str(tmp_path)
 
 
-def test_demo_argv_keeps_user_model(monkeypatch):
-    bundled = bundled_example_dir()
-    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: bundled)
+def test_demo_argv_keeps_user_model(tmp_path, monkeypatch):
+    (tmp_path / "aa_seq").mkdir()
+    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: tmp_path)
     argv = build_demo_argv(["--model", "esm2"])
     assert argv.count("--model") == 1
     assert argv[argv.index("--model") + 1] == "esm2"

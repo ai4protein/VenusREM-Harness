@@ -12,7 +12,7 @@ GETTING_STARTED = """\
 rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
-  rem2 demo                ProteinGym SDA_BACSU_Tsuboyama_2023_1PV0 + ESM-2 8M
+  rem2 demo                ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q + ESM-2 8M
   rem2 download                 ProteinGym 217 → data/proteingym_v1
   rem2 download ProteinGym      same
   rem2 download VenusMutHub     or muthub → data/VenusMutHub
@@ -67,16 +67,10 @@ def _has_flag(argv: list[str], *names: str) -> bool:
 
 
 def demo_dataset_dir() -> Path:
-    """Local example dir without downloading (cache, then bundled / fixtures)."""
-    from rem2.download.example import bundled_example_dir, default_example_dir
+    """Cached example dir (``rem2 demo`` / ``rem2 download example`` fill it)."""
+    from rem2.download.example import default_example_dir
 
-    cache = default_example_dir()
-    if (cache / "aa_seq").is_dir():
-        return cache
-    bundled = bundled_example_dir()
-    if bundled is not None:
-        return bundled
-    return cache
+    return default_example_dir()
 
 
 def build_demo_argv(user_argv: Optional[list[str]] = None) -> list[str]:

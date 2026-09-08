@@ -93,7 +93,7 @@ def normalize_dataset(name: str) -> str:
 def _known_targets_text() -> str:
     return (
         "benchmarks: ProteinGym | VenusMutHub | VenusViroHub | benchmark-all\n"
-        "example:    rem2 download example  (ProteinGym SDA_BACSU_Tsuboyama_2023_1PV0)\n"
+        "example:    rem2 download example  (ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q)\n"
         "models:     esm2 | venusrem2 | saprot | … | model-all\n"
         "            rem2 download --help"
     )

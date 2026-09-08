@@ -22,10 +22,12 @@ def test_resolve_benchmark_and_model_targets():
     assert resolve_download_target("esm2") == ("model", "esm2")
     assert resolve_download_target("venusrem2") == ("model", "venusrem2")
     assert resolve_download_target("proteinmpnn-020") == ("model", "protein_mpnn")
-    assay = "SDA_BACSU_Tsuboyama_2023_1PV0"
+    from rem2.download.example import EXAMPLE_NAME
+
+    assay = EXAMPLE_NAME
     assert resolve_download_target("example") == ("example", assay)
     assert resolve_download_target("demo") == ("example", assay)
-    assert resolve_download_target("SDA_BACSU_Tsuboyama_2023_1PV0") == ("example", assay)
+    assert resolve_download_target(assay) == ("example", assay)
 
 
 def test_resolve_model_key_keeps_ensemble():
