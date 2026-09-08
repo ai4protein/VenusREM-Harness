@@ -501,13 +501,16 @@ def run_score(argv=None):
             logger.info(f"Precomputed logits mode: tokenizer only ({tokenizer_path})")
         else:
             try:
-                adapter = adapter_cls.load(
-                    model_id=getattr(args, "model_id", None) or model_name,
-                    device=device,
-                    cache_dir=args.cache_dir,
-                    args=args,
-                    logger=logger,
-                )
+                from rem2.status import working
+
+                with working(f"loading {display_name}"):
+                    adapter = adapter_cls.load(
+                        model_id=getattr(args, "model_id", None) or model_name,
+                        device=device,
+                        cache_dir=args.cache_dir,
+                        args=args,
+                        logger=logger,
+                    )
             except DownloadRefused as exc:
                 raise SystemExit(str(exc)) from exc
             except ImportError as exc:

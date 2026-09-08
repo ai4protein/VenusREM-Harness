@@ -64,6 +64,20 @@ def main(argv: Optional[Iterable[str]] = None):
         print_model_table()
         return
 
-    from rem2.cli_run import run_score
+    from rem2.status import working
+
+    if head == "demo":
+        from rem2.user_commands import build_demo_argv
+
+        sys.stderr.write("rem2 demo ...\n")
+        sys.stderr.flush()
+        argv = build_demo_argv(argv[1:])
+        with working("loading rem2"):
+            from rem2.cli_run import run_score
+
+        return run_score(argv)
+
+    with working("loading rem2"):
+        from rem2.cli_run import run_score
 
     return run_score(argv)
