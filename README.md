@@ -7,14 +7,16 @@ From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readou
 | Name | Description |
 |------|-------------|
 | **rem2** | Calibration recipe. Applies to ESM-2, SaProt, ProSST, ProteinMPNN, … CLI: `rem2`. |
-| **VenusREM2** | rem2 on the six official ProSST checkpoints (`--model venusrem2`). A single ESM-2 or ProSST-2048 run is rem2, not VenusREM2. |
+| **VenusREM2** | rem2 on the six official ProSST checkpoints (`--model venusrem2`). |
 
 Python import: `rem2`. Default backbone: ESM-2 650M.
 
 ```bash
+rem2 --help
 rem2 doctor
 rem2 demo
 rem2 download
+rem2 download benchmark-all   # ProteinGym + VenusMutHub + VenusViroHub
 rem2 --fasta prot.fasta
 rem2 --model saprot --pdb prot.pdb
 rem2 --model venusrem2 --base_dir data/proteingym_v1
@@ -23,36 +25,30 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 ## News
 
 - **2026.09** Package and CLI released as `rem2`.
-- **2026.08** Weight cache standardized at `~/.cache/rem2/weights` (old `~/.cache/venusrem2` still read).
-- **2026.07** Installable package. VenusREM frozen on `v1` / `v1.0.0`.
+- **2026.07** VenusREM frozen on `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
 - **2025.04** Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
 
 ## Installation
 
-Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
+Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `rem2 demo` (ESM-2 8M) can run on CPU.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
 pip install "rem2[recommended] @ git+https://github.com/tyang816/VenusREM2.git"
-# later, from PyPI: pip install "rem2[recommended]"
 rem2 doctor
 rem2 demo
 ```
 
-From a clone (editable): `pip install -e ".[recommended]"`.
+Editable: `pip install -e ".[recommended]"`.
 
 | Extra | Use |
 |-------|-----|
 | (core) | ESM-2 and other HF sequence LMs |
-| `[recommended]` | biotite (RSA / PDB helpers) |
-| `[prosst]` | Official VenusREM2 (ProSST ensemble). Single-protein `--pdb` builds tokens. Tokenizer files (`AE.pt`, `{K}.joblib`) download from [`tyang816/ProSST`](https://huggingface.co/tyang816/ProSST) on first use |
-| `[carp]`, `[esm3]`, `[s3f]` | Other backbones (`[s3f]` requires Python &lt; 3.11) |
+| `[recommended]` | biotite (RSA / PDB) |
+| `[prosst]` | VenusREM2 / ProSST |
+| `[carp]`, `[esm3]`, `[s3f]` | other backbones (`[s3f]`: Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
-
-Portable conda stub: `environment-minimal.yml`. `environment.yml` is a pinned lab snapshot, not a user recipe.
-
-`rem2 doctor --strict` exits 1 if `torch` or `biopython` is missing.
 
 ## Quick start
 
@@ -94,44 +90,33 @@ Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 w
 
 ## Data
 
-**Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is used only for Spearman. SaProt / ProSST / VenusREM2 can take `--pdb` without `--fasta`: the wild-type sequence is read from the structure (chain A, or `--pdb_chain`). ProSST tokens are built from that PDB when `struc_seq/` is missing.
+**Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is only for Spearman. SaProt / ProSST / VenusREM2 can take `--pdb` without `--fasta`.
 
 **Dataset** (`--base_dir`):
 
 ```
 data/my_assay/
-  substitutions/       # required: mutant CSV, same stem as the protein
-  aa_seq/              # optional if pdbs/ is present
-  pdbs/                # enough for saprot / prosst / venusrem2
-  aa_seq_aln_a2m_af2cf/  # paper default MSA (`rem2 download`)
-  aa_seq_aln_a2m/        # older EVC MSA fallback
-  struc_seq/           # optional; built from pdbs/ if missing
+  substitutions/         # mutant CSV
+  aa_seq/                # optional if pdbs/ is present
+  pdbs/
+  aa_seq_aln_a2m_af2cf/  # MSA (optional)
+  struc_seq/             # optional; built from pdbs/ if missing
 ```
 
-`--base_dir` also accepts ProteinGym layout names (`aa_seq_aln_a2m_af2cf/`, `pdbs_af2_assay_resolved_full/`, …) and uses the first match.
-
-MSA is optional (missing → α = 0). A crystal PDB skips pLDDT and prints a warning. `struc_seq/` is optional when a PDB is present.
-
-**Downloads.** `rem2 download` prints a plan (how many items, where they go, size hints) and one progress bar per model or per archive. Benchmarks write a rem2 `--base_dir`. It tries [`AI4Protein/VenusREM2`](https://huggingface.co/datasets/AI4Protein/VenusREM2) first, then [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `export HF_TOKEN=...` or `hf auth login` (token at `~/.cache/huggingface/token`). Model weights go to the Hugging Face hub cache plus `~/.cache/rem2/weights` (or `$REM2_CACHE`). `rem2 demo` uses the ProteinGym assay (`HCP_LAMBD_Tsuboyama_2023_2L6Q`, 55 aa) shipped in the wheel; `rem2 download example` can also fetch it into `~/.cache/rem2/examples/HCP_LAMBD_Tsuboyama_2023_2L6Q`.
+**Downloads.** Data: [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/rem2/weights`.
 
 ```bash
-rem2 download                 # ProteinGym 217 + paper MSA → data/proteingym_v1
-rem2 download example         # ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q for rem2 demo
-rem2 download ProteinGym      # same
-rem2 download VenusMutHub     # or muthub → data/VenusMutHub
-rem2 download VenusViroHub    # or virohub → data/venusvirohub
-rem2 download benchmark-all   # all three hubs
-rem2 download esm2            # prefetch ESM-2 650M
-rem2 download venusrem2       # 6 official ProSST checkpoints + tokenizer
-rem2 download model-all       # every rem2 backbone (tens of GB)
-rem2 --model esm2 --base_dir data/proteingym_v1
+rem2 download                 # ProteinGym → data/proteingym_v1
+rem2 download VenusMutHub
+rem2 download VenusViroHub
+rem2 download benchmark-all
+rem2 download example
+rem2 download esm2
+rem2 download venusrem2
+rem2 download model-all
 ```
 
-Names are case-insensitive (`ProteinGym`, `venusmuthub`, `MutHub`, …).
-
-`rem2 download` (default `--msa a2m`) fetches the paper MSA archive `aa_seq_aln_a2m_af2cf/`. If that archive is missing, it falls back to the older [`AI4Protein/VenusREM`](https://huggingface.co/datasets/AI4Protein/VenusREM) EVC a2m. Substitutions / AF2 PDBs still fall back to [ProteinGym v1.3](https://github.com/OATML-Markslab/ProteinGym). `--msa a3m` / `--msa both` fetches ColabFold a3m. Already-complete folders are skipped unless `--force`.
-
-**Structures.** RSA is computed for any PDB. pLDDT decay uses the B-factor column and is applied only to predicted models (AlphaFold / ColabFold / ESMFold). Crystal, NMR, and cryo-EM structures skip pLDDT (B-factor is a temperature factor) and print a warning.
+**Structures.** RSA from any PDB. pLDDT uses the B-factor on predicted models only (AlphaFold / ColabFold / ESMFold).
 
 **Combinatorial libraries.** Double/triple mutants require an explicit site list:
 
@@ -170,9 +155,9 @@ rem2 --base_dir data/my_assay $CACHE --out_scores_dir result/rem2
 
 ## Models
 
-Keys below are the ProteinGym ablation set (`experiments/rem2_iclr_20260823`). `rem2 --list-models` prints the live table plus extras (`auto`, `protgpt2`, `s2f`). Override the default with `REM2_MODEL` (or `VENUSREM2_MODEL`). First ESM-2 650M download is ~2.5 GB (`~/.cache/rem2/weights`, or `$REM2_CACHE`).
+`rem2 --list-models` lists backbones. ESM-2 650M is ~2.5 GB on first download.
 
-`--scoring_strategy` is `wt` (default), `mask` (ESM-2 / SaProt / ProtSSN / …), or `tf` (ProteinMPNN teacher-force). ProSST / VenusREM2 are wt only. Experiment CSV `*_mask` / `*_wt` is this flag, not a second `--model`.
+`--scoring_strategy`: `wt` (default), `mask`, or `tf` (ProteinMPNN). ProSST / VenusREM2 are wt only.
 
 | `--model` | Backbone | Requirements |
 |-----------|----------|--------------|
@@ -220,13 +205,11 @@ rem2 --no_rsa_decay --no_plddt_decay
 rem2
 ```
 
-Offline: `--no_auto_download`. Full flag list: `rem2 --help`. `python compute_fitness.py` accepts the same arguments.
-
-To register another PLM, implement `forward_log_probs` → `[L, V]` log-probs (`rem2.models`).
+Offline: `--no_auto_download`. All flags: `rem2 --help`.
 
 ## ProteinGym (217 proteins)
 
-Package default: **dynamic α**, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixed-blend ablation, not the main recipe.
+Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixed-blend ablation.
 
 ### VenusREM2 (ProSST ensemble)
 
@@ -270,7 +253,7 @@ Package default: **dynamic α**, β = 1 − α, `calibrated_margin`. `--alpha 0.
 
 ## VenusREM
 
-Published VenusREM is frozen on **`v1.0.0`**. Closest v1-style command on this tree:
+VenusREM is frozen on **`v1.0.0`**. Closest command here:
 
 ```bash
 rem2 --model prosst-2048 --base_dir data/proteingym_v1 \
@@ -328,4 +311,4 @@ Related: [VenusFactory2](https://github.com/ai4protein/VenusFactory2), [web serv
 
 ## License
 
-[CC-BY-NC-ND 4.0](LICENSE).
+Academic, non-profit, and government research: free under the [VenusREM2 Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact [tanyang.august@sjtu.edu](mailto:tanyang.august@sjtu.edu).

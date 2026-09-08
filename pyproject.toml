@@ -7,7 +7,7 @@ name = "rem2"
 version = "0.2.0"
 description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
-license = "CC-BY-NC-ND-4.0"
+license = "LicenseRef-VenusREM2-Academic"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [{ name = "Yang Tan", email = "ty_ang@163.com" }]

@@ -34,6 +34,7 @@ ALIASES = {
     "vvh": "virohub",
     "all": "all",
     "benchmarkall": "all",
+    "benchmarksall": "all",
     "benchmarks": "all",
 }
 

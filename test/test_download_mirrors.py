@@ -151,4 +151,5 @@ def test_dataset_aliases():
     assert normalize_dataset("vvh") == "virohub"
     assert normalize_dataset("ALL") == "all"
     assert normalize_dataset("benchmark-all") == "all"
+    assert normalize_dataset("benchmarks-all") == "all"
     assert normalize_dataset("benchmarks") == "all"
