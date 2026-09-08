@@ -67,6 +67,7 @@ from rem2.scoring import (
     CliLogger,
     build_logits_cache_path,
     format_name_preview,
+    has_experimental_dms,
     print_compare_table_header,
     print_compare_table_row,
     print_score_preview,
@@ -470,6 +471,7 @@ def run_score(argv=None):
 
     for model_idx, model_name in enumerate(args.model_name):
         corrs = []
+        raw_corrs = []
         compare_table_printed = False
         if args.model_out_name:
             display_name = args.model_out_name[model_idx]
@@ -652,7 +654,15 @@ def run_score(argv=None):
                 skip_mutant_scoring=getattr(args, "skip_mutant_scoring", False),
             )
 
-            if args.print_compare_spearman:
+            compare_spearman = (
+                not getattr(args, "no_print_compare_spearman", False)
+                and (
+                    args.print_compare_spearman
+                    or has_experimental_dms(mutant_df)
+                )
+            )
+            raw_corr = float("nan")
+            if compare_spearman:
                 if raw_col not in mutant_df.columns:
                     raw_kwargs = dict(score_kwargs)
                     raw_kwargs.update(
@@ -696,27 +706,34 @@ def run_score(argv=None):
                 mutant_df, "DMS_score", venusrem2_col, logger, protein_name, venusrem2_col
             )
             corrs.append(corr)
-            if args.print_compare_spearman:
+            raw_corrs.append(raw_corr if compare_spearman else float("nan"))
+            if compare_spearman:
                 if not compare_table_printed:
-                    logger.info("Compare Spearman table (Current - Raw as Delta)")
+                    logger.info("Spearman: raw backbone vs rem2  (Δ = rem2 − raw)")
                     print_compare_table_header(
                         logger, include_venus=False,
-                        raw_label=backbone_name, current_label=venusrem2_col,
+                        raw_label="raw", current_label="rem2",
                     )
                     compare_table_printed = True
                 print_compare_table_row(
                     logger=logger, protein_name=protein_name,
                     raw_corr=raw_corr, venusrem2_corr=corr, venus_corr=None,
                 )
+                delta = corr - raw_corr if np.isfinite(corr) and np.isfinite(raw_corr) else float("nan")
+                logger.success(
+                    f"Spearman raw={raw_corr:.4f}  rem2={corr:.4f}  Δ={delta:+.4f}",
+                    protein=protein_name,
+                )
             else:
                 logger.success(f"{model_out_name} Spearman={corr:.4f}", protein=protein_name)
             score_path = f"{args.out_scores_dir}/scores/{protein_name}.csv"
             mutant_df.to_csv(score_path, index=False)
             if idx == 0:
+                preview_cols = [c for c in (raw_col, venusrem2_col) if c in mutant_df.columns]
                 print_score_preview(
                     logger,
                     mutant_df,
-                    venusrem2_col,
+                    preview_cols or venusrem2_col,
                     protein_name,
                     n=5,
                     path=score_path,
@@ -730,9 +747,19 @@ def run_score(argv=None):
         if compare_table_printed:
             logger.info("+" + "-" * 42 + "+" + "-" * 11 + "+" + "-" * 11 + "+" + "-" * 10 + "+")
         mean_corr = pd.Series(corrs, dtype="float64").mean(skipna=True)
-        logger.section(f"{model_out_name} average Spearman: {mean_corr:.4f}")
+        mean_raw = pd.Series(raw_corrs, dtype="float64").mean(skipna=True)
+        if np.isfinite(mean_raw):
+            mean_delta = mean_corr - mean_raw if np.isfinite(mean_corr) else float("nan")
+            logger.section(
+                f"average Spearman  raw={mean_raw:.4f}  rem2={mean_corr:.4f}  Δ={mean_delta:+.4f}"
+            )
+        else:
+            logger.section(f"{model_out_name} average Spearman: {mean_corr:.4f}")
         summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
-        new_rows = pd.DataFrame({"protein": protein_names, model_out_name: corrs})
+        payload = {"protein": protein_names, model_out_name: corrs}
+        if any(np.isfinite(v) for v in raw_corrs):
+            payload[f"{model_out_name}__raw"] = raw_corrs
+        new_rows = pd.DataFrame(payload)
         if os.path.exists(summary_df_path):
             summary_df = pd.read_csv(summary_df_path).set_index("protein")
             incoming = new_rows.set_index("protein")

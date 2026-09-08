@@ -329,7 +329,12 @@ def create_parser() -> ArgumentParser:
     score.add_argument(
         "--print_compare_spearman",
         action="store_true",
-        help="print raw backbone vs rem2 Spearman per protein",
+        help="always print raw vs rem2 Spearman (on by default when DMS_score varies)",
+    )
+    score.add_argument(
+        "--no_print_compare_spearman",
+        action="store_true",
+        help="do not print raw vs rem2 Spearman even if DMS scores are present",
     )
 
     forward = parser.add_argument_group("forward")

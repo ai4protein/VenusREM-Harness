@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
 import torch
 from argparse import Namespace
 
@@ -105,6 +106,16 @@ def clone_args_with_overrides(args, **kwargs):
     return copied
 
 
+def has_experimental_dms(frame) -> bool:
+    """True when DMS_score looks like real assay values, not a placeholder column."""
+    if frame is None or "DMS_score" not in getattr(frame, "columns", []):
+        return False
+    values = pd.to_numeric(frame["DMS_score"], errors="coerce").dropna()
+    if len(values) < 2:
+        return False
+    return float(values.std(ddof=0)) > 0
+
+
 def format_score_cell(value, width=12):
     if value is None or (isinstance(value, float) and value != value):
         text = "NA"
@@ -116,21 +127,27 @@ def format_score_cell(value, width=12):
 
 
 def format_score_preview(frame, score_col, n=5):
-    """Return aligned preview lines: mutant, DMS (if any), predicted score."""
+    """Return aligned preview lines: mutant, DMS (if any), predicted score(s)."""
     if frame is None or len(frame) == 0 or "mutant" not in getattr(frame, "columns", []):
         return []
+    if isinstance(score_col, str) or score_col is None:
+        score_cols = [score_col] if score_col else []
+    else:
+        score_cols = list(score_col)
     cols = ["mutant"]
     if "DMS_score" in frame.columns:
         cols.append("DMS_score")
-    if score_col and score_col in frame.columns and score_col not in cols:
-        cols.append(score_col)
+    for name in score_cols:
+        if name and name in frame.columns and name not in cols:
+            cols.append(name)
     view = frame.loc[:, cols].head(int(n))
     widths = {
         "mutant": max(8, min(24, max(len("mutant"), *(len(str(v)) for v in view["mutant"])))),
         "DMS_score": 12,
     }
-    if score_col in cols:
-        widths[score_col] = max(12, min(28, len(str(score_col))))
+    for name in score_cols:
+        if name in cols:
+            widths[name] = max(12, min(28, len(str(name))))
     header = "  ".join(_fit_text(col, widths[col]) for col in cols)
     lines = [header]
     for _, row in view.iterrows():

@@ -1,6 +1,10 @@
 import pandas as pd
 
-from rem2.scoring.run_utils import format_score_preview, print_score_preview
+from rem2.scoring.run_utils import (
+    format_score_preview,
+    has_experimental_dms,
+    print_score_preview,
+)
 
 
 def test_format_score_preview_includes_dms_and_score():
@@ -34,3 +38,25 @@ def test_print_score_preview_logs_sample(capsys):
     assert "demo_prot" in out
     assert "M1A" in out
     assert "out/scores/demo.csv" in out
+
+
+def test_format_score_preview_accepts_raw_and_rem2_columns():
+    frame = pd.DataFrame(
+        {
+            "mutant": ["A16C"],
+            "DMS_score": [-0.5],
+            "bb__raw_backbone": [0.1],
+            "bb__rem2": [0.3],
+        }
+    )
+    lines = format_score_preview(frame, ["bb__raw_backbone", "bb__rem2"], n=1)
+    assert "bb__raw_backbone" in lines[0]
+    assert "bb__rem2" in lines[0]
+
+
+def test_has_experimental_dms():
+    assert not has_experimental_dms(pd.DataFrame({"mutant": ["A1C"]}))
+    assert not has_experimental_dms(pd.DataFrame({"mutant": ["A1C", "A1D"], "DMS_score": [0, 0]}))
+    assert has_experimental_dms(
+        pd.DataFrame({"mutant": ["A1C", "A1D"], "DMS_score": [-0.5, 1.2]})
+    )
