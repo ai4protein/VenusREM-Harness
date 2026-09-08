@@ -329,7 +329,7 @@ def create_parser() -> ArgumentParser:
     score.add_argument(
         "--print_compare_spearman",
         action="store_true",
-        help="always print raw vs rem2 Spearman (on by default when DMS_score varies)",
+        help="print raw vs rem2 Spearman when experimental DMS_score is present",
     )
     score.add_argument(
         "--no_print_compare_spearman",

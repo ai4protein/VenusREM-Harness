@@ -57,6 +57,7 @@ def test_format_score_preview_accepts_raw_and_rem2_columns():
 def test_has_experimental_dms():
     assert not has_experimental_dms(pd.DataFrame({"mutant": ["A1C"]}))
     assert not has_experimental_dms(pd.DataFrame({"mutant": ["A1C", "A1D"], "DMS_score": [0, 0]}))
+    assert not has_experimental_dms(pd.DataFrame({"mutant": ["A1C", "A1D"]}))
     assert has_experimental_dms(
         pd.DataFrame({"mutant": ["A1C", "A1D"], "DMS_score": [-0.5, 1.2]})
     )

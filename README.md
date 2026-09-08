@@ -2,10 +2,10 @@
 
 From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction
 
-Given a frozen PLM, **rem2** recalibrates substitution scores with homolog frequencies (MSA), amino-acid background bias (CCD), and structure-derived weights (RSA, pLDDT). No fine-tuning. Default mix is **dynamic α** (entropy-adaptive per protein, β = 1 − α); `--alpha 0.8` is the fixed-blend ablation. On ProteinGym substitutions (official 217-assay Average Spearman), rem2 raises ESM-2 650M from 0.418 to 0.468 and SaProt from 0.424 to 0.454; VenusREM2 from 0.524 to 0.556 (0.038 above the best public score).
+**rem2** is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
-| | |
-|---|---|
+| Name | Description |
+|------|-------------|
 | **rem2** | Calibration recipe. Applies to ESM-2, SaProt, ProSST, ProteinMPNN, … CLI: `rem2`. |
 | **VenusREM2** | rem2 on the six official ProSST checkpoints (`--model venusrem2`). A single ESM-2 or ProSST-2048 run is rem2, not VenusREM2. |
 
@@ -22,7 +22,7 @@ rem2 --model venusrem2 --base_dir data/proteingym_v1
 
 ## News
 
-- **2026.09** Package and CLI are `rem2` (PyPI name `rem2`). Defaults: dynamic α, β = 1 − α, CCD on raw logits. Sequence from FASTA or PDB. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble. ProSST tokenizer files (`AE.pt`, `{K}.joblib`) are no longer shipped in the pip wheel; they download from [`tyang816/ProSST`](https://huggingface.co/tyang816/ProSST) on first use.
+- **2026.09** Package and CLI released as `rem2`.
 - **2026.08** Weight cache standardized at `~/.cache/rem2/weights` (old `~/.cache/venusrem2` still read).
 - **2026.07** Installable package. VenusREM frozen on `v1` / `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
@@ -263,7 +263,7 @@ Package default: **dynamic α**, β = 1 − α, `calibrated_margin`. `--alpha 0.
 | Raw backbone | log_odds | — | - | - | 0.410 |
 | + MSA | log_odds | dynamic | - | - | 0.419 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.433 |
-| + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | above_mean | **0.455 |
+| + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.455 |
 | **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.457** |
 
 ## VenusREM

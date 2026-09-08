@@ -654,12 +654,9 @@ def run_score(argv=None):
                 skip_mutant_scoring=getattr(args, "skip_mutant_scoring", False),
             )
 
-            compare_spearman = (
-                not getattr(args, "no_print_compare_spearman", False)
-                and (
-                    args.print_compare_spearman
-                    or has_experimental_dms(mutant_df)
-                )
+            has_dms = has_experimental_dms(mutant_df)
+            compare_spearman = has_dms and not getattr(
+                args, "no_print_compare_spearman", False
             )
             raw_corr = float("nan")
             if compare_spearman:
@@ -702,9 +699,12 @@ def run_score(argv=None):
                     raise SystemExit(f"{protein_name}: {exc}") from exc
                 mutant_df[venusrem2_col] = scores
 
-            corr = finite_spearman(
-                mutant_df, "DMS_score", venusrem2_col, logger, protein_name, venusrem2_col
-            )
+            if has_dms:
+                corr = finite_spearman(
+                    mutant_df, "DMS_score", venusrem2_col, logger, protein_name, venusrem2_col
+                )
+            else:
+                corr = float("nan")
             corrs.append(corr)
             raw_corrs.append(raw_corr if compare_spearman else float("nan"))
             if compare_spearman:
@@ -724,8 +724,13 @@ def run_score(argv=None):
                     f"Spearman raw={raw_corr:.4f}  rem2={corr:.4f}  Δ={delta:+.4f}",
                     protein=protein_name,
                 )
-            else:
+            elif has_dms:
                 logger.success(f"{model_out_name} Spearman={corr:.4f}", protein=protein_name)
+            else:
+                logger.success(
+                    f"Wrote {len(mutant_df)} mutant scores (no experimental DMS; Spearman skipped)",
+                    protein=protein_name,
+                )
             score_path = f"{args.out_scores_dir}/scores/{protein_name}.csv"
             mutant_df.to_csv(score_path, index=False)
             if idx == 0:
@@ -753,22 +758,25 @@ def run_score(argv=None):
             logger.section(
                 f"average Spearman  raw={mean_raw:.4f}  rem2={mean_corr:.4f}  Δ={mean_delta:+.4f}"
             )
-        else:
+        elif np.isfinite(mean_corr):
             logger.section(f"{model_out_name} average Spearman: {mean_corr:.4f}")
-        summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
-        payload = {"protein": protein_names, model_out_name: corrs}
-        if any(np.isfinite(v) for v in raw_corrs):
-            payload[f"{model_out_name}__raw"] = raw_corrs
-        new_rows = pd.DataFrame(payload)
-        if os.path.exists(summary_df_path):
-            summary_df = pd.read_csv(summary_df_path).set_index("protein")
-            incoming = new_rows.set_index("protein")
-            for name, row in incoming.iterrows():
-                summary_df.loc[name, model_out_name] = row[model_out_name]
-            summary_df = summary_df.reset_index()
         else:
-            summary_df = new_rows
-        summary_df.to_csv(summary_df_path, index=False)
+            logger.section("Scores written (no experimental DMS; Spearman skipped)")
+        if any(np.isfinite(v) for v in corrs):
+            summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
+            payload = {"protein": protein_names, model_out_name: corrs}
+            if any(np.isfinite(v) for v in raw_corrs):
+                payload[f"{model_out_name}__raw"] = raw_corrs
+            new_rows = pd.DataFrame(payload)
+            if os.path.exists(summary_df_path):
+                summary_df = pd.read_csv(summary_df_path).set_index("protein")
+                incoming = new_rows.set_index("protein")
+                for name, row in incoming.iterrows():
+                    summary_df.loc[name, model_out_name] = row[model_out_name]
+                summary_df = summary_df.reset_index()
+            else:
+                summary_df = new_rows
+            summary_df.to_csv(summary_df_path, index=False)
 
     if official:
         ens_col = OFFICIAL_SYSTEM_NAME
@@ -785,22 +793,26 @@ def run_score(argv=None):
                 continue
             frame[ens_col] = _zmean_columns(frame, member_cols)
             frame.to_csv(path, index=False)
-            ens_corrs.append(
-                finite_spearman(frame, "DMS_score", ens_col, logger, protein_name, ens_col)
-            )
+            if has_experimental_dms(frame):
+                ens_corrs.append(
+                    finite_spearman(frame, "DMS_score", ens_col, logger, protein_name, ens_col)
+                )
+            else:
+                ens_corrs.append(float("nan"))
         mean_ens = pd.Series(ens_corrs, dtype="float64").mean(skipna=True)
-        logger.section(f"{ens_col} z-mean ensemble Spearman: {mean_ens:.4f}")
-        summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
-        new_rows = pd.DataFrame({"protein": protein_names, ens_col: ens_corrs})
-        if os.path.exists(summary_df_path):
-            summary_df = pd.read_csv(summary_df_path).set_index("protein")
-            incoming = new_rows.set_index("protein")
-            for name, row in incoming.iterrows():
-                summary_df.loc[name, ens_col] = row[ens_col]
-            summary_df = summary_df.reset_index()
-        else:
-            summary_df = new_rows
-        summary_df.to_csv(summary_df_path, index=False)
+        if np.isfinite(mean_ens):
+            logger.section(f"{ens_col} z-mean ensemble Spearman: {mean_ens:.4f}")
+            summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
+            new_rows = pd.DataFrame({"protein": protein_names, ens_col: ens_corrs})
+            if os.path.exists(summary_df_path):
+                summary_df = pd.read_csv(summary_df_path).set_index("protein")
+                incoming = new_rows.set_index("protein")
+                for name, row in incoming.iterrows():
+                    summary_df.loc[name, ens_col] = row[ens_col]
+                summary_df = summary_df.reset_index()
+            else:
+                summary_df = new_rows
+            summary_df.to_csv(summary_df_path, index=False)
 
     _write_run_meta(args, model_key, protein_names)
     logger.info(f"Wrote {args.out_scores_dir}/run_meta.json")
