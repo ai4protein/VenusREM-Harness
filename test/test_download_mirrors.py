@@ -1,9 +1,19 @@
 """VenusREM2 mirror order (no network)."""
 
+import urllib.error
 from pathlib import Path
 
+import pytest
+
 from rem2.data.download import normalize_dataset
-from rem2.data.mirrors import first_venusrem2_repo, download_from_venusrem2
+from rem2.data.mirrors import (
+    call_with_hf_retry,
+    download_from_venusrem2,
+    first_venusrem2_repo,
+    hf_endpoints,
+    is_hf_network_error,
+    rewrite_hf_url,
+)
 
 
 def test_first_repo_prefers_ai4protein():
@@ -45,6 +55,67 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
     assert got == dest
     assert calls == ["tyang816/VenusREM2"]
     assert dest.read_text() == "ok"
+
+
+def test_hf_endpoints_official_then_mirror(monkeypatch):
+    monkeypatch.delenv("HF_ENDPOINT", raising=False)
+    monkeypatch.delenv("HF_MIRROR", raising=False)
+    assert hf_endpoints()[0] == "https://huggingface.co"
+    assert "https://hf-mirror.com" in hf_endpoints()
+
+
+def test_rewrite_hf_url_to_mirror():
+    url = "https://huggingface.co/datasets/x/resolve/main/a.txt"
+    assert (
+        rewrite_hf_url(url, "https://hf-mirror.com")
+        == "https://hf-mirror.com/datasets/x/resolve/main/a.txt"
+    )
+
+
+def test_call_with_hf_retry_switches_mirror(monkeypatch):
+    monkeypatch.delenv("HF_ENDPOINT", raising=False)
+    monkeypatch.delenv("HF_MIRROR", raising=False)
+    calls = []
+
+    def fn(endpoint):
+        calls.append(endpoint)
+        if endpoint == "https://huggingface.co":
+            raise urllib.error.URLError("timed out")
+        return "ok"
+
+    assert call_with_hf_retry(fn) == "ok"
+    assert calls[0] == "https://huggingface.co"
+    assert calls[1] == "https://hf-mirror.com"
+
+
+def test_call_with_hf_retry_stops_after_three(monkeypatch):
+    monkeypatch.delenv("HF_ENDPOINT", raising=False)
+    monkeypatch.delenv("HF_MIRROR", raising=False)
+    calls = []
+
+    def fn(endpoint):
+        calls.append(endpoint)
+        raise TimeoutError("down")
+
+    with pytest.raises(TimeoutError):
+        call_with_hf_retry(fn, attempts=3)
+    assert len(calls) == 3
+
+
+def test_non_network_error_does_not_retry(monkeypatch):
+    monkeypatch.delenv("HF_ENDPOINT", raising=False)
+    n = 0
+
+    def fn(endpoint):
+        nonlocal n
+        n += 1
+        raise FileNotFoundError("missing")
+
+    with pytest.raises(FileNotFoundError):
+        call_with_hf_retry(fn)
+    assert n == 1
+    assert is_hf_network_error(urllib.error.URLError("timed out"))
+    assert not is_hf_network_error(FileNotFoundError("missing"))
 
 
 def test_dataset_aliases():

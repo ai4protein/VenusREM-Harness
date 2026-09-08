@@ -247,7 +247,18 @@ def _hf_download(
         looked_in=looked_in,
         logger=logger,
     )
-    return hf_hub_download(repo_id=repo_id, filename=filename, local_dir=local_dir)
+    from rem2.data.mirrors import call_with_hf_retry
+
+    def _once(endpoint: str) -> str:
+        return hf_hub_download(
+            repo_id=repo_id,
+            filename=filename,
+            local_dir=local_dir,
+            endpoint=endpoint,
+        )
+
+    log = getattr(logger, "info", None) if logger is not None else None
+    return call_with_hf_retry(_once, log=log, what=f"{repo_id}/{filename}")
 
 
 def ensure_foldseek_bin(cache_dir: Optional[str] = None, explicit: Optional[str] = None, logger=None) -> str:

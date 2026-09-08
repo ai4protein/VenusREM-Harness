@@ -364,14 +364,19 @@ def _prefetch_hf_repo(repo_id: str, desc: str, force: bool) -> str:
             bar.update(1)
         return "cached"
     from huggingface_hub import snapshot_download
+    from rem2.data.mirrors import call_with_hf_retry
 
-    snapshot_download(
-        repo_id=repo_id,
-        allow_patterns=list(HF_ALLOW),
-        ignore_patterns=list(HF_IGNORE),
-        force_download=force,
-    )
-    return "ok"
+    def _once(endpoint: str) -> str:
+        snapshot_download(
+            repo_id=repo_id,
+            allow_patterns=list(HF_ALLOW),
+            ignore_patterns=list(HF_IGNORE),
+            force_download=force,
+            endpoint=endpoint,
+        )
+        return "ok"
+
+    return call_with_hf_retry(_once, what=desc)
 
 
 def _prefetch_hf_file(repo: str, filename: str, dest: Path, desc: str, force: bool) -> str:
@@ -381,26 +386,31 @@ def _prefetch_hf_file(repo: str, filename: str, dest: Path, desc: str, force: bo
         return "cached"
     dest.parent.mkdir(parents=True, exist_ok=True)
     from huggingface_hub import hf_hub_download
+    from rem2.data.mirrors import call_with_hf_retry
 
-    disable_hf_bars()
-    try:
-        path = hf_hub_download(
-            repo_id=repo,
-            filename=filename,
-            local_dir=str(dest.parent),
-            force_download=force,
-        )
-    finally:
-        enable_hf_bars()
-    downloaded = Path(path)
-    if downloaded.resolve() != dest.resolve() and downloaded.is_file():
-        import shutil
+    def _once(endpoint: str) -> str:
+        disable_hf_bars()
+        try:
+            path = hf_hub_download(
+                repo_id=repo,
+                filename=filename,
+                local_dir=str(dest.parent),
+                force_download=force,
+                endpoint=endpoint,
+            )
+        finally:
+            enable_hf_bars()
+        downloaded = Path(path)
+        if downloaded.resolve() != dest.resolve() and downloaded.is_file():
+            import shutil
 
-        shutil.copy2(downloaded, dest)
-    size = dest.stat().st_size if dest.is_file() else 0
-    with tqdm_bar(desc, size or 1) as bar:
-        bar.update(size or 1)
-    return "ok"
+            shutil.copy2(downloaded, dest)
+        size = dest.stat().st_size if dest.is_file() else 0
+        with tqdm_bar(desc, size or 1) as bar:
+            bar.update(size or 1)
+        return "ok"
+
+    return call_with_hf_retry(_once, what=desc)
 
 
 def _prefetch_artifact(art: Artifact, cache: str, force: bool, log: Callable) -> str:
@@ -434,12 +444,20 @@ def _prefetch_artifact(art: Artifact, cache: str, force: bool, log: Callable) ->
         existing = resolve_existing_weight(*rel, cache_dir=cache)
         if existing and not force:
             dest = Path(existing)
-        url = f"https://huggingface.co/{art.extra['repo']}/resolve/main/{art.extra['filename']}"
-        try:
+        from rem2.data.mirrors import call_with_hf_retry, rewrite_hf_url
+
+        def _once(endpoint: str) -> str:
+            url = rewrite_hf_url(
+                f"https://huggingface.co/{art.extra['repo']}/resolve/main/{art.extra['filename']}",
+                endpoint,
+            )
             download_url_with_progress(
                 url, dest, desc=art.label, headers=_hf_headers(), force=force
             )
             return "ok"
+
+        try:
+            return call_with_hf_retry(_once, what=art.label)
         except Exception:
             return _prefetch_hf_file(
                 art.extra["repo"], art.extra["filename"], dest, art.label, force
