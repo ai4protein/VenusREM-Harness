@@ -1,428 +1,175 @@
-# Beyond Fine-Tuning: Calibrate Any Protein Language Model for Variant Effect Prediction
+# VenusREM2
 
-## Introduction
+Training-free calibration for protein language models on variant-effect prediction.
 
-**Orbit** is a training-free calibration recipe that improves any protein language model (PLM) for variant effect prediction. It works as a post-hoc scoring pipeline on top of frozen PLM logits, requiring no gradient updates or fine-tuning.
+Given a frozen PLM, **rem2** recalibrates substitution scores with homolog frequencies (MSA), amino-acid background bias (CCD), and structure-derived weights (RSA, pLDDT). No fine-tuning. On ProteinGym substitutions, the full recipe raises ESM-2 mean Spearman from 0.444 to 0.499 and SaProt from 0.473 to 0.511.
 
-The Orbit recipe consists of four additive components:
+| | |
+|---|---|
+| **rem2** | Calibration recipe. Applies to ESM-2, SaProt, ProSST, ProteinMPNN, … CLI: `rem2`. |
+| **VenusREM2** | rem2 on the official ProSST ensemble only (`--model venusrem2`). A single ESM-2 or ProSST-2048 run is rem2, not VenusREM2. |
 
-| Component | Flag | What it does |
-|-----------|------|-------------|
-| **MSA fusion** | `--alpha 0.8` | Blends PLM log-odds with evolutionary counts from MSA alignments |
-| **CCD** | `--scoring_mode calibrated_margin` | Calibrated margin scoring with background correction and wild-type confidence bonus |
-| **RSA decay** | `--use_rsa_decay --rsa_decay_mode above_mean` | Suppresses surface-exposed positions where PLMs over-predict effects |
-| **pLDDT decay** | `--use_plddt_decay --plddt_decay_mode above_mean` | Suppresses disordered regions where structure predictions are unreliable |
-
-Each component is independently toggleable. The full recipe stacks all four.
-
-### Related work
-
-- **VenusREM (v1)** — *From high-throughput evaluation to wet-lab studies: advancing mutation effect prediction with a retrieval-enhanced model* (ISMB/ECCB 2025). Frozen on branch / tag below.
-
-## Repository layout (v1 archive → Orbit)
-
-This codebase is developed **on top of [ai4protein/VenusREM](https://github.com/ai4protein/VenusREM)**. Published VenusREM-v1 is **frozen**; active development is the Orbit package on `main`.
-
-| Ref | Purpose | Layout |
-|-----|---------|--------|
-| **`v1` / `venusrem-v1-maintenance`** (and tag **`v1.0.0`**) | **Archive** of published VenusREM-v1 — do not rewrite history | Monolithic `src/` + `compute_fitness.py` |
-| **`main`** (this tree) | Orbit: pluggable PLMs, pip package, tiered deps | Package `venus_orbit/` + thin `compute_fitness.py` shim |
+Python import: `venusrem2`. Default backbone: ESM-2 650M.
 
 ```bash
-# Published VenusREM-v1 (paper reproduction)
-git checkout v1.0.0
-# or: git checkout venusrem-v1-maintenance
-
-# Current Orbit development (default)
-git checkout main
-pip install -e ".[prosst,structure]"
+rem2 doctor
+rem2 demo
+rem2 --model esm2 --fasta prot.fasta --mutants mutants.csv
+rem2 --model venusrem2 --base_dir data/proteingym_v1
 ```
-
-### What changed from v1 → Orbit (`main`)
-
-| Area | VenusREM-v1 (archived) | Orbit (`main`) |
-|------|------------------------|----------------|
-| Package | Ad-hoc `src/` imports | Installable **`venus-orbit`** (`import venus_orbit`) |
-| CLI | `python compute_fitness.py …` | `venus-orbit …` (same entry still works) |
-| Backbones | ProSST (+ a few scripts) | **Registry of 17+ models** (`--model esm2|prosst|saprot|…`) |
-| Weights | Manual download / fixed paths | Auto-download into `~/.cache/venus_orbit/weights` |
-| Dependencies | One fat environment | **Tiered extras** (`.[prosst]`, `.[s3f]`, …) — core install stays small |
-| Scoring | MSA α fusion (VenusREM) | Orbit modules: MSA + CCD + RSA + pLDDT (all optional flags) |
-| Compatibility | — | `compute_fitness.py` remains a **6-line shim** → `venusrem_orbit.cli` / `venus_orbit.cli` |
-
-### Tracked vs local-only (this checkout)
-
-| In git | Local only (gitignored) |
-|--------|-------------------------|
-| `venus_orbit/`, `venusrem_orbit/`, `test/`, `pyproject.toml` | `data/*` datasets & weight dumps (except two ProteinGym CSVs) |
-| `script/` (baseline / smoke / msa / data_prep / structure) | `result/`, `experiments/`, `log/`, `tools/` |
-| `README.md`, `docs/scoring_formula.md` | other `docs/`, `script/iclr/` |
-| ProSST `venus_orbit/.../static/*` (~165MB, needed for ProSST) | HF / cache downloads under `~/.cache/venus_orbit/` |
-
-### Migration cheat-sheet
-
-```bash
-# v1-style ProSST + MSA α=0.8 (closest to published VenusREM scoring)
-venus-orbit --model prosst \
-    --base_dir data/proteingym_v1 \
-    --struc_seq_dir struc_seq_af2_assay_resolved_full \
-    --structure_vocab_subdir 2048 \
-    --aa_seq_aln_dir aa_seq_aln_a2m \
-    --alpha 0.8 --scoring_mode log_odds \
-    --out_scores_dir result/venusrem_like
-
-# Full Orbit recipe on any backbone
-venus-orbit --model esm2 \
-    --base_dir data/proteingym_v1 \
-    --pdb_dir pdbs_af2_assay_resolved_full \
-    --aa_seq_aln_dir aa_seq_aln_a2m \
-    --alpha 0.8 --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean \
-    --out_scores_dir result/orbit_full
-```
-
-Old scripts that call `python compute_fitness.py …` **keep working** on `main` (shim unchanged). Prefer `venus-orbit --model …` for new work.
-
-If you only need the paper pipeline and not Orbit, stay on **`v1.0.0` / `venusrem-v1-maintenance`** and use the archived README there.
 
 ## News
 
-- [2026.07] Orbit packaging: `venus_orbit` installable package, model registry, tiered deps; VenusREM-v1 frozen on `v1` / `v1.0.0`.
-- [2026.05] Orbit recipe generalization: verified on ESM-2, ESM-1v, and SaProt backbones.
-- [2026.04] VenusREM has been integrated into [VenusFactory2](https://github.com/ai4protein/VenusFactory2). [Web server](https://venusfactory.cn/playground/) | [Technical report](https://arxiv.org/abs/2603.27303).
-- [2025.07] VenusREM-v1 published at [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
-- [2025.04] Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
+- **2026.09** CLI is `rem2`. Defaults: entropy-α, β = 1 − α, CCD on raw logits. Experimental PDBs skip pLDDT. `--model venusrem2` is the official ProSST ensemble.
+- **2026.08** Weight cache standardized at `~/.cache/venusrem2/weights`.
+- **2026.07** Installable `venusrem2` package. VenusREM-v1 frozen on `v1` / `v1.0.0`.
+- **2025.07** VenusREM-v1 in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
+- **2025.04** Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
 
-## Install
+## Installation
 
-Install is **tiered**. Core is enough for Orbit on HF sequence models (ESM-2 / ESM-1b / …).
-Heavy stacks (ProSST graph bits, S3F/TorchDrug, CARP, ESM3) are **optional extras**.
+Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first so pip does not pull a CPU build. ESM-2 650M needs roughly ≥10 GB VRAM; `rem2 demo` uses ESM-2 8M and can run on CPU.
 
 ```bash
-# 1) Install a CUDA-matching PyTorch yourself (do this first)
-#    https://pytorch.org/get-started/locally/
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-
-# 2) Core package (~ torch + transformers + scoring code)
-pip install venus-orbit
-# or from this repo:
-pip install -e .
-
-# 3) Optional extras (only what you need)
-pip install -e ".[prosst]"      # ProSST structure tokens (torch-geometric, biotite)
-pip install -e ".[structure]"   # PDB helpers for ESM-IF / RSA / ProteinMPNN I/O
-pip install -e ".[msa]"         # BioPython MSA utilities
-pip install -e ".[carp]"        # CARP (sequence_models)
-pip install -e ".[esm3]"        # EvolutionaryScale ESM-3 / ESM-C
-pip install -e ".[s3f]"         # full S3F / S2F (TorchDrug + pykeops; large; see note)
-pip install -e ".[baselines]"   # prosst+structure+carp+esm3+msa (no S3F)
-pip install -e ".[all]"         # everything including S3F (Python <3.11 recommended)
+pip install -e ".[recommended]"
+rem2 doctor
+rem2 demo
 ```
 
-**S3F note:** TorchDrug only publishes wheels for **Python &lt; 3.11**. On 3.11/3.12:
+| Extra | Use |
+|-------|-----|
+| `[recommended]` | ESM-2 / FASTA / PDB (biotite) |
+| `[prosst]` | Official VenusREM2 (ProSST ensemble); needs `struc_seq/` |
+| `[carp]`, `[esm3]`, `[s3f]` | Other backbones (`[s3f]` requires Python &lt; 3.11) |
+| `[dev]` | pytest / ruff |
 
-```bash
-bash script/install_s3f_deps.sh
-# or:
-pip install --ignore-requires-python --no-deps \
-  "git+https://github.com/DeepGraphLearning/torchdrug.git"
-pip install 'rdkit==2023.9.6' 'numpy<2' lmdb robust-laplacian biopython
-```
+Portable conda stub: `environment-minimal.yml`. `environment.yml` is a pinned lab snapshot, not a user recipe.
 
-Inference with precomputed surface `.pkl` (**does not need PyKeOps**). Provide surfaces via `--s3f_surface_dir` (default `<base_dir>/s3f_surfaces_af2_assay_resolved_full`). Checkpoint: `data/s3f_weights/s3f.pth` or `S3F_CHECKPOINT`.
-
-On-the-fly surface generation from PDB still needs `pip install -e ".[s3f-surface-gen]"` (pykeops + CUDA toolkit headers).
-
-| Install | Pulls | Typical models |
-|---------|-------|----------------|
-| `venus-orbit` (core) | torch, transformers, numpy, pandas, scipy, huggingface-hub | `esm2`, `esm1b`, `esm1v`, `progen2`, `rita`, `protgpt2`, `tranception`, `protein_mpnn`, `protssn`, `saprot`\* |
-| `.[prosst]` | + torch-geometric, biotite | `prosst` / VenusREM backbone |
-| `.[structure]` | + biotite, biopython | `esm_if` coordinate I/O |
-| `.[s3f]` | + torchdrug, pykeops, … | full `s3f` / `s2f` (not lightweight ESM2 fallback) |
-| `.[carp]` / `.[esm3]` | sequence_models / `esm` | `carp`, `esm3` |
-
-\* Foldseek binary is **auto-downloaded** for SaProt (not a pip dependency). Checkpoints for ProtSSN / ProteinMPNN / CARP are **auto-downloaded** into `~/.cache/venus_orbit/weights` on first use.
-
-**You do not need TorchDrug / pykeops / sequence_models for the default Orbit + ESM-2 / ProSST path.** Those only appear when you opt into the corresponding extras.
-
-CLI:
-
-```bash
-venus-orbit --help
-venus-orbit --list-models
-
-# Legacy script entry (unchanged)
-python compute_fitness.py --help
-```
-
-Python:
-
-```python
-import venus_orbit
-from venus_orbit.models import get_model, list_models
-from venus_orbit.scoring import score_protein
-```
-
-### Environment (optional conda)
-
-```bash
-conda env create -f environment.yml
-conda activate venusrem
-pip install -e ".[prosst,structure]"
-# optional: pip install -e ".[s3f]"
-```
-
-### External tools (not pip-installed)
-
-| Tool | Used for | Notes |
-|------|----------|--------|
-| HMMER + EVcouplings | MSA generation | `pip install hmmer` + EVcouplings from GitHub |
-| plmc | Evolutionary couplings | Build from source; set path in `venus_orbit/single_config_monomer.txt` |
-| Foldseek | SaProt structure tokens | Auto-downloaded from HF (`tyang816/Foldseek_bin`); override with `--foldseek_bin` or `PATH` |
-
-### Hardware
-
-- GPU: >= 10 GB VRAM (e.g., RTX 3080)
-- CPU: >= 8 cores (for MSA search)
+`rem2 doctor --strict` exits 1 if `torch` or `biopython` is missing.
 
 ## Quick start
 
-Data layout:
-
-```
-data/<dataset_name>/
-  aa_seq/              # wild-type FASTA (one per protein)
-  substitutions/       # mutation CSV (columns: mutant, DMS_score)
-  aa_seq_aln_a2m/      # optional MSA (a2m/a3m)
-  pdbs/                # optional PDB (RSA / pLDDT / structure models)
-  struc_seq/           # optional structure tokens (ProSST)
-```
-
 ```bash
-# Default backbone: ProSST (weights download from Hugging Face on first run)
-venus-orbit \
-    --model prosst \
-    --base_dir data/proteingym_v1 \
-    --out_scores_dir result/prosst_full \
-    --alpha 0.8 \
-    --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean
+# single protein
+rem2 --fasta prot.fasta --mutants mutants.csv
+rem2 --fasta prot.fasta --mutants mutants.csv --pdb prot.pdb
 
-# ESM-2
-venus-orbit \
-    --model esm2 \
-    --base_dir data/proteingym_v1 \
-    --out_scores_dir result/esm2_full \
-    --alpha 0.8 \
-    --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean
+# single-site saturation (omit --mutants)
+rem2 --fasta prot.fasta
+
+# dataset
+rem2 --base_dir data/my_assay
+rem2 --model venusrem2 --base_dir data/proteingym_v1
 ```
-
-`python compute_fitness.py` accepts the same flags.
-
-### Single protein (no `base_dir`)
-
-Score one FASTA; auto-generate an n-point saturation library with `--mutant_sites`
-(`1`=single, `2`=double, `3`=triple). Orders ≥2 require `--positions` or `--residue_range`.
-
-```bash
-# Full-length single-site saturation
-venus-orbit --model esm2 --fasta prot.fasta \
-    --mutant_sites 1 \
-    --alpha 0 \
-    --out_scores_dir result/single_scan
-
-# Single + double + triple on selected sites
-venus-orbit --model esm2 --fasta prot.fasta --pdb prot.pdb \
-    --mutant_sites 1,2,3 \
-    --positions 10,11,12,13,14 \
-    --alpha 0 \
-    --out_scores_dir result/npoint_scan
-
-# Use an existing mutants CSV instead of generating
-venus-orbit --model esm2 --fasta prot.fasta --mutants mutants.csv \
-    --out_scores_dir result/custom_mutants
-```
-
-Generated CSVs are written to `<out_scores_dir>/generated_mutants/` and
-`<out_scores_dir>/_inputs/substitutions/`. Libraries larger than `--max_mutants`
-(default 1,000,000) are rejected.
-
-## Supported models
-
-List at runtime: `venus-orbit --list-models`
-
-| `--model` | Default weights | Auto-download | Needs PDB | Notes |
-|-----------|-----------------|---------------|-----------|--------|
-| `prosst` | `AI4Protein/ProSST-2048` | yes (HF) | no* | *uses `struc_seq/`; extras: `prosst` |
-| `auto` | pass `--model_id` | yes (HF) | no | Any `AutoModelForMaskedLM` |
-| `esm2` | `facebook/esm2_t33_650M_UR50D` | yes (HF) | no | |
-| `esm1b` | `facebook/esm1b_t33_650M_UR50S` | yes (HF) | no | |
-| `esm1v` | 5-seed ensemble | yes (HF) | no | `--esm1v_seeds` |
-| `saprot` | `westlake-repl/SaProt_650M_AF2` | yes (HF) | yes | Foldseek auto-downloaded |
-| `protssn` | HF `tyang816/ProtSSN` | yes | yes | cache `protssn/` |
-| `esm_if` | fair-esm ESM-IF1 | yes | yes | isolated from ESM3 package |
-| `protein_mpnn` | GitHub `v_48_020.pt` | yes | yes | cache `protein_mpnn/` |
-| `progen2` | `hugohrban/progen2-large` | yes (HF) | no | |
-| `progen3` | `Profluent-Bio/progen3-1b` | yes (HF) | no | heavy optional deps |
-| `protgpt2` | `nferruz/ProtGPT2` | yes (HF) | no | |
-| `rita` | `lightonai/RITA_xl` | yes (HF) | no | |
-| `esm3` | `esmc_300m` | yes | no | `pip install esm` |
-| `tranception` | `OATML-Markslab/Tranception_Large` | yes (HF) | no | |
-| `carp` | Zenodo CARP | yes | no | needs `sequence_models` |
-| `s2f` | lightweight ESM2 if no ckpt | partial | no | full mode: `--s2f_checkpoint` |
-| `s3f` | `data/s3f_weights/s3f.pth` | yes* | yes | *local or `S3F_CHECKPOINT` / HF `tyang816/S3F_weights` |
-
-ProteinGym reference (raw → full Orbit): ESM-2 0.444 → 0.499; SaProt 0.473 → 0.511.
-
-## CLI reference
-
-Preferred flags:
-
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--model` | `prosst` (inferred) | Backbone key from the table above |
-| `--model_id` | model default | HF id / local path override |
-| `--cache_dir` | `~/.cache/venus_orbit/weights` | Weight cache (`$VENUS_ORBIT_CACHE`) |
-| `--base_dir` | — | Dataset root (`aa_seq/`, `substitutions/`, …) |
-| `--fasta` / `--pdb` | — | Single-protein mode (no `base_dir`) |
-| `--mutant_sites` | — | Auto-generate n-point library: `1` / `1,2` / `1,2,3` |
-| `--positions` / `--residue_range` | — | Residue set for mutagenesis (required if orders ≥2) |
-| `--mutants` | — | Existing mutants CSV (skips generation) |
-| `--max_mutants` | `1000000` | Cap on auto-generated library size |
-| `--out_scores_dir` | — | Output directory |
-| `--alpha` | `0.8` | MSA fusion weight (`0` disables) |
-| `--scoring_mode` | `log_odds` | `log_odds` / `calibrated_margin` / … |
-| `--use_rsa_decay` | off | RSA position decay |
-| `--use_plddt_decay` | off | pLDDT disorder decay |
-
-Legacy flags (`--baseline_type`, `--model_name`, `--progen2_model_name_or_path`, …) still work.
-
-### More examples
-
-```bash
-# ESM-1v ensemble
-venus-orbit --model esm1v --base_dir data/proteingym_v1 --out_scores_dir result/esm1v_full \
-    --alpha 0.8 --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean
-
-# SaProt (Foldseek auto-downloaded if missing)
-venus-orbit --model saprot --base_dir data/proteingym_v1 --out_scores_dir result/saprot_full \
-    --scoring_strategy masked-marginals \
-    --alpha 0.8 --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean
-
-# ProteinMPNN (checkpoint auto-downloaded)
-venus-orbit --model protein_mpnn --base_dir data/proteingym_v1 --out_scores_dir result/mpnn \
-    --alpha 0
-
-# Arbitrary HF MLM
-venus-orbit --model auto --model_id facebook/esm2_t30_150M_UR50D \
-    --base_dir data/proteingym_v1 --out_scores_dir result/esm2_150m --alpha 0
-```
-
-### Orbit ablations (ESM-2)
-
-```bash
-BASE="--model esm2 --base_dir data/proteingym_v1 --pdb_dir pdbs"
-
-venus-orbit $BASE --out_scores_dir result/esm2_raw --alpha 0
-venus-orbit $BASE --out_scores_dir result/esm2_msa --alpha 0.8
-venus-orbit $BASE --out_scores_dir result/esm2_msa_ccd --alpha 0.8 --scoring_mode calibrated_margin
-venus-orbit $BASE --out_scores_dir result/esm2_full --alpha 0.8 --scoring_mode calibrated_margin \
-    --use_rsa_decay --rsa_decay_mode above_mean \
-    --use_plddt_decay --plddt_decay_mode above_mean
-```
-
-### Logits caching
-
-```bash
-BASE="--model esm2 --base_dir data/proteingym_v1"
-CACHE="--logits_cache_dir cache/esm2 --reuse_logits_cache --write_logits_cache --logits_cache_stage raw --logits_cache_tag esm2_v1"
-
-venus-orbit $BASE $CACHE --out_scores_dir result/esm2_raw --alpha 0
-venus-orbit $BASE $CACHE --out_scores_dir result/esm2_msa --alpha 0.8
-```
-
-## Weights & auto-download
-
-Missing weights are downloaded into:
-
-```
-~/.cache/venus_orbit/weights/
-```
-
-Override with `--cache_dir` or `VENUS_ORBIT_CACHE`. HF models use the normal Hugging Face cache as well.
-
-## Pluggable custom models
-
-Any backbone that can produce **`[L, V]` log-probs** can plug into the same Orbit pipeline.
 
 ```python
-from venus_orbit.models import ModelAdapter, ModelSpec, register_model
+from venusrem2 import score
 
-@register_model
-class MyAdapter(ModelAdapter):
-    spec = ModelSpec(
-        name="my_plm",
-        description="My custom PLM",
-        default_model_id="org/my-model",
-        needs_pdb=False,
-        auto_download=True,
-        baseline_type="auto",  # reuse HF MLM dispatch, or implement load fully
-    )
-
-    @classmethod
-    def load(cls, model_id, device, cache_dir, args, logger):
-        # Load weights (auto-download if needed), return cls(state, args, device)
-        ...
-
-    def forward_log_probs(self, sequence, *, pdb_path=None, structure_fasta=None, **kw):
-        # Return Tensor[L, V] log-probs (project to ESM vocab if needed)
-        ...
+df = score("prot.fasta", mutants="mutants.csv", pdb="prot.pdb")
+summary = score(base_dir="data/my_assay")
 ```
 
-Third-party packages can register via entry points:
+Outputs (default `result/`):
 
-```toml
-[project.entry-points."venus_orbit.models"]
-my_plm = "mypkg.adapters:MyAdapter"
+```
+result/scores/<protein>.csv    # mutants + rem2 column
+result/summary_performance.csv # Spearman vs DMS_score, if present
+result/run_meta.json
 ```
 
-Then:
+Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 writes per-K columns plus a z-mean `VenusREM2`. Higher = more preferred by the calibrated model. Use for ranking; this is not a ΔΔG.
+
+## Data
+
+**Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is used only for Spearman.
+
+**Dataset** (`--base_dir`):
+
+```
+data/my_assay/
+  aa_seq/              # wild-type FASTA, one file per protein
+  substitutions/       # mutant CSV, same stem as the FASTA
+  aa_seq_aln_a2m/      # optional MSA (a2m / a3m)
+  pdbs/                # optional structures
+  struc_seq/           # ProSST structure tokens (VenusREM2 / --model prosst)
+```
+
+`--base_dir` also accepts ProteinGym layout names (`aa_seq_aln_a2m_af2cf/`, `pdbs_af2_assay_resolved_full/`, …) and uses the first match.
+
+MSA / PDB / `struc_seq` are optional. Missing inputs drop the corresponding terms and emit a warning; rem2 does not silently claim the full recipe.
+
+ProteinGym alignments: [a2m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a2m.tar.gz), [a3m](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a3m.tar.gz).
+
+**Structures.** RSA is computed for any PDB. pLDDT decay uses the B-factor column and is applied only to predicted models (AlphaFold / ColabFold / ESMFold). Crystal, NMR, and cryo-EM structures skip pLDDT (B-factor is a temperature factor) and print a warning.
+
+**Combinatorial libraries.** Double/triple mutants require an explicit site list:
 
 ```bash
-venus-orbit --model my_plm --base_dir data/foo --out_scores_dir out/
+rem2 --fasta prot.fasta --pdb prot.pdb \
+    --mutant_sites 1,2,3 --positions 10,11,12,13,14
 ```
 
-## Tests
+Libraries larger than `--max_mutants` (default 1e6) are refused.
 
-Integration tests use a real mini-protein fixture (trp-cage sequence + PDB):
+## Method
+
+Default recipe (all terms on when the files exist):
+
+1. **MSA fusion** — mix column frequencies into the logits. α is entropy-adaptive (`--alpha entropy`). No MSA → α = 0. `--alpha 0.8` is the fixed-blend ablation.
+2. **CCD** — subtract amino-acid background bias computed on raw logits; β = 1 − α.
+3. **RSA** — down-weight solvent-exposed positions (stability-like assays). `--task_type surface` reverses the sign (binding / surface phenotypes).
+4. **pLDDT** — down-weight low-confidence predicted structure. Skipped on experimental PDBs.
+
+Scoring mode: `calibrated_margin`. Formula: [`docs/scoring_formula.md`](docs/scoring_formula.md).
+
+Raw PLM baseline (no rem2 extras):
 
 ```bash
-pip install -e ".[prosst,dev]"
-pytest test/ -v
+rem2 --fasta prot.fasta --mutants m.csv --alpha 0 --scoring_mode log_odds \
+    --no_rsa_decay --no_plddt_decay --background_weight 0
 ```
 
-- `test/test_registry.py` — model registry / CLI flags / fixtures
-- `test/test_cli.py` — `venus-orbit --list-models`
-- `test/test_models_forward.py` — every registered `--model` loads and returns `[L, V]` log-probs on the fixture FASTA/PDB; a subset also runs `score_protein` end-to-end
+Reuse one forward pass across heads:
 
-Models missing optional deps (e.g. `torchdrug` for full S3F) are reported as **skipped**, not silent passes.
+```bash
+CACHE="--logits_cache_dir cache/esm2 --reuse_logits_cache --write_logits_cache --logits_cache_tag esm2_v1"
+rem2 --base_dir data/my_assay $CACHE --out_scores_dir result/raw --alpha 0
+rem2 --base_dir data/my_assay $CACHE --out_scores_dir result/rem2
+```
 
-## Data preparation
+## Models
 
-### Downloads (ProteinGym benchmark)
+`rem2 --list-models`. Override the default with `VENUSREM2_MODEL` / `REM2_MODEL`. First ESM-2 650M download is ~2.5 GB (`~/.cache/venusrem2/weights`, or `$VENUSREM2_CACHE`).
 
-- [EVCouplings a2m alignments](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a2m.tar.gz)
-- [ColabFold a3m alignments](https://huggingface.co/datasets/AI4Protein/VenusREM/resolve/main/aa_seq_aln_a3m.tar.gz)
+| `--model` | Backbone | Requirements |
+|-----------|----------|--------------|
+| `esm2` | ESM-2 650M (default) | FASTA |
+| `esm2-8m` | ESM-2 8M (`rem2 demo`) | FASTA |
+| `esm1v` | ESM-1v 5-seed ensemble | FASTA |
+| `venusrem2` | official ProSST ensemble + rem2 | `struc_seq/` + `[prosst]` |
+| `prosst` | single ProSST + rem2 | `struc_seq/` |
+| `saprot` | SaProt | PDB (Foldseek on first use) |
+| `protein_mpnn` / `esm_if` | inverse folding | PDB |
+| `auto` | any Hugging Face masked LM | `--model_id` |
 
-## Results on ProteinGym (217 proteins)
+ProSST does not read a raw PDB; it needs precomputed structure tokens. Inverse-folding and causal LMs cannot use `--scoring_strategy masked-marginals`.
+
+| Flag | Default |
+|------|---------|
+| `--model` | `esm2` |
+| `--alpha` | `entropy` |
+| `--task_type` | `default` |
+| `--out_scores_dir` | `result` |
+| `--no_auto_download` | off (download if missing) |
+
+Offline: `--no_auto_download`. Full flag list: `rem2 --help`. `python compute_fitness.py` accepts the same arguments.
+
+To register another PLM, implement `forward_log_probs` → `[L, V]` log-probs (`venusrem2.models`).
+
+## ProteinGym (217 proteins)
+
+Tables use fixed α = 0.8. Package default is entropy-α.
 
 ### ESM-2 (650M)
 
@@ -456,21 +203,37 @@ Models missing optional deps (e.g. `torchdrug` for full S3F) are reported as **s
 | + MSA + CCD + RSA | calibrated_margin | 0.8 | above_mean | - | 0.4898 |
 | Full recipe | calibrated_margin | 0.8 | above_mean | above_mean | *in progress* |
 
+## VenusREM v1
+
+Published VenusREM is frozen on **`v1.0.0`**. Closest v1-style command on this tree:
+
+```bash
+rem2 --model prosst --base_dir data/proteingym_v1 \
+    --alpha 0.8 --scoring_mode log_odds
+```
+
+## Development
+
+```bash
+pip install -e ".[prosst,dev]"
+pytest test/ -v
+```
+
 ## Citation
 
-### VenusREM-Orbit (in preparation)
+VenusREM2 (in preparation):
 
-```
-@article{tan2026orbit,
+```bibtex
+@article{tan2026venusrem2,
     title={Beyond Fine-Tuning: Calibrate Any Protein Language Model for Variant Effect Prediction},
     author={Tan, Yang and others},
     year={2026},
 }
 ```
 
-### VenusREM-v1 (published)
+VenusREM-v1:
 
-```
+```bibtex
 @article{tan2025venusrem,
     author = {Tan, Yang and Wang, Ruilin and Wu, Banghao and Hong, Liang and Zhou, Bingxin},
     title = {From high-throughput evaluation to wet-lab studies: advancing mutation effect prediction with a retrieval-enhanced model},
@@ -480,8 +243,13 @@ Models missing optional deps (e.g. `torchdrug` for full S3F) are reported as **s
     pages = {i401-i409},
     year = {2025},
     month = {07},
-    issn = {1367-4811},
     doi = {10.1093/bioinformatics/btaf189},
     url = {https://doi.org/10.1093/bioinformatics/btaf189},
 }
 ```
+
+Related: [VenusFactory2](https://github.com/ai4protein/VenusFactory2), [web server](https://venusfactory.cn/playground/), [technical report](https://arxiv.org/abs/2603.27303).
+
+## License
+
+[CC-BY-NC-ND 4.0](LICENSE).

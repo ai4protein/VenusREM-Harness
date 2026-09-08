@@ -1,9 +1,9 @@
 """
-RITA baseline adapter for VenusREM-Orbit.
+RITA baseline adapter for VenusREM2.
 
 RITA is an autoregressive protein language model. This adapter scores single
 protein sequences using forward + reverse log-probability averaging, then
-projects the per-residue log-probs to ESM2 vocabulary for Orbit compatibility.
+projects the per-residue log-probs to ESM2 vocabulary for VenusREM2 compatibility.
 
 Reference: Hesslow et al., "RITA: a Study on Scaling Up Generative Protein
 Sequence Models", arXiv 2022.

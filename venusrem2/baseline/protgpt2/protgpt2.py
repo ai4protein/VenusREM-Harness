@@ -1,10 +1,10 @@
 """
-ProtGPT2 baseline adapter for VenusREM-Orbit.
+ProtGPT2 baseline adapter for VenusREM2.
 
 ProtGPT2 is an autoregressive protein language model based on GPT2. This
 adapter scores single protein sequences using forward + reverse log-probability
 averaging, then projects the per-residue log-probs to ESM2 vocabulary for
-Orbit compatibility.
+VenusREM2 compatibility.
 
 Reference: Ferruz et al., "ProtGPT2 is a deep unsupervised language model
 for protein design", Nature Communications 2022.

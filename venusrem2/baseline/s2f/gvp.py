@@ -7,8 +7,8 @@ from torchdrug.core import Registry as R
 
 from torch_cluster import knn_graph
 
-from venus_orbit.baseline.s2f import gvp_layer as layer
-from venus_orbit.baseline.s2f import surface
+from venusrem2.baseline.s2f import gvp_layer as layer
+from venusrem2.baseline.s2f import surface
 
 
 def rbf(d, d_min=0.0, d_max=20.0, dim=16):

@@ -1,8 +1,9 @@
-"""CLI entrypoint for VenusREM / Orbit scoring."""
+"""CLI entrypoint for rem2 scoring (VenusREM2 = ProSST ensemble only)."""
 
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -11,13 +12,53 @@ from scipy.stats import spearmanr
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from venus_orbit.backbone import (
+from venusrem2.backbone import (
     BaselineState,
     resolve_structure_fasta_path,
 )
-from venus_orbit.config import create_parser, postprocess_args
-from venus_orbit.models import apply_model_defaults, get_model, list_models, resolve_model_name
-from venus_orbit.scoring import (
+from venusrem2.config import create_parser, postprocess_args
+from venusrem2.models import (
+    apply_model_defaults,
+    get_model,
+    list_models,
+    resolve_model_name,
+)
+from venusrem2.models.download_policy import (
+    DownloadRefused,
+    apply_download_policy_from_args,
+    get_download_policy,
+)
+from venusrem2.scoring.mutant_parse import MutantParseError
+from venusrem2.user_commands import (
+    GETTING_STARTED,
+    build_demo_argv,
+    model_size_hint,
+    run_doctor,
+)
+from venusrem2.models.scoring_strategy import (
+    MASKED_MARGINALS,
+    UnsupportedScoringStrategy,
+    require_scoring_strategy,
+    require_tokenizer_mask,
+)
+from venusrem2.naming import (
+    OFFICIAL_SYSTEM_NAME,
+    is_official_venusrem2,
+    run_banner,
+)
+
+
+def _zmean_columns(frame: pd.DataFrame, columns: list[str]) -> np.ndarray:
+    mats = []
+    for column in columns:
+        values = pd.to_numeric(frame[column], errors="coerce").to_numpy(dtype=float)
+        scale = float(np.nanstd(values))
+        if scale > 0:
+            mats.append((values - np.nanmean(values)) / scale)
+        else:
+            mats.append(np.zeros_like(values, dtype=float))
+    return np.nanmean(np.vstack(mats), axis=0)
+from venusrem2.scoring import (
     CliLogger,
     build_logits_cache_path,
     format_name_preview,
@@ -33,14 +74,26 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 DEFAULT_ESM2_TOKENIZER = "facebook/esm2_t33_650M_UR50D"
 
 
+def _numeric_series(series: pd.Series) -> pd.Series:
+    # Strip all whitespace incl. NBSP (U+00A0). pandas StringDtype
+    # ``str.replace(r"\s+")`` does not strip NBSP — use Python re.
+    import re
+
+    cleaned = series.map(
+        lambda x: re.sub(r"\s+", "", str(x)) if pd.notna(x) else x
+    )
+    return pd.to_numeric(cleaned, errors="coerce")
+
+
 def finite_spearman(df, target_col, score_col, logger, protein_name, label):
-    # Legacy path used by VenusMutHub AF2 Orbit baselines (2026-06): call scipy
-    # spearmanr on the raw columns. Do NOT pre-filter with pd.to_numeric(...,
-    # errors="coerce") — that silently drops valid DMS values containing
-    # unicode spaces such as NBSP ("100\xa0"), thin/narrow spaces, etc., while
-    # Python/scipy can still coerce those strings to floats.
+    # Clean then correlate — matches VMH official-metrics hygiene.
     try:
-        corr = spearmanr(df[target_col], df[score_col]).correlation
+        x = _numeric_series(df[target_col])
+        y = _numeric_series(df[score_col])
+        ok = x.notna() & y.notna()
+        if int(ok.sum()) < 2:
+            raise ValueError(f"need >=2 finite pairs, got {int(ok.sum())}")
+        corr = spearmanr(x[ok], y[ok]).correlation
     except Exception as exc:
         logger.warn(
             f"{label}: Spearman failed ({type(exc).__name__}: {exc})",
@@ -59,25 +112,27 @@ def finite_spearman(df, target_col, score_col, logger, protein_name, label):
 def _print_model_table():
     specs = list_models()
     name_w = max(len(s.name) for s in specs)
-    print(f"{'MODEL':<{name_w}}  PDB  AUTO  DEFAULT_ID / NOTES")
-    print("-" * (name_w + 60))
+    print("rem2 backbones. MASK=yes can use --scoring_strategy masked-marginals.")
+    print("venusrem2 = rem2 on the official ProSST ensemble.")
+    print()
+    print(f"{'MODEL':<{name_w}}  PDB  MASK  AUTO  DEFAULT_ID / NOTES")
+    print("-" * (name_w + 66))
     for s in specs:
         pdb = "yes" if s.needs_pdb else "no"
+        mask = "yes" if s.supports_mask else "no"
         auto = "yes" if s.auto_download else "no"
         extra = s.default_model_id or ""
         if s.notes:
             extra = f"{extra}  ({s.notes})" if extra else s.notes
         if s.extras:
             extra = f"{extra}  [extras:{s.extras}]"
-        print(f"{s.name:<{name_w}}  {pdb:<3}  {auto:<4}  {extra}")
+        print(f"{s.name:<{name_w}}  {pdb:<3}  {mask:<4}  {auto:<4}  {extra}")
 
 
 def _prepare_single_protein(args, logger):
     """Materialize --fasta/--pdb/--mutants|--mutant_sites into a mini dataset layout."""
-    from venus_orbit.data.mutagenesis import materialize_single_protein_inputs
+    from venusrem2.data.mutagenesis import materialize_single_protein_inputs
 
-    if not args.out_scores_dir:
-        raise SystemExit("--out_scores_dir is required with --fasta")
     inputs_root = os.path.join(args.out_scores_dir, "_inputs")
     try:
         meta = materialize_single_protein_inputs(
@@ -111,7 +166,55 @@ def _prepare_single_protein(args, logger):
     return meta
 
 
+def _log_available_inputs(args, logger):
+    msa_dir = getattr(args, "aa_seq_aln_dir", None)
+    pdb_dir = getattr(args, "pdb_dir", None)
+    pdb_file = getattr(args, "pdb", None)
+    has_msa = bool(msa_dir and os.path.isdir(msa_dir) and os.listdir(msa_dir))
+    has_pdb = bool(
+        (pdb_file and os.path.exists(pdb_file))
+        or (pdb_dir and os.path.isdir(pdb_dir) and any(n.endswith(".pdb") for n in os.listdir(pdb_dir)))
+    )
+    if str(getattr(args, "alpha", "entropy")).strip().lower() in {"entropy", "auto", "adaptive"} and not has_msa:
+        logger.warn("No MSA files found; entropy-α will use α=0")
+    if (getattr(args, "use_rsa_decay", True) or getattr(args, "use_plddt_decay", True)) and not has_pdb:
+        logger.warn("No PDB files found; RSA / pLDDT decay will be skipped")
+
+
+def _write_run_meta(args, model_key, protein_names):
+    import json
+    from venusrem2 import __version__
+
+    payload = {
+        "rem2_version": __version__,
+        "model": model_key,
+        "model_ids": list(getattr(args, "model_name", None) or []),
+        "alpha": getattr(args, "alpha", None),
+        "scoring_mode": getattr(args, "scoring_mode", None),
+        "scoring_strategy": getattr(args, "scoring_strategy", None),
+        "out_scores_dir": args.out_scores_dir,
+        "n_proteins": len(protein_names),
+        "proteins": list(protein_names),
+    }
+    path = os.path.join(args.out_scores_dir, "run_meta.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+
+
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv:
+        print(GETTING_STARTED, end="")
+        return
+    if argv and argv[0] == "demo":
+        argv = build_demo_argv(argv[1:])
+    elif argv and argv[0] == "doctor":
+        code = run_doctor(argv[1:])
+        if code:
+            raise SystemExit(code)
+        return
+
     raw_args = create_parser().parse_args(argv)
     if getattr(raw_args, "list_models", False):
         _print_model_table()
@@ -121,16 +224,65 @@ def main(argv=None):
     set_deterministic_inference(args.seed)
     logger = CliLogger(level=args.log_level, use_color=should_use_color(args.no_color))
 
+    apply_download_policy_from_args(args)
     model_key = resolve_model_name(args)
-    apply_model_defaults(args, model_key)
+    try:
+        apply_model_defaults(args, model_key, logger=logger)
+    except KeyError as exc:
+        raise SystemExit(str(exc)) from exc
+    except DownloadRefused as exc:
+        raise SystemExit(str(exc)) from exc
+    except SystemExit:
+        raise
     adapter_cls = get_model(model_key)
+    try:
+        require_scoring_strategy(model_key, getattr(args, "scoring_strategy", None))
+    except UnsupportedScoringStrategy as exc:
+        raise SystemExit(str(exc)) from exc
 
-    logger.section("Venus-Orbit scoring run")
+    logger.section(run_banner(model_key, args))
     logger.info(f"Backbone model: {model_key} (baseline_type={args.baseline_type})")
+    hint = model_size_hint(model_key)
+    if hint:
+        logger.info(hint)
+    logger.info(f"Forward strategy: {args.scoring_strategy}")
     logger.info(f"Weight cache: {args.cache_dir}")
+    policy = get_download_policy()
+    if policy == "yes":
+        logger.info("Missing checkpoints: auto-download")
+    elif policy == "no":
+        logger.info("Missing checkpoints: download disabled (cache / explicit path only)")
+    else:
+        logger.info("Missing checkpoints: download if missing (TTY: confirm [Y/n])")
+    if is_official_venusrem2(model_key, args):
+        logger.info(
+            f"Official {OFFICIAL_SYSTEM_NAME}: rem2 on a ProSST ensemble "
+            f"({len(args.model_name)} checkpoints)"
+        )
+    elif (model_key or "").lower() in {"prosst", "venusrem", "venusrem2"}:
+        logger.warn(
+            f"{OFFICIAL_SYSTEM_NAME} is rem2 on a ProSST ensemble only. "
+            "This single-ProSST run is rem2 — pass 2+ --model_name AI4Protein/ProSST-* "
+            f"to label the run {OFFICIAL_SYSTEM_NAME}."
+        )
+    out_names = getattr(args, "model_out_name", None) or []
+    if any(n == OFFICIAL_SYSTEM_NAME for n in out_names) and not is_official_venusrem2(
+        model_key, args
+    ):
+        logger.warn(
+            f"--model_out_name {OFFICIAL_SYSTEM_NAME} on a non-ensemble run. "
+            "Prefer {backbone}__rem2 unless this is a ProSST ensemble."
+        )
+    logger.info(
+        "Requested rem2 recipe: entropy-α, β=1-α, w_c=0, calibrate_on_raw, "
+        "CCD + RSA/pLDDT above_mean"
+    )
     logger.info("Scoring proteins")
-    if not args.out_scores_dir:
-        raise SystemExit("--out_scores_dir is required (or use --list-models)")
+    if args.base_dir:
+        logger.info(
+            f"Data dirs: seq={args.aa_seq_dir}  msa={args.aa_seq_aln_dir}  "
+            f"pdb={args.pdb_dir}  struc={args.struc_seq_dir}"
+        )
     os.makedirs(args.out_scores_dir, exist_ok=True)
     os.makedirs(f"{args.out_scores_dir}/scores", exist_ok=True)
 
@@ -140,7 +292,7 @@ def main(argv=None):
     if not args.aa_seq_dir:
         raise SystemExit("Provide --base_dir / --aa_seq_dir, or --fasta for single-protein mode")
     if not args.mutant_dir:
-        raise SystemExit("Provide --mutant_dir (via --base_dir) or use --fasta with --mutants/--mutant_sites")
+        raise SystemExit("Provide --mutant_dir (via --base_dir) or use --fasta")
 
     protein_names = sorted(read_names(args.aa_seq_dir))
     if args.protein_list:
@@ -148,8 +300,18 @@ def main(argv=None):
         protein_names = [p for p in protein_names if p in allowed]
     if args.max_proteins is not None and args.max_proteins > 0:
         protein_names = protein_names[: args.max_proteins]
+    if not protein_names:
+        raise SystemExit(
+            "No proteins to score. Check --base_dir / --aa_seq_dir / --protein_list "
+            "(need FASTA files in aa_seq/)."
+        )
     logger.info(f"Total proteins: {len(protein_names)}")
+    _log_available_inputs(args, logger)
     logger.debug(f"Protein preview: {format_name_preview(protein_names)}")
+
+    official = is_official_venusrem2(model_key, args)
+    if official:
+        args.structure_vocab_subdir = None
 
     for model_idx, model_name in enumerate(args.model_name):
         corrs = []
@@ -184,17 +346,29 @@ def main(argv=None):
             adapter = None
             logger.info(f"Precomputed logits mode: tokenizer only ({tokenizer_path})")
         else:
-            adapter = adapter_cls.load(
-                model_id=getattr(args, "model_id", None) or model_name,
-                device=device,
-                cache_dir=args.cache_dir,
-                args=args,
-                logger=logger,
-            )
+            try:
+                adapter = adapter_cls.load(
+                    model_id=getattr(args, "model_id", None) or model_name,
+                    device=device,
+                    cache_dir=args.cache_dir,
+                    args=args,
+                    logger=logger,
+                )
+            except DownloadRefused as exc:
+                raise SystemExit(str(exc)) from exc
+            except ImportError as exc:
+                extra = getattr(adapter_cls.spec, "extras", "") or ""
+                hint = f' Install with: pip install "venusrem2[{extra}]"' if extra else ""
+                raise SystemExit(f"Missing dependency for --model {model_key}: {exc}.{hint}") from exc
             state = adapter.state
         model = state.model
         tokenizer = state.tokenizer
         model_max_residue_len = state.model_max_residue_len
+        if getattr(args, "scoring_strategy", None) == MASKED_MARGINALS:
+            try:
+                require_tokenizer_mask(model_key, tokenizer)
+            except UnsupportedScoringStrategy as exc:
+                raise SystemExit(str(exc)) from exc
 
         protein_progress = tqdm(
             protein_names,
@@ -226,11 +400,19 @@ def main(argv=None):
                     elif os.path.exists(f"{args.aa_seq_aln_dir}/{protein_name}.fasta"):
                         aa_seq_aln_file = f"{args.aa_seq_aln_dir}/{protein_name}.fasta"
                 if "struc_seq_aln" in args.logit_mode:
-                    struc_seq_aln_file = f"{args.struc_seq_aln_dir}/{protein_name}.fasta"
+                    cand = f"{args.struc_seq_aln_dir}/{protein_name}.fasta"
+                    if os.path.exists(cand):
+                        struc_seq_aln_file = cand
 
+            if not os.path.exists(residue_fasta):
+                raise SystemExit(f"Missing FASTA: {residue_fasta}")
             if os.path.exists(f"{args.out_scores_dir}/scores/{protein_name}.csv"):
                 mutant_file = f"{args.out_scores_dir}/scores/{protein_name}.csv"
+            if not os.path.exists(mutant_file):
+                raise SystemExit(f"Missing mutants CSV: {mutant_file}")
             mutant_df = pd.read_csv(mutant_file)
+            if "mutant" not in mutant_df.columns:
+                raise SystemExit(f"{mutant_file} needs a 'mutant' column (e.g. A42G)")
 
             if args.model_out_name:
                 model_out_name = args.model_out_name[model_idx]
@@ -239,31 +421,39 @@ def main(argv=None):
 
             backbone_name = model_name.split("/")[-1]
             raw_col = f"{backbone_name}__raw_backbone"
-            orbit_col = model_out_name
+            venusrem2_col = model_out_name
             raw_logits_cache_path = build_logits_cache_path(
                 args=args, protein_name=protein_name,
                 model_name=model_name, variant_label="raw_backbone",
             )
-            orbit_logits_cache_path = build_logits_cache_path(
+            venusrem2_logits_cache_path = build_logits_cache_path(
                 args=args, protein_name=protein_name,
-                model_name=model_name, variant_label="orbit_main",
+                model_name=model_name, variant_label="venusrem2_main",
             )
 
             if adapter is not None:
                 baseline_fwd_fn = adapter.create_forward_fn(
                     protein_name, pdb_file, structure_fasta, idx, logger
                 )
-                native_scorer = adapter.create_native_scorer_fn(protein_name, logger)
+                native_scorer = (
+                    None
+                    if getattr(args, "disable_native_scorer", False)
+                    else adapter.create_native_scorer_fn(protein_name, logger)
+                )
             else:
-                from venus_orbit.backbone.baseline_dispatch import (
+                from venusrem2.backbone.baseline_dispatch import (
                     create_baseline_forward_fn,
                     create_native_scorer_fn,
                 )
                 baseline_fwd_fn = create_baseline_forward_fn(
                     state, args, protein_name, pdb_file, structure_fasta, idx, device, logger
                 )
-                native_scorer = create_native_scorer_fn(
-                    state, args, protein_name, device, logger
+                native_scorer = (
+                    None
+                    if getattr(args, "disable_native_scorer", False)
+                    else create_native_scorer_fn(
+                        state, args, protein_name, device, logger
+                    )
                 )
 
             score_kwargs = dict(
@@ -302,36 +492,52 @@ def main(argv=None):
                 baseline_forward_fn=baseline_fwd_fn,
                 aln_count_cache_dir=args.aln_count_cache_dir,
                 native_scorer_fn=native_scorer,
+                skip_mutant_scoring=getattr(args, "skip_mutant_scoring", False),
             )
 
             if args.print_compare_spearman:
                 if raw_col not in mutant_df.columns:
-                    raw_scores = score_protein(
-                        **score_kwargs,
+                    raw_kwargs = dict(score_kwargs)
+                    raw_kwargs.update(
                         alpha=0.0,
+                        scoring_mode="log_odds",
+                        background_weight=0.0,
+                        wt_confidence_weight=0.0,
+                        use_rsa_decay=False,
+                        use_plddt_decay=False,
+                        calibrate_on_raw=False,
                         aa_seq_aln_file=None,
                         struc_seq_aln_file=None,
                         quiet=True,
                         logits_cache_path=raw_logits_cache_path,
                     )
+                    raw_scores = score_protein(**raw_kwargs)
                     mutant_df[raw_col] = raw_scores
                 raw_corr = finite_spearman(
                     mutant_df, "DMS_score", raw_col, logger, protein_name, raw_col
                 )
 
-            if orbit_col not in mutant_df.columns:
-                scores = score_protein(
-                    **score_kwargs,
-                    alpha=args.alpha,
-                    aa_seq_aln_file=aa_seq_aln_file,
-                    struc_seq_aln_file=struc_seq_aln_file,
-                    quiet=False,
-                    logits_cache_path=orbit_logits_cache_path,
-                )
-                mutant_df[orbit_col] = scores
+            need_forward = venusrem2_col not in mutant_df.columns or (
+                getattr(args, "write_logits_cache", False)
+                and venusrem2_logits_cache_path
+                and not os.path.exists(venusrem2_logits_cache_path)
+            )
+            if need_forward:
+                try:
+                    scores = score_protein(
+                        **score_kwargs,
+                        alpha=args.alpha,
+                        aa_seq_aln_file=aa_seq_aln_file,
+                        struc_seq_aln_file=struc_seq_aln_file,
+                        quiet=False,
+                        logits_cache_path=venusrem2_logits_cache_path,
+                    )
+                except (MutantParseError, FileNotFoundError, ValueError) as exc:
+                    raise SystemExit(f"{protein_name}: {exc}") from exc
+                mutant_df[venusrem2_col] = scores
 
             corr = finite_spearman(
-                mutant_df, "DMS_score", orbit_col, logger, protein_name, orbit_col
+                mutant_df, "DMS_score", venusrem2_col, logger, protein_name, venusrem2_col
             )
             corrs.append(corr)
             if args.print_compare_spearman:
@@ -339,12 +545,12 @@ def main(argv=None):
                     logger.info("Compare Spearman table (Current - Raw as Delta)")
                     print_compare_table_header(
                         logger, include_venus=False,
-                        raw_label=backbone_name, current_label=orbit_col,
+                        raw_label=backbone_name, current_label=venusrem2_col,
                     )
                     compare_table_printed = True
                 print_compare_table_row(
                     logger=logger, protein_name=protein_name,
-                    raw_corr=raw_corr, orbit_corr=corr, venus_corr=None,
+                    raw_corr=raw_corr, venusrem2_corr=corr, venus_corr=None,
                 )
             else:
                 logger.success(f"{model_out_name} Spearman={corr:.4f}", protein=protein_name)
@@ -355,12 +561,51 @@ def main(argv=None):
         mean_corr = pd.Series(corrs, dtype="float64").mean(skipna=True)
         logger.section(f"{model_out_name} average Spearman: {mean_corr:.4f}")
         summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
+        new_rows = pd.DataFrame({"protein": protein_names, model_out_name: corrs})
         if os.path.exists(summary_df_path):
-            summary_df = pd.read_csv(summary_df_path)
-            summary_df[model_out_name] = corrs
+            summary_df = pd.read_csv(summary_df_path).set_index("protein")
+            incoming = new_rows.set_index("protein")
+            for name, row in incoming.iterrows():
+                summary_df.loc[name, model_out_name] = row[model_out_name]
+            summary_df = summary_df.reset_index()
         else:
-            summary_df = pd.DataFrame({"protein": protein_names, model_out_name: corrs})
-        summary_df.to_csv(f"{args.out_scores_dir}/summary_performance.csv", index=False)
+            summary_df = new_rows
+        summary_df.to_csv(summary_df_path, index=False)
+
+    if official:
+        ens_col = OFFICIAL_SYSTEM_NAME
+        ens_corrs = []
+        for protein_name in protein_names:
+            path = f"{args.out_scores_dir}/scores/{protein_name}.csv"
+            if not os.path.exists(path):
+                ens_corrs.append(float("nan"))
+                continue
+            frame = pd.read_csv(path)
+            member_cols = [c for c in frame.columns if c.startswith(f"{OFFICIAL_SYSTEM_NAME}__")]
+            if len(member_cols) < 2:
+                ens_corrs.append(float("nan"))
+                continue
+            frame[ens_col] = _zmean_columns(frame, member_cols)
+            frame.to_csv(path, index=False)
+            ens_corrs.append(
+                finite_spearman(frame, "DMS_score", ens_col, logger, protein_name, ens_col)
+            )
+        mean_ens = pd.Series(ens_corrs, dtype="float64").mean(skipna=True)
+        logger.section(f"{ens_col} z-mean ensemble Spearman: {mean_ens:.4f}")
+        summary_df_path = f"{args.out_scores_dir}/summary_performance.csv"
+        new_rows = pd.DataFrame({"protein": protein_names, ens_col: ens_corrs})
+        if os.path.exists(summary_df_path):
+            summary_df = pd.read_csv(summary_df_path).set_index("protein")
+            incoming = new_rows.set_index("protein")
+            for name, row in incoming.iterrows():
+                summary_df.loc[name, ens_col] = row[ens_col]
+            summary_df = summary_df.reset_index()
+        else:
+            summary_df = new_rows
+        summary_df.to_csv(summary_df_path, index=False)
+
+    _write_run_meta(args, model_key, protein_names)
+    logger.info(f"Wrote {args.out_scores_dir}/run_meta.json")
 
 
 if __name__ == "__main__":

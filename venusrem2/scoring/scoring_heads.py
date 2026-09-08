@@ -2,13 +2,39 @@ import math
 
 import torch
 
+# Standard amino-acid alphabet used for CCD background z-scoring / consistency.
+_AA20 = tuple("ACDEFGHIKLMNPQRSTVWY")
 
-def build_calibration_terms(logits, sequence, vocab, scoring_mode, raw_logits=None, rsa_weights=None, plddt_weights=None):
-    """Build CCD calibration terms (docs / Orbit CCD v1).
 
-    background: logsumexp_i(raw) - log L  (no bg_scale)
-    wt_confidence: sigmoid(raw wt logit)  (no z-score)
-    wt_log_probability: raw wt logit
+def _aa_vocab_ids(vocab):
+    ids = []
+    for aa in _AA20:
+        idx = vocab.get(aa, -1)
+        if idx is not None and idx >= 0:
+            ids.append(idx)
+    return ids
+
+
+def build_calibration_terms(
+    logits,
+    sequence,
+    vocab,
+    scoring_mode,
+    raw_logits=None,
+    rsa_weights=None,
+    plddt_weights=None,
+    disable_adaptive_ccd=False,
+):
+    """Build CCD calibration terms.
+
+    Historical VenusREM2 CCD (matches exp_prosst / exp_protssn score CSVs):
+      background_z[v] = zscore_AA(logsumexp_i(source[:, v]) - log L)
+      wt_confidence[i] = sigmoid(zscore_positions(source[i, wt]))
+      bg_consistency = mean_i pearson(source[i, AA], background[AA])
+      bg_scale = 1.0 if disable_adaptive_ccd else max(0, bg_consistency)
+
+    calibrated_margin then uses:
+      score = Δ - bg_scale * w_b * (background_z[mt] - background_z[wt]) + w_c * wt_confidence
     """
     terms = {}
     if scoring_mode not in {
@@ -16,7 +42,7 @@ def build_calibration_terms(logits, sequence, vocab, scoring_mode, raw_logits=No
         "ccd_exact",
         "temp_scaled_log_odds",
         "entropy_adaptive_margin",
-        "orbit_confidence_gate",
+        "venusrem2_confidence_gate",
         "rsa_modulated_ccd",
     }:
         # Still attach RSA/pLDDT stats when requested for decay-only log_odds paths.
@@ -29,11 +55,12 @@ def build_calibration_terms(logits, sequence, vocab, scoring_mode, raw_logits=No
         "ccd_exact",
         "temp_scaled_log_odds",
         "entropy_adaptive_margin",
-        "orbit_confidence_gate",
+        "venusrem2_confidence_gate",
         "rsa_modulated_ccd",
     }:
         probs = source.exp()
-        terms["background"] = torch.logsumexp(source, dim=0) - math.log(max(source.size(0), 1))
+        background = torch.logsumexp(source, dim=0) - math.log(max(source.size(0), 1))
+        terms["background"] = background
         terms["entropy"] = -(probs * source).sum(dim=-1)
         terms["wt_confidence"] = torch.zeros(source.size(0), device=source.device, dtype=source.dtype)
         terms["wt_log_probability"] = torch.zeros(
@@ -45,8 +72,46 @@ def build_calibration_terms(logits, sequence, vocab, scoring_mode, raw_logits=No
             valid_positions = valid_mask.nonzero(as_tuple=False).squeeze(-1)
             wt_logits = source[valid_positions, wt_vocab_ids[valid_positions]]
             terms["wt_log_probability"][valid_positions] = wt_logits
-            terms["wt_confidence"][valid_positions] = torch.sigmoid(wt_logits)
+            # Position-wise z-score then sigmoid (historical CCD; avoids ProtSSN saturation).
+            wt_std = wt_logits.std()
+            if float(wt_std) > 1e-8:
+                wt_z = (wt_logits - wt_logits.mean()) / wt_std
+            else:
+                wt_z = torch.zeros_like(wt_logits)
+            terms["wt_confidence"][valid_positions] = torch.sigmoid(wt_z)
         terms["calibrated_on_raw"] = raw_logits is not None
+
+        # Z-scored background over the 20 AA columns + optional adaptive bg_scale.
+        aa_ids = _aa_vocab_ids(vocab)
+        background_z = torch.zeros_like(background)
+        bg_consistency = 0.0
+        if len(aa_ids) >= 2:
+            aa_ids_t = torch.tensor(aa_ids, device=source.device, dtype=torch.long)
+            bg_aa = background[aa_ids_t]
+            bg_std = bg_aa.std()
+            if float(bg_std) > 1e-8:
+                bg_aa_z = (bg_aa - bg_aa.mean()) / bg_std
+            else:
+                bg_aa_z = torch.zeros_like(bg_aa)
+            background_z[aa_ids_t] = bg_aa_z
+
+            # bg_consistency: mean pearson(local AA logits, global AA background).
+            local_aa = source[:, aa_ids_t].to(dtype=torch.float64)
+            bg_f = bg_aa.to(dtype=torch.float64)
+            bg_c = bg_f - bg_f.mean()
+            bg_den = torch.sqrt((bg_c * bg_c).sum())
+            if float(bg_den) > 1e-12:
+                loc_c = local_aa - local_aa.mean(dim=1, keepdim=True)
+                loc_den = torch.sqrt((loc_c * loc_c).sum(dim=1)).clamp_min(1e-12)
+                corr = (loc_c * bg_c.unsqueeze(0)).sum(dim=1) / (loc_den * bg_den)
+                corr = torch.nan_to_num(corr, nan=0.0, posinf=0.0, neginf=0.0)
+                bg_consistency = float(corr.mean().item())
+        terms["background_z"] = background_z
+        terms["bg_consistency"] = bg_consistency
+        if disable_adaptive_ccd:
+            terms["bg_scale"] = 1.0
+        else:
+            terms["bg_scale"] = max(0.0, bg_consistency)
 
     if rsa_weights is not None:
         rsa = rsa_weights.squeeze(-1).clamp(0.0, 1.0)
@@ -85,8 +150,9 @@ def score_sub_mutation(
     plddt_mode="off",
     task_type="default",
 ):
-    wt, idx, mt = sub_mutant[0], int(sub_mutant[1:-1]) - 1, sub_mutant[-1]
-    assert sequence[idx] == wt, f"Wild type mismatch: {sequence[idx]} != {wt}, idx {idx}"
+    from venusrem2.scoring.mutant_parse import parse_substitution
+
+    wt, idx, mt = parse_substitution(sub_mutant, sequence, vocab)
     mt_id = vocab[mt]
     wt_id = vocab[wt]
     delta_log_odds = logits[idx, mt_id] - logits[idx, wt_id]
@@ -97,9 +163,9 @@ def score_sub_mutation(
         plddt_gate = calibration_terms["plddt"][idx].clamp(0.0, 1.0)
 
     if scoring_mode == "calibrated_margin":
-        background_penalty = background_weight * (
-            calibration_terms["background"][mt_id] - calibration_terms["background"][wt_id]
-        )
+        bg = calibration_terms.get("background_z", calibration_terms["background"])
+        bg_scale = float(calibration_terms.get("bg_scale", 1.0))
+        background_penalty = bg_scale * background_weight * (bg[mt_id] - bg[wt_id])
         uncertainty_penalty = uncertainty_weight * calibration_terms.get(
             "entropy", torch.zeros((), device=logits.device, dtype=logits.dtype)
         )
@@ -146,7 +212,7 @@ def score_sub_mutation(
             background_penalty = background_penalty_raw
             uncertainty_penalty = uncertainty_penalty_raw
         score = delta_log_odds - background_penalty - uncertainty_penalty + wt_confidence_bonus
-    elif scoring_mode == "orbit_confidence_gate":
+    elif scoring_mode == "venusrem2_confidence_gate":
         wt_confidence = calibration_terms["wt_confidence"][idx]
         gate = torch.sigmoid((wt_confidence - float(gate_center)) * float(gate_sharpness))
         score = gate * (delta_log_odds / safe_temperature)
@@ -170,7 +236,10 @@ def score_sub_mutation(
             decay = float(rsa_val)
         if plddt_mode in ("gate_rsa", "gate_all") and "plddt" in calibration_terms:
             decay = decay * float(calibration_terms["plddt"][idx].clamp(0.0, 1.0))
-        score = score * (1.0 - decay)
+        if task_type == "surface":
+            score = score * (1.0 + decay)
+        else:
+            score = score * (1.0 - decay)
 
     # Preferred pLDDT decay API (VenusMutHub / hparam scripts).
     if use_plddt_decay and "plddt" in calibration_terms:
@@ -208,11 +277,8 @@ def score_mutations_batch(
     use_plddt_decay=False,
     plddt_decay_mode="above_mean",
     task_type="default",
-    native_deltas=None,
-    alpha=0.0,
-    raw_logits=None,
 ):
-    """Batched mutant scoring with CCD v1 (no bg_scale / bg_consistency)."""
+    """Batched mutant scoring with VenusREM2 CCD (z-scored background + optional adaptive bg_scale)."""
     n_mutants = len(mutants)
     if n_mutants == 0:
         return []
@@ -222,9 +288,11 @@ def score_mutations_batch(
     wt_ids = []
     mt_ids = []
 
+    from venusrem2.scoring.mutant_parse import parse_substitution
+
     for i, mutant in enumerate(mutants):
-        for sub in mutant.split(":"):
-            wt, idx, mt = sub[0], int(sub[1:-1]) - 1, sub[-1]
+        for sub in str(mutant).split(":"):
+            wt, idx, mt = parse_substitution(sub, sequence, vocab)
             mut_indices.append(i)
             positions.append(idx)
             wt_ids.append(vocab[wt])
@@ -242,18 +310,10 @@ def score_mutations_batch(
 
     delta_log_odds = logits[positions, mt_ids] - logits[positions, wt_ids]
 
-    if native_deltas is not None and raw_logits is not None:
-        native_t = torch.tensor(native_deltas, device=device, dtype=delta_log_odds.dtype)
-        bb_delta = raw_logits[positions, mt_ids] - raw_logits[positions, wt_ids]
-        sub_counts = torch.zeros(n_mutants, device=device, dtype=torch.long)
-        sub_counts.scatter_add_(0, mut_indices, torch.ones_like(mut_indices))
-        single_sub_mask = (sub_counts == 1)[mut_indices]
-        adjustment = (1 - alpha) * (native_t[mut_indices] - bb_delta)
-        delta_log_odds = delta_log_odds + single_sub_mask.float() * adjustment
-
     if scoring_mode == "calibrated_margin":
-        bg = _ct("background")
-        bg_penalty = background_weight * (bg[mt_ids] - bg[wt_ids])
+        bg = _ct("background_z") if "background_z" in calibration_terms else _ct("background")
+        bg_scale = float(calibration_terms.get("bg_scale", 1.0))
+        bg_penalty = bg_scale * background_weight * (bg[mt_ids] - bg[wt_ids])
         wt_bonus = wt_confidence_weight * _ct("wt_confidence")[positions]
         unc = 0.0
         if uncertainty_weight and "entropy" in calibration_terms:
@@ -303,7 +363,10 @@ def score_mutations_batch(
             decay = strength * rsa_vals
         else:
             decay = rsa_vals
-        sub_scores = sub_scores * (1.0 - decay)
+        if task_type == "surface":
+            sub_scores = sub_scores * (1.0 + decay)
+        else:
+            sub_scores = sub_scores * (1.0 - decay)
 
     if use_plddt_decay and "plddt" in calibration_terms:
         p_vals = _ct("plddt")[positions].clamp(0.0, 1.0)

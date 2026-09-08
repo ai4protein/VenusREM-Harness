@@ -105,10 +105,19 @@ cython_debug/
 .sii/
 .tmp/
 .codex/
+_local/
 
-# Crash dumps
+# Personal auth / chat leftovers (QR logins, Lark dumps)
+feishu_auth*
+*_auth_qr*
+*feishu_auth*
+lark_*auth*
+
+# Crash dumps / editor backups
 core
 core.[0-9]*
+*.bak
+*.bak_*
 
 # Root-level archives
 /*.tar
@@ -136,21 +145,34 @@ lightning_logs/
 # Local research utilities / paper drafts (not part of the installable package)
 tools/
 docs/
+docs/0overleaf/
 !docs/scoring_formula.md
 script/iclr/
 
+# Local hyperparameter sweeps / grids / ablations (keep on disk, do not publish)
+script/exp/
+script/sweep_*.sh
+script/**/*sweep*
+script/**/*hparam*
+script/**/*_grid.sh
+script/**/*ablation*
+
 # Legacy code trees (pre-package layout)
 src/
-venus_orbit/legacy/
+venusrem2/legacy/
+
+# VenusREM-Orbit leftovers (old package name / scripts / local dumps)
+venusrem_orbit/
+*orbit*
 
 # Model tensor caches / checkpoints (allow package-shipped static weights only)
 *.pt
-!venus_orbit/**/static/*.pt
-!venus_orbit/**/protssn_config/**/*.pt
+!venusrem2/**/static/*.pt
+!venusrem2/**/protssn_config/**/*.pt
 *.pth
 *.ckpt
 *.bin
-!venus_orbit/**/tokenizers/**
+!venusrem2/**/tokenizers/**
 
 # ---------------------------------------------------------------------------
 # Project: data/

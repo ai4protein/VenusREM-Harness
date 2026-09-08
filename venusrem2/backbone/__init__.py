@@ -1,4 +1,4 @@
-from venus_orbit.backbone.forward_utils import (
+from venusrem2.backbone.forward_utils import (
     backbone_supports_structure_tokens,
     force_config_max_residue_len,
     forward_masked_marginal,
@@ -8,7 +8,7 @@ from venus_orbit.backbone.forward_utils import (
     resolve_structure_fasta_path,
     tokenize_structure_sequence,
 )
-from venus_orbit.backbone.baseline_dispatch import BaselineState, load_baseline, create_baseline_forward_fn, create_native_scorer_fn
+from venusrem2.backbone.baseline_dispatch import BaselineState, load_baseline, create_baseline_forward_fn, create_native_scorer_fn
 
 __all__ = [
     "tokenize_structure_sequence",

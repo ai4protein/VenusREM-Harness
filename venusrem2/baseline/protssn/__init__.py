@@ -1,4 +1,4 @@
-from venus_orbit.baseline.protssn.protssn import (
+from venusrem2.baseline.protssn.protssn import (
     forward_protssn,
     forward_protssn_masked_marginal,
     load_protssn_models,

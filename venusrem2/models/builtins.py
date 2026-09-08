@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from venus_orbit.models.base import ModelAdapter, ModelSpec
-from venus_orbit.models.registry import register_model
+from venusrem2.models.base import ModelAdapter, ModelSpec
+from venusrem2.models.registry import register_model
 
 
 def _load_via_dispatch(
@@ -16,7 +16,7 @@ def _load_via_dispatch(
     args: Any,
     logger: Any,
 ) -> ModelAdapter:
-    from venus_orbit.backbone.baseline_dispatch import load_baseline
+    from venusrem2.backbone.baseline_dispatch import load_baseline
 
     names = list(getattr(args, "model_name", None) or [])
     if model_id:
@@ -43,6 +43,7 @@ def _make_adapter(
     extras: str = "",
     notes: str = "",
     aliases: tuple = (),
+    supports_mask: bool = False,
 ):
     @register_model
     class _Adapter(ModelAdapter):
@@ -56,6 +57,7 @@ def _make_adapter(
             extras=extras,
             notes=notes,
             aliases=aliases,
+            supports_mask=supports_mask,
         )
 
         @classmethod
@@ -70,30 +72,43 @@ def _make_adapter(
 _make_adapter(
     "prosst",
     "auto",
-    description="ProSST structure-aware MLM (default Orbit backbone)",
+    description="ProSST structure-aware MLM (VenusREM2 = rem2 on a ProSST ensemble)",
     default_model_id="AI4Protein/ProSST-2048",
     extras="prosst",
-    notes="Uses structure token FASTA under struc_seq/",
-    aliases=("venusrem",),
+    notes="Single ProSST + rem2 is not VenusREM2; pass 2+ --model_name ProSST-* for the official ensemble",
+    aliases=("venusrem", "venusrem2"),
+    supports_mask=True,
 )
 _make_adapter(
     "auto",
     "auto",
     description="Any HuggingFace AutoModelForMaskedLM (pass --model_id)",
     default_model_id=None,
-    notes="Generic HF MLM path",
+    notes="Generic HF MLM path; refuses masked-marginals if the tokenizer has no mask token",
+    supports_mask=True,
 )
 _make_adapter(
     "esm2",
     "esm2",
     description="ESM-2 masked language model",
     default_model_id="facebook/esm2_t33_650M_UR50D",
+    supports_mask=True,
+)
+_make_adapter(
+    "esm2-8m",
+    "esm2",
+    description="ESM-2 8M (smoke / rem2 demo)",
+    default_model_id="facebook/esm2_t6_8M_UR50D",
+    notes="Small checkpoint for rem2 demo and install checks",
+    aliases=("esm2_8m",),
+    supports_mask=True,
 )
 _make_adapter(
     "esm1b",
     "esm1b",
     description="ESM-1b masked language model",
     default_model_id="facebook/esm1b_t33_650M_UR50S",
+    supports_mask=True,
 )
 _make_adapter(
     "esm1v",
@@ -101,6 +116,7 @@ _make_adapter(
     description="ESM-1v 5-seed ensemble",
     default_model_id="facebook/esm1v_t33_650M_UR90S_1",
     notes="Uses --esm1v_seeds (default 1-5); ignores --model_id for weights",
+    supports_mask=True,
 )
 _make_adapter(
     "saprot",
@@ -109,6 +125,7 @@ _make_adapter(
     default_model_id="westlake-repl/SaProt_650M_AF2",
     needs_pdb=True,
     notes="Foldseek auto-downloaded from HF if missing",
+    supports_mask=True,
 )
 _make_adapter(
     "protssn",
@@ -116,45 +133,49 @@ _make_adapter(
     description="ProtSSN structure GNN ensemble",
     needs_pdb=True,
     notes="Weights auto-download to cache/protssn",
+    supports_mask=True,
 )
 _make_adapter(
     "esm_if",
     "esm_if",
     description="ESM-IF1 inverse folding",
     needs_pdb=True,
-    notes="fair-esm sources isolated from ESM3; weights auto-download",
+    notes="Inverse folding (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "protein_mpnn",
     "protein_mpnn",
     description="ProteinMPNN",
     needs_pdb=True,
-    notes="Checkpoint auto-download to cache/protein_mpnn",
+    notes="Inverse folding (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "progen2",
     "progen2",
     description="ProGen2 causal LM",
     default_model_id="hugohrban/progen2-large",
+    notes="Causal LM (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "progen3",
     "progen3",
     description="ProGen3 causal LM",
     default_model_id="Profluent-Bio/progen3-1b",
-    notes="May require extra flash-attn / megablocks deps",
+    notes="Causal LM (no mask); masked-marginals is refused. May need flash-attn / megablocks",
 )
 _make_adapter(
     "protgpt2",
     "protgpt2",
     description="ProtGPT2 causal LM",
     default_model_id="nferruz/ProtGPT2",
+    notes="Causal LM (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "rita",
     "rita",
     description="RITA causal LM",
     default_model_id="lightonai/RITA_xl",
+    notes="Causal LM (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "esm3",
@@ -163,26 +184,39 @@ _make_adapter(
     default_model_id="esmc_300m",
     extras="baselines",
     notes="Requires `pip install esm`",
+    supports_mask=True,
 )
 _make_adapter(
     "tranception",
     "tranception",
     description="Tranception AR model",
     default_model_id="OATML-Markslab/Tranception_Large",
+    notes="Autoregressive (no mask); masked-marginals is refused",
 )
 _make_adapter(
     "carp",
     "carp",
     description="CARP (Zenodo weights)",
     default_model_id="carp_640M",
-    notes="Requires sequence_models; downloads from Zenodo",
+    notes="Requires sequence_models; downloads from Zenodo; scores via mask",
+    supports_mask=True,
+)
+_make_adapter(
+    "mifst",
+    "mifst",
+    description="MIF-ST masked inverse folding (+ CARP-640M sequence transfer)",
+    default_model_id="mifst",
+    needs_pdb=True,
+    extras="carp",
+    notes="Teacher-force / unmasked (ProteinGym name is misleading); masked-marginals is refused",
+    aliases=("mif_st", "mif-st"),
 )
 _make_adapter(
     "s2f",
     "s2f",
     description="S2F (lightweight ESM2 if no checkpoint)",
     auto_download=True,
-    notes="Full TorchDrug mode needs --s2f_checkpoint; config auto-bundled",
+    notes="No masked-marginals path (use esm2 / s3f); config auto-bundled",
 )
 _make_adapter(
     "s3f",
@@ -191,4 +225,5 @@ _make_adapter(
     needs_pdb=True,
     auto_download=True,
     notes="Uses data/s3f_weights/s3f.pth or cache/HF; config auto-bundled",
+    supports_mask=True,
 )

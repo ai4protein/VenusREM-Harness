@@ -226,6 +226,23 @@ def process_pdb_file(
 ):
     result_dict, subgraph_dict = {}, {}
     result_dict["name"] = pdb_file.split("/")[-1]
+    cache_stem = result_dict["name"].split(".")[0]
+    cache_path = (
+        os.path.join(cache_subgraph_dir, f"{cache_stem}.pt")
+        if cache_subgraph_dir is not None
+        else None
+    )
+
+    # Reuse cached subgraphs (still need aa_seq / length from PDB).
+    if cache_path is not None and os.path.isfile(cache_path):
+        try:
+            graph = generate_graph(pdb_file, max_distance)
+        except Exception as e:
+            result_dict["error"] = str(e)
+            return None, result_dict, 0
+        result_dict["aa_seq"] = graph.aa_seq
+        return cache_path, result_dict, len(graph.aa_seq)
+
     # build graph, maybe lack of some atoms
     try:
         graph = generate_graph(pdb_file, max_distance)

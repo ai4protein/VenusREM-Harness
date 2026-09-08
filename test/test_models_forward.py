@@ -13,9 +13,9 @@ import pandas as pd
 import pytest
 import torch
 
-from venus_orbit.models import apply_model_defaults, get_model, list_models
-from venus_orbit.scoring import score_protein
-from venus_orbit.scoring.score_protein import read_seq
+from venusrem2.models import apply_model_defaults, get_model, list_models
+from venusrem2.scoring import score_protein
+from venusrem2.scoring.score_protein import read_seq
 
 from helpers import SEQUENCE, NullLogger, make_args
 
@@ -132,7 +132,7 @@ def test_model_forward_log_probs_on_real_fasta_pdb(
         if fwd is not None:
             logits = fwd(sequence=sequence)
         else:
-            from venus_orbit.backbone.forward_utils import forward_sequence_logits
+            from venusrem2.backbone.forward_utils import forward_sequence_logits
 
             use_structure = model_name == "prosst"
             structure_sequence = None

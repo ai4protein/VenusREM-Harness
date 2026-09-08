@@ -1,4 +1,4 @@
-"""Shared helpers for Venus-Orbit integration tests."""
+"""Shared helpers for VenusREM2 integration tests."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def make_args(**overrides):
         model_id=None,
         cache_dir=None,
         model_name=["AI4Protein/ProSST-2048"],
-        model_out_name=["test"],
+        model_out_name=None,
         baseline_type="auto",
         backbone_mode="auto",
         max_residue_len=None,

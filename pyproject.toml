@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "venus-orbit"
+name = "venusrem2"
 version = "0.1.0"
-description = "Orbit: training-free calibration for protein language models on variant effect prediction"
+description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
 license = { text = "CC-BY-NC-ND-4.0" }
 requires-python = ">=3.9"
 authors = [{ name = "AI4Protein" }]
-keywords = ["protein", "PLM", "variant-effect", "DMS", "Orbit", "VenusREM"]
+keywords = ["protein", "PLM", "variant-effect", "DMS", "VenusREM2", "VenusREM"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
@@ -18,7 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
-# Core: enough for Orbit scoring on HF MLMs (ESM-2 / ProSST logits path without
+# Core: enough for VenusREM2 scoring on HF MLMs (ESM-2 / ProSST logits path without
 # structure-token *generation*). Install a CUDA-matching PyTorch *before* this
 # package so pip does not pull a CPU-only wheel.
 #
@@ -34,6 +34,7 @@ dependencies = [
   "joblib>=1.3",
   "safetensors>=0.4",
   "pyyaml>=6.0",
+  "biopython>=1.80",
 ]
 
 [project.optional-dependencies]
@@ -78,6 +79,10 @@ esm3 = [
 msa = [
   "biopython>=1.80",
 ]
+# Everyday scoring: core + better PDB I/O.
+recommended = [
+  "biotite>=0.40",
+]
 # Common baseline set without S3F (S3F is opt-in due to TorchDrug weight).
 baselines = [
   "torch-geometric>=2.4",
@@ -113,24 +118,24 @@ Homepage = "https://github.com/ai4protein/VenusREM"
 Documentation = "https://github.com/ai4protein/VenusREM"
 
 [project.scripts]
-venus-orbit = "venus_orbit.cli:main"
-venusrem-score = "venus_orbit.cli:main"
-
+rem2 = "venusrem2.cli:main"
+venusrem2 = "venusrem2.cli:main"
+venusrem-score = "venusrem2.cli:main"
 # Third-party packages register ModelAdapter subclasses here, e.g.:
 #   my_plm = "mypkg.adapters:MyAdapter"
-# Built-ins register via venus_orbit.models.builtins on import.
-[project.entry-points."venus_orbit.models"]
+# Built-ins register via venusrem2.models.builtins on import.
+[project.entry-points."venusrem2.models"]
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["venus_orbit*", "venusrem_orbit*"]
-exclude = ["venus_orbit.legacy*"]
+include = ["venusrem2*"]
+exclude = ["venusrem2.legacy*"]
 
 [tool.setuptools.package-data]
-venus_orbit = [
+venusrem2 = [
   "single_config_monomer.txt",
   "baseline/prosst/static/*",
   "baseline/protssn/protssn_config/**/*",
@@ -138,4 +143,5 @@ venus_orbit = [
   "baseline/progen3/tokenizer.json",
   "baseline/s2f/config/**/*",
   "baseline/tranception/model/utils/tokenizers/**/*",
+  "examples/**/*",
 ]

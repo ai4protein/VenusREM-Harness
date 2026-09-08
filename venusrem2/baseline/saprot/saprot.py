@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from venus_orbit.baseline.saprot.foldseek_util import get_struc_seq
+from venusrem2.baseline.saprot.foldseek_util import get_struc_seq
 
 FOLDSEEK_STRUC_VOCAB = "pynwrqhgdlvtmfsaeikc#"
 AA_LIST = "ACDEFGHIKLMNPQRSTVWY"

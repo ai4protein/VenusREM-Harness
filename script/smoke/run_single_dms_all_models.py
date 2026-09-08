@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single-DMS smoke test for every registered backbone (MSA-fused Orbit path).
+"""Single-DMS smoke test for every registered backbone (MSA-fused VenusREM2 path).
 
 Runs one ProteinGym assay with AF2 structure + a2m MSA, records status / Spearman,
 and compares against prior official-format DMS-level results when available.
@@ -24,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROTEIN = "PIN1_HUMAN_Tsuboyama_2023_1I6C"
 DEFAULT_OUT = ROOT / "result" / "smoke_single_dms_20260722"
 
-# Maps --model key -> prior leaderboard column names (Raw / Orbit DMS-level CSVs).
-# pro sst MSA-only (α=0.8 log_odds) aligns to VenusREM, not full ProSST (Orbit).
+# Maps --model key -> prior leaderboard column names (Raw / VenusREM2 DMS-level CSVs).
+# pro sst MSA-only (α=0.8 log_odds) aligns to VenusREM, not full ProSST (VenusREM2).
 PRIOR_RAW_COL = {
     "prosst": "ProSST (K=2048)",
     "esm2": "esm2_650m_wt",
@@ -42,8 +42,8 @@ PRIOR_RAW_COL = {
     "carp": "carp_640m",
     "s3f": "S3F (wt raw)",
 }
-PRIOR_ORBIT_COL = {
-    "prosst": "VenusREM",  # MSA α=0.8 log_odds; full Orbit is ProSST (Orbit)
+PRIOR_VENUSREM2_COL = {
+    "prosst": "VenusREM",  # MSA α=0.8 log_odds; full VenusREM2 is ProSST (VenusREM2)
     "esm2": "esm2_650m_wt",
     "esm1b": "esm1b_wt",
     "esm1v": "esm1v_wt",
@@ -56,7 +56,7 @@ PRIOR_ORBIT_COL = {
     "rita": "rita_xl",
     "esm3": "esmc",
     "carp": "carp_640m",
-    "s3f": "S3F (wt Orbit)",
+    "s3f": "S3F (wt VenusREM2)",
 }
 # Alias for summary display
 PRIOR_COL = {**PRIOR_RAW_COL}
@@ -88,11 +88,11 @@ def _utc_now() -> str:
 
 
 def _load_prior(protein: str) -> dict:
-    base = ROOT / "results_and_figures" / "proteingym_raw_vs_orbit_official" / "performance" / "Spearman"
-    out = {"raw": {}, "orbit": {}}
+    base = ROOT / "results_and_figures" / "proteingym_raw_vs_venusrem2_official" / "performance" / "Spearman"
+    out = {"raw": {}, "venusrem2": {}}
     for kind, fname in [
         ("raw", "DMS_substitutions_Raw_Spearman_DMS_level.csv"),
-        ("orbit", "DMS_substitutions_Orbit_Spearman_DMS_level.csv"),
+        ("venusrem2", "DMS_substitutions_VenusREM2_Spearman_DMS_level.csv"),
     ]:
         path = base / fname
         if not path.is_file():
@@ -192,13 +192,13 @@ def run_one(model: str, protein: str, out_dir: Path, base_dir: Path, prior: dict
             "struc_seq": "struc_seq_af2_assay_resolved_full/2048",
         },
         "prior_col_raw": PRIOR_RAW_COL.get(model),
-        "prior_col_orbit": PRIOR_ORBIT_COL.get(model),
+        "prior_col_venusrem2": PRIOR_VENUSREM2_COL.get(model),
         "prior_raw": None,
-        "prior_orbit": None,
+        "prior_venusrem2": None,
         "spearman_msa": None,
         "spearman_raw_backbone": None,
         "delta_vs_prior_raw": None,
-        "delta_vs_prior_orbit": None,
+        "delta_vs_prior_venusrem2": None,
         "elapsed_sec": None,
         "returncode": None,
         "error": None,
@@ -206,11 +206,11 @@ def run_one(model: str, protein: str, out_dir: Path, base_dir: Path, prior: dict
         "scores_csv": str(scores_dir / "scores" / f"{protein}.csv"),
     }
     raw_col = PRIOR_RAW_COL.get(model)
-    orbit_col = PRIOR_ORBIT_COL.get(model)
+    venusrem2_col = PRIOR_VENUSREM2_COL.get(model)
     if raw_col:
         meta["prior_raw"] = prior.get("raw", {}).get(raw_col)
-    if orbit_col:
-        meta["prior_orbit"] = prior.get("orbit", {}).get(orbit_col)
+    if venusrem2_col:
+        meta["prior_venusrem2"] = prior.get("venusrem2", {}).get(venusrem2_col)
 
     cmd = build_cmd(model, protein, out_dir, base_dir)
     meta["cmd"] = cmd
@@ -251,7 +251,7 @@ def run_one(model: str, protein: str, out_dir: Path, base_dir: Path, prior: dict
 
     for key, prior_key, smoke_key in [
         ("delta_vs_prior_raw", "prior_raw", "spearman_raw_backbone"),
-        ("delta_vs_prior_orbit", "prior_orbit", "spearman_msa"),
+        ("delta_vs_prior_venusrem2", "prior_venusrem2", "spearman_msa"),
     ]:
         p = meta.get(prior_key)
         s = meta.get(smoke_key)
@@ -280,11 +280,11 @@ def write_summary(records: list[dict], out_dir: Path) -> None:
                 "spearman_msa_a08": r.get("spearman_msa"),
                 "spearman_raw_backbone": r.get("spearman_raw_backbone"),
                 "prior_raw": r.get("prior_raw"),
-                "prior_orbit": r.get("prior_orbit"),
+                "prior_venusrem2": r.get("prior_venusrem2"),
                 "delta_vs_prior_raw": r.get("delta_vs_prior_raw"),
-                "delta_vs_prior_orbit": r.get("delta_vs_prior_orbit"),
+                "delta_vs_prior_venusrem2": r.get("delta_vs_prior_venusrem2"),
                 "prior_col_raw": r.get("prior_col_raw"),
-                "prior_col_orbit": r.get("prior_col_orbit"),
+                "prior_col_venusrem2": r.get("prior_col_venusrem2"),
                 "elapsed_sec": r.get("elapsed_sec"),
                 "error": r.get("error"),
             }
@@ -298,21 +298,21 @@ def write_summary(records: list[dict], out_dir: Path) -> None:
         "",
         f"- Generated: `{_utc_now()}`",
         f"- Protocol: α=0.8 MSA (`aa_seq_aln_a2m`), AF2 PDB/struc tokens, `log_odds`",
-        f"- Prior: `results_and_figures/proteingym_raw_vs_orbit_official/performance/Spearman/`",
+        f"- Prior: `results_and_figures/proteingym_raw_vs_venusrem2_official/performance/Spearman/`",
         "",
-        "| model | status | smoke_msa | smoke_raw | prior_raw | prior_orbit | Δorbit | sec | error |",
+        "| model | status | smoke_msa | smoke_raw | prior_raw | prior_venusrem2 | Δvenusrem2 | sec | error |",
         "|---|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for r in records:
         lines.append(
-            "| {model} | {status} | {spearman_msa} | {spearman_raw_backbone} | {prior_raw} | {prior_orbit} | {delta_vs_prior_orbit} | {elapsed_sec} | {error} |".format(
+            "| {model} | {status} | {spearman_msa} | {spearman_raw_backbone} | {prior_raw} | {prior_venusrem2} | {delta_vs_prior_venusrem2} | {elapsed_sec} | {error} |".format(
                 model=r["model"],
                 status=r["status"],
                 spearman_msa=_fmt(r.get("spearman_msa")),
                 spearman_raw_backbone=_fmt(r.get("spearman_raw_backbone")),
                 prior_raw=_fmt(r.get("prior_raw")),
-                prior_orbit=_fmt(r.get("prior_orbit")),
-                delta_vs_prior_orbit=_fmt(r.get("delta_vs_prior_orbit")),
+                prior_venusrem2=_fmt(r.get("prior_venusrem2")),
+                delta_vs_prior_venusrem2=_fmt(r.get("delta_vs_prior_venusrem2")),
                 elapsed_sec=r.get("elapsed_sec"),
                 error=(r.get("error") or "")[:80].replace("|", "/"),
             )
@@ -387,7 +387,7 @@ def main():
         write_summary(records, out_dir)
         print(
             f"[{rec['status']}] {model} msa={rec.get('spearman_msa')} "
-            f"raw={rec.get('spearman_raw_backbone')} Δorbit={rec.get('delta_vs_prior_orbit')} "
+            f"raw={rec.get('spearman_raw_backbone')} Δvenusrem2={rec.get('delta_vs_prior_venusrem2')} "
             f"({rec.get('elapsed_sec')}s)",
             flush=True,
         )

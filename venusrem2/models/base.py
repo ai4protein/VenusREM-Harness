@@ -22,6 +22,8 @@ class ModelSpec:
     aliases: tuple = ()
     # Internal baseline_type key used by legacy dispatch.
     baseline_type: Optional[str] = None
+    # True only if --scoring_strategy masked-marginals is implemented.
+    supports_mask: bool = False
 
 
 class _NullLogger:
@@ -39,11 +41,11 @@ class _NullLogger:
 
 
 class ModelAdapter(ABC):
-    """Thin wrapper around a logit model used by Orbit scoring.
+    """Thin wrapper around a logit model used by VenusREM2 scoring.
 
     Custom backbones should return ``[L, V]`` log-probs from
     :meth:`forward_log_probs` (projected to the ESM vocab when needed).
-    Orbit calibration heads are applied on top by ``score_protein``.
+    VenusREM2 calibration heads are applied on top by ``score_protein``.
     """
 
     spec: ClassVar[ModelSpec]
@@ -73,7 +75,7 @@ class ModelAdapter(ABC):
         idx: int,
         logger: Any,
     ) -> Optional[Callable]:
-        from venus_orbit.backbone.baseline_dispatch import create_baseline_forward_fn
+        from venusrem2.backbone.baseline_dispatch import create_baseline_forward_fn
 
         return create_baseline_forward_fn(
             self.state,
@@ -118,7 +120,7 @@ class ModelAdapter(ABC):
         protein_name: str,
         logger: Any,
     ) -> Optional[Callable]:
-        from venus_orbit.backbone.baseline_dispatch import create_native_scorer_fn
+        from venusrem2.backbone.baseline_dispatch import create_native_scorer_fn
 
         return create_native_scorer_fn(
             self.state,

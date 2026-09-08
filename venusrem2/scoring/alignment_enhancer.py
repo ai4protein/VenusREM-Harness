@@ -251,6 +251,25 @@ def count_matrix_from_structure_alignment(
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def load_alignment_count_matrix(
+    file_path,
+    tokenizer,
+    cache_dir=None,
+    is_structure=False,
+    logger=None,
+    protein_name=None,
+):
+    """Public wrapper: (count_matrix, aln_start, aln_end)."""
+    return _get_or_build_count_matrix(
+        file_path,
+        tokenizer,
+        cache_dir=cache_dir,
+        is_structure=is_structure,
+        logger=logger,
+        protein_name=protein_name,
+    )
+
+
 def apply_alignment_prior(
     logits,
     tokenizer,

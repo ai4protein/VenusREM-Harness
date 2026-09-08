@@ -1,4 +1,4 @@
-# VenusREM-Orbit Scoring Formula
+# VenusREM2 Scoring Formula
 
 ## Notation
 
@@ -12,7 +12,10 @@
 
 $$\ell_{\text{fused}} = (1 - \alpha) \cdot \ell_{\text{raw}} + \alpha \cdot \log \operatorname{softmax}(\mathbf{f}_{\text{MSA}})$$
 
-where $\alpha = 0.8$.
+$\alpha$ is entropy-adaptive per assay (rem2 default, main column `rem2_entropy`):
+$\rho = (1-\bar{H})\rho_\pi + \bar{H}\rho_{\text{rot}}$, then
+$\alpha = \rho\, s_P / (\rho\, s_P + (1-\rho)\, s_M)$;
+the fixed variant $\alpha = 0.8$ is kept as the `rem2_fixed08` ablation column.
 
 ## Step 2: Background Bias
 
@@ -46,11 +49,22 @@ $$S = \sum_{i \in \mathcal{M}} \text{score}_i$$
 
 ## Parameters
 
+rem2 defaults (supersedes the v1-era values
+$w_b{=}0.15$, $w_c{=}0.05$ previously listed here):
+
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| $\alpha$ | 0.8 | MSA fusion weight |
-| $w_b$ | 0.15 | Background penalty weight |
-| $w_c$ | 0.05 | Wild-type confidence bonus weight |
+| $\alpha$ | entropy-adaptive (per assay); fixed variant 0.8 | MSA fusion weight |
+| $\beta$ ($w_b$) | **$\beta = 1-\alpha$** (package default); fixed \(0.2\) is the \(\alpha=0.8\) special case | Background penalty weight |
+| $\gamma$ ($w_c$) | 0.0 | Wild-type confidence bonus weight |
+
+Dynamic-$\beta$ rationale: the background term $b$ is computed from the raw
+(PLM-channel) logits only, and the PLM channel enters the fused score with
+weight $(1-\alpha)$, so the correction strength scales with the actual PLM
+contribution. Fixed $\beta = 0.2$ is the special case of this rule at
+$\alpha = 0.8$. On VenusViroHub (59 models), $\beta = 1-\alpha$ improves the
+hierarchical mean for 56/59 models (mean $+0.0068$); see
+`experiments/viro_clinvar/results/venusvirohub_dynbeta/README.md`.
 
 ## Performance (ProteinGym, 217 proteins)
 
@@ -58,6 +72,6 @@ $$S = \sum_{i \in \mathcal{M}} \text{score}_i$$
 |--------|:---:|
 | ProSST backbone | 0.5252 |
 | VenusREM v1 | 0.5357 |
-| Orbit Single-Anchor | 0.5406 |
+| VenusREM2 Single-Anchor | 0.5406 |
 | Raw-CCD (no RSA) | 0.5423 |
 | **Raw-CCD + RSA above-mean** | **0.5500** |

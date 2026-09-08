@@ -1,5 +1,5 @@
 """
-ProteinMPNN adapter for the Orbit pipeline.
+ProteinMPNN adapter for the VenusREM2 pipeline.
 
 Extracts per-position log probabilities from ProteinMPNN's teacher-forced
 decoder and projects the 21-dim output to the ESM-2 tokenizer vocabulary.
@@ -35,7 +35,7 @@ def forward_protein_mpnn(
     path controlled by the model's ``randn`` argument, optionally averaging over
     multiple orders.
     """
-    from venus_orbit.baseline.protein_mpnn.protein_mpnn_utils import (
+    from venusrem2.baseline.protein_mpnn.protein_mpnn_utils import (
         parse_PDB,
         StructureDatasetPDB,
         tied_featurize,
@@ -111,40 +111,59 @@ def forward_protein_mpnn(
 
 
 
-def _ensure_mpnn_checkpoint(checkpoint_dir):
-    """Download ProteinMPNN v_48_020 checkpoint if not present."""
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    ckpt_path = os.path.join(checkpoint_dir, "v_48_020.pt")
-    if os.path.exists(ckpt_path):
-        return ckpt_path
+def _ensure_mpnn_checkpoint(checkpoint_dir, cache_dir=None, logger=None):
+    """Resolve ProteinMPNN v_48_020 from cache, or prompt to download."""
+    from venusrem2.models.weights import (
+        ensure_url_file,
+        log_cache_hit,
+        resolve_existing_weight,
+        weight_candidates,
+    )
 
+    if os.path.isfile(checkpoint_dir):
+        return log_cache_hit("ProteinMPNN", checkpoint_dir, logger)
+    ckpt_path = os.path.join(checkpoint_dir, "v_48_020.pt")
+    if os.path.isfile(ckpt_path) and os.path.getsize(ckpt_path) > 0:
+        return log_cache_hit("ProteinMPNN", ckpt_path, logger)
+    existing = resolve_existing_weight("protein_mpnn", "v_48_020.pt", cache_dir=cache_dir)
+    if existing:
+        return log_cache_hit("ProteinMPNN", existing, logger)
     url = (
         "https://raw.githubusercontent.com/dauparas/ProteinMPNN/"
         "main/vanilla_model_weights/v_48_020.pt"
     )
-    import urllib.request
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    return ensure_url_file(
+        url,
+        ckpt_path,
+        logger=logger,
+        name="ProteinMPNN v_48_020.pt",
+        looked_in=weight_candidates("protein_mpnn", "v_48_020.pt", cache_dir=cache_dir),
+    )
 
-    print(f"Downloading ProteinMPNN checkpoint to {ckpt_path} ...")
-    urllib.request.urlretrieve(url, ckpt_path)
-    return ckpt_path
 
-
-def load_protein_mpnn_model(checkpoint_path, device):
+def load_protein_mpnn_model(checkpoint_path, device, cache_dir=None, logger=None):
     """Load ProteinMPNN model from checkpoint.
 
     Args:
         checkpoint_path: Path to .pt checkpoint file, or a directory
-            (auto-downloads v_48_020.pt if absent).
+            (reads cache, otherwise asks before downloading v_48_020.pt).
         device: torch device.
 
     Returns:
         (model, esm_tokenizer)
     """
     from transformers import AutoTokenizer
-    from venus_orbit.baseline.protein_mpnn.protein_mpnn_utils import ProteinMPNN as ProteinMPNNModel
+    from venusrem2.baseline.protein_mpnn.protein_mpnn_utils import ProteinMPNN as ProteinMPNNModel
 
-    if os.path.isdir(checkpoint_path):
-        checkpoint_path = _ensure_mpnn_checkpoint(checkpoint_path)
+    if os.path.isdir(checkpoint_path) or not os.path.isfile(checkpoint_path):
+        checkpoint_path = _ensure_mpnn_checkpoint(
+            checkpoint_path, cache_dir=cache_dir, logger=logger
+        )
+    else:
+        from venusrem2.models.weights import log_cache_hit
+
+        log_cache_hit("ProteinMPNN", checkpoint_path, logger)
 
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 

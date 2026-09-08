@@ -20,7 +20,7 @@ from typing import Any, Mapping, Optional
 from Bio.PDB import PDBParser
 import numpy as np
 
-from venus_orbit.baseline.s2f import residue_constants
+from venusrem2.baseline.s2f import residue_constants
 
 
 FeatureDict = Mapping[str, np.ndarray]

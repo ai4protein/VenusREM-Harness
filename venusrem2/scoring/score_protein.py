@@ -5,12 +5,12 @@ import os
 import torch
 from Bio import SeqIO
 
-from venus_orbit.backbone import (
+from venusrem2.backbone import (
     backbone_supports_structure_tokens,
     forward_sequence_logits,
     resolve_structure_fasta_path,
 )
-from venus_orbit.scoring import (
+from venusrem2.scoring import (
     apply_alignment_prior,
     build_calibration_terms,
     load_cached_logits,
@@ -18,6 +18,13 @@ from venus_orbit.scoring import (
     load_residue_rsa_weights_from_pdb,
     save_cached_logits,
     score_mutations_batch,
+)
+from venusrem2.scoring.alignment_enhancer import load_alignment_count_matrix
+from venusrem2.scoring.structure_weights import plddt_skip_reason, resolve_pdb_file
+from venusrem2.scoring.entropy_alpha import (
+    parse_alpha_arg,
+    parse_background_weight_arg,
+    resolve_mix_weights,
 )
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -58,29 +65,35 @@ def _save_native_cache(cache_path, mutant_df, scores):
 
 
 def read_seq(fasta):
+    if not fasta or not os.path.exists(fasta):
+        raise FileNotFoundError(f"Missing FASTA: {fasta}")
     for record in SeqIO.parse(fasta, "fasta"):
-        return str(record.seq)
+        seq = str(record.seq).strip()
+        if seq:
+            return seq
+    raise ValueError(f"No sequence found in {fasta}")
 
 
 @torch.no_grad()
 def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
-                  alpha=0.7, aa_seq_aln_file=None, struc_seq_aln_file=None,
+                  alpha="entropy", aa_seq_aln_file=None, struc_seq_aln_file=None,
                   sample_size=None, sample_ratio=1.0, sample_times=1,
                   protein_name=None, backbone_mode="auto", pdb_file=None,
                   max_residue_len=None, long_seq_mode="auto_window", long_seq_overlap=256,
                   quiet=False, show_progress=True, logger=None,
-                  scoring_mode="log_odds", background_weight=0.2,
-                  wt_confidence_weight=0.05,
+                  scoring_mode="calibrated_margin", background_weight="one_minus_alpha",
+                  wt_confidence_weight=0.0,
                   logits_cache_path=None, reuse_logits_cache=False, write_logits_cache=False,
                   cache_miss_policy="forward", logits_cache_stage="raw",
-                  calibrate_on_raw=False, precomputed_logits_dir=None,
-                  use_rsa_decay=False, pdb_dir=None, rsa_decay_mode="raw",
-                  use_plddt_decay=False, plddt_decay_mode="above_mean",
+                  calibrate_on_raw=True, precomputed_logits_dir=None,
+                  use_rsa_decay=True, pdb_dir=None, rsa_decay_mode="above_mean",
+                  use_plddt_decay=True, plddt_decay_mode="above_mean",
                   task_type="default",
                   disable_adaptive_ccd=False,
                   baseline_forward_fn=None,
                   aln_count_cache_dir=None,
-                  native_scorer_fn=None):
+                  native_scorer_fn=None,
+                  skip_mutant_scoring=False):
     def log_local(msg):
         if not quiet:
             if logger is not None:
@@ -99,8 +112,10 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
                 print(f"[WARN] {msg}")
 
     sequence = read_seq(residue_fasta)
+    alpha_spec = parse_alpha_arg(alpha)
+    background_spec = parse_background_weight_arg(background_weight)
 
-    if native_scorer_fn is not None and alpha == 0 and scoring_mode == "log_odds":
+    if native_scorer_fn is not None and alpha_spec == 0.0 and scoring_mode == "log_odds":
         native_cache_path = _native_cache_path(logits_cache_path)
         native_scores = None
         if native_cache_path and reuse_logits_cache:
@@ -197,12 +212,72 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
 
     if not loaded_final_logits:
         backbone_logits = logits.clone()
+        vocab = tokenizer.get_vocab()
+        mix_alpha = 0.0 if alpha_spec == 0.0 else (
+            float(alpha_spec) if isinstance(alpha_spec, float) else 0.8
+        )
+        mix_bg = 0.2 if background_spec == "one_minus_alpha" else float(background_spec)
+        count_matrix = None
+        aln_start = aln_end = 0
+        if aa_seq_aln_file and os.path.exists(aa_seq_aln_file):
+            try:
+                count_matrix, aln_start, aln_end = load_alignment_count_matrix(
+                    aa_seq_aln_file,
+                    tokenizer,
+                    cache_dir=aln_count_cache_dir,
+                    is_structure=False,
+                    logger=logger,
+                    protein_name=protein_name,
+                )
+                count_matrix = count_matrix.to(logits.device)
+            except Exception as exc:
+                log_warn_local(f"MSA count matrix failed ({exc}); mix will skip entropy-α")
+                count_matrix = None
+        if alpha_spec == "entropy" and count_matrix is None:
+            log_warn_local(
+                "No usable MSA; entropy-α cannot run, using α=0 "
+                "(CCD / RSA / pLDDT still apply if available)"
+            )
+        try:
+            mix_alpha, mix_bg, mix_features = resolve_mix_weights(
+                raw_logits=backbone_logits,
+                count_matrix=count_matrix,
+                aln_start=aln_start,
+                aln_end=aln_end,
+                sequence=sequence,
+                vocab=vocab,
+                alpha_spec=alpha_spec if count_matrix is not None else (
+                    0.0 if alpha_spec == "entropy" else alpha_spec
+                ),
+                background_spec=background_spec,
+            )
+            if mix_features.get("n"):
+                log_local(
+                    "rem2 mix α={:.4f} β={:.4f} ρ={:.4f} H̄={:.4f} ρπ={:.4f}".format(
+                        mix_alpha,
+                        mix_bg,
+                        float(mix_features.get("rho", float("nan"))),
+                        float(mix_features.get("hbar", float("nan"))),
+                        float(mix_features.get("rho_pi", float("nan"))),
+                    )
+                )
+        except Exception as exc:
+            if alpha_spec == "entropy":
+                log_warn_local(f"entropy-α failed ({exc}); falling back to α=0.8, β=0.2")
+                mix_alpha, mix_bg = 0.8, 0.2
+            else:
+                mix_alpha = float(alpha_spec)
+                mix_bg = (
+                    1.0 - mix_alpha
+                    if background_spec == "one_minus_alpha"
+                    else float(background_spec)
+                )
 
-        if alpha != 0:
+        if mix_alpha != 0:
             logits = apply_alignment_prior(
                 logits=logits,
                 tokenizer=tokenizer,
-                alpha=alpha,
+                alpha=mix_alpha,
                 aa_seq_aln_file=aa_seq_aln_file,
                 struc_seq_aln_file=struc_seq_aln_file,
                 sample_ratio=sample_ratio,
@@ -215,6 +290,8 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
             )
         else:
             log_local("No alignment matrix used")
+        background_weight = mix_bg
+        alpha = mix_alpha
         if logits_cache_path and write_logits_cache and logits_cache_stage == "final":
             save_cached_logits(
                 logits_cache_path=logits_cache_path,
@@ -226,6 +303,12 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
     else:
         backbone_logits = None
         log_local("Skip logits fusion: using final-stage cache")
+        if background_spec == "one_minus_alpha":
+            background_weight = 0.2
+        else:
+            background_weight = float(background_spec)
+        if isinstance(alpha_spec, float):
+            alpha = alpha_spec
 
     raw_for_calib = None
     if calibrate_on_raw:
@@ -248,6 +331,8 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
                 "(final-stage cache in use, no precomputed dir); falling back to fused calibration"
             )
 
+    if "mutant" not in mutant_df.columns:
+        raise ValueError("mutant table needs a 'mutant' column (e.g. A42G)")
     vocab = tokenizer.get_vocab()
     mutants = mutant_df["mutant"].tolist()
 
@@ -264,14 +349,21 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
 
     plddt_weights = None
     if use_plddt_decay:
-        plddt_weights = load_residue_plddt_from_pdb(
-            seq_len=len(sequence),
-            protein_name=protein_name,
-            pdb_file=pdb_file,
-            pdb_dir=pdb_dir,
+        resolved_pdb = resolve_pdb_file(
+            protein_name=protein_name, pdb_file=pdb_file, pdb_dir=pdb_dir
         )
-        if plddt_weights is None:
-            log_warn_local("pLDDT weights requested but loading failed; ignoring pLDDT")
+        skip = plddt_skip_reason(resolved_pdb)
+        if skip:
+            log_warn_local(skip)
+        else:
+            plddt_weights = load_residue_plddt_from_pdb(
+                seq_len=len(sequence),
+                protein_name=protein_name,
+                pdb_file=pdb_file,
+                pdb_dir=pdb_dir,
+            )
+            if plddt_weights is None:
+                log_warn_local("pLDDT weights requested but loading failed; ignoring pLDDT")
 
     calibration_terms = build_calibration_terms(
         logits=logits,
@@ -281,33 +373,34 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
         raw_logits=raw_for_calib,
         rsa_weights=rsa_weights,
         plddt_weights=plddt_weights,
+        disable_adaptive_ccd=disable_adaptive_ccd,
     )
-    # disable_adaptive_ccd kept for CLI compatibility; CCD v1 no longer emits bg_consistency.
-    _ = disable_adaptive_ccd
+    if scoring_mode == "calibrated_margin":
+        log_local(
+            "CCD adaptive={} bg_scale={:.4f} bg_consistency={:.4f}".format(
+                not disable_adaptive_ccd,
+                float(calibration_terms.get("bg_scale", 1.0)),
+                float(calibration_terms.get("bg_consistency", 0.0)),
+            )
+        )
 
     log_local(f"Scoring mode: {scoring_mode}")
 
-    native_scores = None
-    if native_scorer_fn is not None:
-        native_cache_path = _native_cache_path(logits_cache_path)
-        if native_cache_path and reuse_logits_cache:
-            native_scores = _load_native_cache(native_cache_path, mutant_df)
-            if native_scores is not None:
-                log_local(f"Loaded cached native scores ({len(native_scores)} mutants)")
-        if native_scores is None:
-            native_scores = native_scorer_fn(sequence=sequence, mutant_df=mutant_df)
-            if native_cache_path and write_logits_cache:
-                _save_native_cache(native_cache_path, mutant_df, native_scores)
+    if skip_mutant_scoring:
+        log_local("Skipping mutant scoring (logits dump only)")
+        return [0.0] * len(mutant_df)
 
     log_local("Scoring mutants")
 
+    if not isinstance(background_weight, (int, float)):
+        background_weight = 0.2
     scores = score_mutations_batch(
         mutants=mutants,
         logits=logits,
         sequence=sequence,
         vocab=vocab,
         scoring_mode=scoring_mode,
-        background_weight=background_weight,
+        background_weight=float(background_weight),
         wt_confidence_weight=wt_confidence_weight,
         calibration_terms=calibration_terms,
         use_rsa_decay=use_rsa_decay,
@@ -315,9 +408,6 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
         use_plddt_decay=use_plddt_decay,
         plddt_decay_mode=plddt_decay_mode,
         task_type=task_type,
-        native_deltas=native_scores,
-        alpha=alpha,
-        raw_logits=backbone_logits,
     )
 
     return scores

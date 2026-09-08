@@ -7,7 +7,7 @@
 #SBATCH --output=log/%x.o
 #SBATCH --error=log/%x.e
 
-WORKDIR=.
+WORKDIR="$(cd "$(dirname "$0")/../.." && pwd)"
 CONDA_BIN=$CONDA_PREFIX/bin
 DATABASE=$UNIREF100
 BITSCORES="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9"

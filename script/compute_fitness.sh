@@ -28,17 +28,16 @@ CUDA_VISIBLE_DEVICES=0 python compute_fitness.py \
     --base_dir data/$protein_dir \
     --out_scores_dir result/${protein_dir}_struc
 
-# 4) VenusREM-Orbit basic run (fixed recipe, non-sweep)
+# 4) VenusREM2 basic run (fixed recipe, non-sweep)
 export HF_ENDPOINT=https://hf-mirror.com
 alpha=0.8
 protein_dir=proteingym_v1
 CUDA_VISIBLE_DEVICES=1 python compute_fitness.py \
     --base_dir data/$protein_dir \
-    --out_scores_dir result/${protein_dir}_orbit \
-    --orbit_enable \
+    --out_scores_dir result/${protein_dir}_venusrem2 \
     --print_compare_spearman \
     --alpha $alpha \
     --logit_mode aa_seq_aln \
-    --model_out_name VenusREM-Orbit \
+    --model_out_name VenusREM2 \
     --retriever msa \
     --fusion linear_alpha

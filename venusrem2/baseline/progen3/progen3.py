@@ -1,10 +1,10 @@
 """
-Progen3 baseline adapter for VenusREM-Orbit.
+Progen3 baseline adapter for VenusREM2.
 
 Progen3 is an autoregressive protein language model with a Mixture-of-Experts
 (MoE) architecture. This adapter scores single protein sequences using
 forward + reverse log-probability averaging, then projects the per-residue
-log-probs to ESM2 vocabulary for Orbit compatibility.
+log-probs to ESM2 vocabulary for VenusREM2 compatibility.
 
 Progen3 uses a custom model class (ProGen3ForCausalLM) from the progen3
 package, which requires megablocks and flash_attn dependencies. The model
@@ -64,26 +64,19 @@ def load_progen3_model(
     try:
         from progen3.modeling import ProGen3ForCausalLM
 
-        if fp16:
-            model = ProGen3ForCausalLM.from_pretrained(
-                model_name_or_path,
-                torch_dtype=torch.float16,
-                low_cpu_mem_usage=True,
-            )
-        else:
-            model = ProGen3ForCausalLM.from_pretrained(
-                model_name_or_path,
-                torch_dtype=torch.bfloat16,
-                low_cpu_mem_usage=True,
-            )
+        # megablocks grouped_gemm requires bfloat16, not float16.
+        model = ProGen3ForCausalLM.from_pretrained(
+            model_name_or_path,
+            torch_dtype=torch.bfloat16,
+            low_cpu_mem_usage=True,
+        )
     except ImportError:
         # Fall back to AutoModel with trust_remote_code
         from transformers import AutoModelForCausalLM
 
-        dtype = torch.float16 if fp16 else torch.bfloat16
         model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
-            torch_dtype=dtype,
+            torch_dtype=torch.bfloat16,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
         )
@@ -170,7 +163,7 @@ def _score_direction(model, tokenizer, sequence, device, fp16, reverse=False):
     sequence_ids = torch.zeros(1, seq_len, dtype=torch.long, device=device)
     input_ids = ids.unsqueeze(0)  # [1, seq_len]
 
-    with torch.cuda.amp.autocast(enabled=fp16):
+    with torch.amp.autocast("cuda", dtype=torch.bfloat16, enabled=fp16):
         output = model(
             input_ids=input_ids,
             position_ids=position_ids,

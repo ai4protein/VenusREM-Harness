@@ -1,6 +1,12 @@
-from venus_orbit.scoring.alignment_enhancer import apply_alignment_prior
-from venus_orbit.scoring.logits_cache import load_cached_logits, save_cached_logits
-from venus_orbit.scoring.run_utils import (
+from venusrem2.scoring.alignment_enhancer import apply_alignment_prior, load_alignment_count_matrix
+from venusrem2.scoring.entropy_alpha import (
+    native_preference_features,
+    parse_alpha_arg,
+    parse_background_weight_arg,
+    resolve_mix_weights,
+)
+from venusrem2.scoring.logits_cache import load_cached_logits, save_cached_logits
+from venusrem2.scoring.run_utils import (
     CliLogger,
     clone_args_with_overrides,
     format_name_preview,
@@ -11,12 +17,22 @@ from venus_orbit.scoring.run_utils import (
     set_deterministic_inference,
     should_use_color,
 )
-from venus_orbit.scoring.scoring_heads import build_calibration_terms, score_mutations_batch, score_sub_mutation
-from venus_orbit.scoring.structure_weights import load_residue_rsa_weights_from_pdb, load_residue_plddt_from_pdb
-from venus_orbit.scoring.score_protein import score_protein, build_logits_cache_path, read_seq
+from venusrem2.scoring.scoring_heads import build_calibration_terms, score_mutations_batch, score_sub_mutation
+from venusrem2.scoring.structure_weights import (
+    classify_pdb_origin,
+    load_residue_plddt_from_pdb,
+    load_residue_rsa_weights_from_pdb,
+    plddt_skip_reason,
+)
+from venusrem2.scoring.score_protein import score_protein, build_logits_cache_path, read_seq
 
 __all__ = [
     "apply_alignment_prior",
+    "load_alignment_count_matrix",
+    "native_preference_features",
+    "parse_alpha_arg",
+    "parse_background_weight_arg",
+    "resolve_mix_weights",
     "load_cached_logits",
     "save_cached_logits",
     "build_calibration_terms",
@@ -33,6 +49,8 @@ __all__ = [
     "print_compare_table_row_extended",
     "load_residue_rsa_weights_from_pdb",
     "load_residue_plddt_from_pdb",
+    "classify_pdb_origin",
+    "plddt_skip_reason",
     "score_protein",
     "build_logits_cache_path",
     "read_seq",

@@ -4,7 +4,7 @@ from torch import nn
 from torchdrug import core, tasks
 from torchdrug.core import Registry as R
 
-from venus_orbit.baseline.s2f import gvp
+from venusrem2.baseline.s2f import gvp
     
 
 @R.register("tasks.ResidueTypePrediction")

@@ -1,0 +1,9 @@
+# Portable env for rem2. Install CUDA PyTorch yourself, then the package.
+name: rem2
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - -e .

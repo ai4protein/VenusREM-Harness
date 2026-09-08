@@ -1,1 +1,1 @@
-from venus_orbit.baseline.protgpt2.protgpt2 import load_protgpt2_model, forward_protgpt2
+from venusrem2.baseline.protgpt2.protgpt2 import load_protgpt2_model, forward_protgpt2

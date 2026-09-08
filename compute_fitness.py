@@ -1,6 +1,6 @@
-"""Backward-compatible entrypoint. Prefer: venusrem-score ... """
+"""Backward-compatible entrypoint. Prefer: venusrem2 ...  or  venusrem-score ..."""
 
-from venusrem_orbit.cli import main
+from venusrem2.cli import main
 
 if __name__ == "__main__":
     main()

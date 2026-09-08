@@ -1,9 +1,9 @@
 """
-Progen2 baseline adapter for VenusREM-Orbit.
+Progen2 baseline adapter for VenusREM2.
 
 Progen2 is an autoregressive protein language model. This adapter scores
 single protein sequences using forward + reverse log-probability averaging,
-then projects the per-residue log-probs to ESM2 vocabulary for Orbit
+then projects the per-residue log-probs to ESM2 vocabulary for VenusREM2
 compatibility.
 
 Reference: Nijkamp et al., "ProGen2: Exploring the Boundaries of Protein
@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from tokenizers import Tokenizer
 from transformers import AutoTokenizer
 
-from venus_orbit.baseline.progen2.modeling_progen import ProGenForCausalLM
+from venusrem2.baseline.progen2.modeling_progen import ProGenForCausalLM
 
 # Progen2 tokenizer vocab layout (from tokenizer.json):
 #   0: <|pad|>, 1: <|bos|>, 2: <|eos|>, 3: "1" (BOS marker), 4: "2" (EOS marker)
@@ -49,11 +49,11 @@ def load_progen2_model(
     - esm_tokenizer: AutoTokenizer from "facebook/esm2_t6_8M_UR50D" for vocab projection
     - model_context_len: int from config['n_positions']
     """
-    # Load model
+    # Load model. Do not use revision="float16": that is not a real HF git
+    # revision for hugohrban/progen2-{large,xlarge} (404 on hf-mirror).
     if fp16:
         model = ProGenForCausalLM.from_pretrained(
             model_name_or_path,
-            revision="float16",
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )

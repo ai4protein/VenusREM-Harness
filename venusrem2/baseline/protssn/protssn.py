@@ -1,8 +1,8 @@
 """
-ProtSSN baseline adapter for VenusREM-Orbit.
+ProtSSN baseline adapter for VenusREM2.
 
 ProtSSN = frozen ESM2 embeddings + trainable EGNN on protein structure kNN graph.
-Outputs [L, 20] logits over amino acids, projected to ESM2 vocab for Orbit compatibility.
+Outputs [L, 20] logits over amino acids, projected to ESM2 vocab for VenusREM2 compatibility.
 
 Reference: Tan et al., "Semantical and geometrical protein encoding toward enhanced
 bioactivity and thermostability", eLife 2025.
@@ -26,7 +26,7 @@ from Bio.PDB.PDBExceptions import PDBConstructionWarning
 from torch_geometric.data import Batch, Data
 from transformers import AutoTokenizer, EsmModel
 
-from venus_orbit.baseline.protssn.protssn_egnn import EGNN
+from venusrem2.baseline.protssn.protssn_egnn import EGNN
 
 PROTSSN_AA_LIST = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
                    "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
@@ -549,30 +549,46 @@ def forward_protssn_masked_marginal(
 
 
 def _ensure_protssn_weights(model_dir: str, configs: List[Tuple[int, int]], logger=None):
-    """Download missing ProtSSN weights from HuggingFace."""
+    """Resolve ProtSSN weights from cache, or prompt to download from HuggingFace."""
     os.makedirs(model_dir, exist_ok=True)
+    from venusrem2.models.weights import log_cache_hit, resolve_existing_weight
+
     missing = []
     for k, h in configs:
-        path = os.path.join(model_dir, f"protssn_k{k}_h{h}.pt")
-        if not os.path.exists(path):
-            missing.append((k, h, f"protssn_k{k}_h{h}.pt"))
+        fname = f"protssn_k{k}_h{h}.pt"
+        path = os.path.join(model_dir, fname)
+        if os.path.isfile(path) and os.path.getsize(path) > 0:
+            continue
+        cached = resolve_existing_weight("protssn", fname)
+        if cached:
+            if os.path.abspath(cached) != os.path.abspath(path):
+                import shutil
+
+                shutil.copy2(cached, path)
+            log_cache_hit(fname, cached, logger)
+            continue
+        missing.append((k, h, fname))
     if not missing:
         return
+    names = [m[2] for m in missing]
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
-        names = [m[2] for m in missing]
         raise FileNotFoundError(
-            f"Missing ProtSSN weights: {names}. Install huggingface_hub or download manually."
+            f"Missing ProtSSN weights: {names}. Install huggingface_hub, "
+            "place files in --protssn_model_dir / --cache_dir, or allow download."
         )
+    from venusrem2.models.download_policy import confirm_download
+
+    confirm_download(
+        name="ProtSSN (" + ", ".join(names) + ")",
+        dest=model_dir,
+        source="hf://tyang816/ProtSSN",
+        looked_in=[model_dir],
+        logger=logger,
+    )
     for k, h, fname in missing:
-        if logger:
-            logger.info(f"Downloading ProtSSN weight: {fname}")
-        hf_hub_download(
-            repo_id="tyang816/ProtSSN",
-            filename=fname,
-            local_dir=model_dir,
-        )
+        hf_hub_download(repo_id="tyang816/ProtSSN", filename=fname, local_dir=model_dir)
 
 
 def load_protssn_models(

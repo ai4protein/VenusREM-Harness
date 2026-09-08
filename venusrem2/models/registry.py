@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Type
 
-from venus_orbit.models.base import ModelAdapter, ModelSpec
+from venusrem2.models.base import ModelAdapter, ModelSpec
 
 _REGISTRY: Dict[str, Type[ModelAdapter]] = {}
 _ENTRY_POINTS_LOADED = False
@@ -32,15 +32,16 @@ def _load_entry_points() -> None:
         from importlib.metadata import entry_points
     except ImportError:  # pragma: no cover
         return
-    try:
-        eps = entry_points(group="venus_orbit.models")
-    except TypeError:  # Python < 3.10
-        eps = entry_points().get("venus_orbit.models", [])
-    for ep in eps:
+    for group in ("venusrem2.models",):
         try:
-            ep.load()
-        except Exception:
-            continue
+            eps = entry_points(group=group)
+        except TypeError:  # Python < 3.10
+            eps = entry_points().get(group, [])
+        for ep in eps:
+            try:
+                ep.load()
+            except Exception:
+                continue
 
 
 def get_model(name: str) -> Type[ModelAdapter]:

@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from venus_orbit.backbone.forward_utils import (
+from venusrem2.backbone.forward_utils import (
     force_config_max_residue_len,
     infer_model_max_residue_len,
 )
@@ -25,28 +25,28 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
     state = BaselineState(baseline_type=baseline_type)
 
     if baseline_type == "esm2":
-        from venus_orbit.baseline.esm2 import load_esm2_model
+        from venusrem2.baseline.esm2 import load_esm2_model
         state.model, state.tokenizer, state.model_max_residue_len = load_esm2_model(model_name, device)
         if args.max_residue_len is not None:
             state.model_max_residue_len = args.max_residue_len
         logger.info(f"Baseline: ESM-2 ({model_name})")
 
     elif baseline_type == "esm1b":
-        from venus_orbit.baseline.esm1b import load_esm1b_model
+        from venusrem2.baseline.esm1b import load_esm1b_model
         state.model, state.tokenizer, state.model_max_residue_len = load_esm1b_model(model_name, device)
         if args.max_residue_len is not None:
             state.model_max_residue_len = args.max_residue_len
         logger.info(f"Baseline: ESM-1b ({model_name})")
 
     elif baseline_type == "esm1v":
-        from venus_orbit.baseline.esm1v import load_esm1v_tokenizer
+        from venusrem2.baseline.esm1v import load_esm1v_tokenizer
         state.tokenizer = load_esm1v_tokenizer()
         state.model_max_residue_len = args.max_residue_len
         logger.info("Baseline: ESM-1v 5-seed ensemble (cached per process)")
 
     elif baseline_type == "saprot":
-        from venus_orbit.baseline.saprot import load_saprot_model_and_tokenizers
-        from venus_orbit.models.weights import ensure_foldseek_bin
+        from venusrem2.baseline.saprot import load_saprot_model_and_tokenizers
+        from venusrem2.models.weights import ensure_foldseek_bin
 
         args.foldseek_bin = ensure_foldseek_bin(
             cache_dir=getattr(args, "cache_dir", None),
@@ -65,8 +65,8 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Foldseek binary: {args.foldseek_bin}")
 
     elif baseline_type == "protssn":
-        from venus_orbit.baseline.protssn import load_protssn_models
-        from venus_orbit.models.weights import default_cache_dir, ensure_dir
+        from venusrem2.baseline.protssn import load_protssn_models
+        from venusrem2.models.weights import default_cache_dir, ensure_dir
         if args.protssn_model_dir is None:
             args.protssn_model_dir = ensure_dir(
                 os.path.join(default_cache_dir(getattr(args, "cache_dir", None)), "protssn")
@@ -86,7 +86,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: ProtSSN ({n_models} model{'s' if n_models > 1 else ''})")
 
     elif baseline_type == "esm_if":
-        from venus_orbit.baseline.esm_if import load_esm_if_model
+        from venusrem2.baseline.esm_if import load_esm_if_model
         esm_if_model, esm_if_alphabet, tokenizer, esm_if_helpers = load_esm_if_model(
             device,
             cache_dir=getattr(args, "cache_dir", None),
@@ -100,15 +100,18 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info("Baseline: ESM-IF1 (142M, inverse folding)")
 
     elif baseline_type == "protein_mpnn":
-        from venus_orbit.baseline.protein_mpnn import load_protein_mpnn_model
-        from venus_orbit.models.weights import default_cache_dir, ensure_dir
+        from venusrem2.baseline.protein_mpnn import load_protein_mpnn_model
+        from venusrem2.models.weights import default_cache_dir, ensure_dir
         if args.protein_mpnn_checkpoint is None:
             args.protein_mpnn_checkpoint = ensure_dir(
                 os.path.join(default_cache_dir(getattr(args, "cache_dir", None)), "protein_mpnn")
             )
             logger.info(f"ProteinMPNN checkpoint dir (auto): {args.protein_mpnn_checkpoint}")
         mpnn_model, tokenizer = load_protein_mpnn_model(
-            args.protein_mpnn_checkpoint, device
+            args.protein_mpnn_checkpoint,
+            device,
+            cache_dir=getattr(args, "cache_dir", None),
+            logger=logger,
         )
         state.tokenizer = tokenizer
         state.model_max_residue_len = args.max_residue_len
@@ -116,7 +119,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info("Baseline: ProteinMPNN (128-dim, 3-layer)")
 
     elif baseline_type == "progen2":
-        from venus_orbit.baseline.progen2 import load_progen2_model
+        from venusrem2.baseline.progen2 import load_progen2_model
         progen2_model, progen2_tokenizer, esm_tokenizer, progen2_context_len = load_progen2_model(
             args.progen2_model_name_or_path, device, fp16=args.progen2_fp16
         )
@@ -128,7 +131,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: Progen2 (context_len={progen2_context_len})")
 
     elif baseline_type == "progen3":
-        from venus_orbit.baseline.progen3 import load_progen3_model
+        from venusrem2.baseline.progen3 import load_progen3_model
         progen3_model, progen3_tokenizer, esm_tokenizer, progen3_context_len = load_progen3_model(
             args.progen3_model_name_or_path, device, fp16=args.progen3_fp16
         )
@@ -140,7 +143,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: Progen3 (context_len={progen3_context_len})")
 
     elif baseline_type == "protgpt2":
-        from venus_orbit.baseline.protgpt2 import load_protgpt2_model
+        from venusrem2.baseline.protgpt2 import load_protgpt2_model
         protgpt2_model, protgpt2_tokenizer, esm_tokenizer, protgpt2_context_len = load_protgpt2_model(
             args.protgpt2_model_name_or_path, device
         )
@@ -152,7 +155,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: ProtGPT2 (context_len={protgpt2_context_len})")
 
     elif baseline_type == "rita":
-        from venus_orbit.baseline.rita import load_rita_model
+        from venusrem2.baseline.rita import load_rita_model
         rita_model, rita_tokenizer, esm_tokenizer, rita_context_len = load_rita_model(
             args.rita_model_name_or_path, device
         )
@@ -164,7 +167,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: RITA (context_len={rita_context_len})")
 
     elif baseline_type == "esm3":
-        from venus_orbit.baseline.esm3 import load_esm3_model
+        from venusrem2.baseline.esm3 import load_esm3_model
         esm3_model, esm3_tokenizer, _, esm3_max_residue_len = load_esm3_model(
             args.esm3_model_name, device
         )
@@ -175,12 +178,12 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
             state.model_max_residue_len = args.max_residue_len
         state.extra["esm3_model"] = esm3_model
         state.extra["esm3_tokenizer"] = esm3_tokenizer
-        from venus_orbit.baseline.esm3.esm3 import _resolve_model_type
+        from venusrem2.baseline.esm3.esm3 import _resolve_model_type
         state.extra["esm3_model_type"] = _resolve_model_type(args.esm3_model_name)
         logger.info(f"Baseline: ESM3/ESM-C ({args.esm3_model_name})")
 
     elif baseline_type == "tranception":
-        from venus_orbit.baseline.tranception import load_tranception_model
+        from venusrem2.baseline.tranception import load_tranception_model
         tranception_model, tranception_tokenizer, esm_tokenizer, tranception_context_len = load_tranception_model(
             args.tranception_checkpoint, device
         )
@@ -192,9 +195,12 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         logger.info(f"Baseline: Tranception (context_len={tranception_context_len})")
 
     elif baseline_type == "carp":
-        from venus_orbit.baseline.carp import load_carp_model
+        from venusrem2.baseline.carp import load_carp_model
         carp_model, carp_collater, esm_tokenizer, carp_alphabet = load_carp_model(
-            args.carp_model_name, device
+            args.carp_model_name,
+            device,
+            cache_dir=getattr(args, "cache_dir", None),
+            logger=logger,
         )
         state.tokenizer = esm_tokenizer
         state.model_max_residue_len = args.max_residue_len
@@ -203,12 +209,24 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         state.extra["carp_alphabet"] = carp_alphabet
         logger.info(f"Baseline: CARP ({args.carp_model_name})")
 
+    elif baseline_type in ("mifst", "mif_st"):
+        from venusrem2.baseline.mifst import load_mifst_model
+        mif_model, mif_collater, esm_tokenizer, mif_alphabet = load_mifst_model(
+            device, cache_dir=getattr(args, "cache_dir", None), logger=logger
+        )
+        state.tokenizer = esm_tokenizer
+        state.model_max_residue_len = args.max_residue_len
+        state.extra["mifst_model"] = mif_model
+        state.extra["mifst_collater"] = mif_collater
+        state.extra["mifst_alphabet"] = mif_alphabet
+        logger.info("Baseline: MIF-ST (Zenodo mifst.pt + CARP-640M)")
+
     elif baseline_type == "s2f":
-        from venus_orbit.models.weights import bundled_s2f_config
+        from venusrem2.models.weights import bundled_s2f_config
         if args.s2f_config is None and args.s2f_checkpoint is not None:
             args.s2f_config = bundled_s2f_config()
         if args.s2f_config is not None and args.s2f_checkpoint is not None:
-            from venus_orbit.baseline.s2f import load_s2f_model
+            from venusrem2.baseline.s2f import load_s2f_model
             s2f_task, tokenizer, s2f_config = load_s2f_model(
                 args.s2f_config, args.s2f_checkpoint, device
             )
@@ -218,7 +236,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
             state.extra["s2f_lightweight"] = False
             logger.info("Baseline: S2F (full TorchDrug, sequence-only)")
         else:
-            from venus_orbit.baseline.s2f.s2f import load_s2f_model_lightweight
+            from venusrem2.baseline.s2f.s2f import load_s2f_model_lightweight
             model, tokenizer, model_max_residue_len = load_s2f_model_lightweight(device=device)
             state.model = model
             state.tokenizer = tokenizer
@@ -229,7 +247,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
             logger.info("Baseline: S2F (lightweight/ESM2)")
 
     elif baseline_type == "s3f":
-        from venus_orbit.models.weights import bundled_s3f_config, ensure_s3f_checkpoint
+        from venusrem2.models.weights import bundled_s3f_config, ensure_s3f_checkpoint
         if args.s2f_config is None:
             args.s2f_config = bundled_s3f_config()
         args.s2f_checkpoint = ensure_s3f_checkpoint(
@@ -243,7 +261,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
             if os.path.isdir(cand):
                 surface_path = cand
                 args.s3f_surface_dir = cand
-        from venus_orbit.baseline.s2f import load_s2f_model
+        from venusrem2.baseline.s2f import load_s2f_model
         s2f_task, tokenizer, s2f_config = load_s2f_model(
             args.s2f_config,
             args.s2f_checkpoint,
@@ -295,10 +313,24 @@ def create_baseline_forward_fn(
     model = state.model
     tokenizer = state.tokenizer
     model_max_residue_len = state.model_max_residue_len
+    if scoring_strategy == "masked-marginals":
+        from venusrem2.models.scoring_strategy import (
+            UnsupportedScoringStrategy,
+            dispatch_supports_mask,
+            require_tokenizer_mask,
+            unsupported_mask_message,
+        )
+
+        if not dispatch_supports_mask(baseline_type):
+            raise UnsupportedScoringStrategy(
+                unsupported_mask_message(baseline_type or "unknown")
+            )
+        if tokenizer is not None:
+            require_tokenizer_mask(baseline_type or "unknown", tokenizer)
 
     if baseline_type == "esm2":
         if scoring_strategy == "masked-marginals":
-            from venus_orbit.baseline.esm2 import forward_esm2_masked_marginal
+            from venusrem2.baseline.esm2 import forward_esm2_masked_marginal
             return partial(
                 forward_esm2_masked_marginal,
                 model=model, tokenizer=tokenizer, device=device,
@@ -307,7 +339,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.esm2 import forward_esm2
+            from venusrem2.baseline.esm2 import forward_esm2
             return partial(
                 forward_esm2,
                 model=model, tokenizer=tokenizer, device=device,
@@ -318,7 +350,7 @@ def create_baseline_forward_fn(
 
     elif baseline_type == "esm1b":
         if scoring_strategy == "masked-marginals":
-            from venus_orbit.baseline.esm1b import forward_esm1b_masked_marginal
+            from venusrem2.baseline.esm1b import forward_esm1b_masked_marginal
             return partial(
                 forward_esm1b_masked_marginal,
                 model=model, tokenizer=tokenizer, device=device,
@@ -327,7 +359,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.esm1b import forward_esm1b
+            from venusrem2.baseline.esm1b import forward_esm1b
             return partial(
                 forward_esm1b,
                 model=model, tokenizer=tokenizer, device=device,
@@ -338,7 +370,7 @@ def create_baseline_forward_fn(
 
     elif baseline_type == "esm1v":
         if scoring_strategy == "masked-marginals":
-            from venus_orbit.baseline.esm1v import forward_esm1v_masked_marginal
+            from venusrem2.baseline.esm1v import forward_esm1v_masked_marginal
             return partial(
                 forward_esm1v_masked_marginal,
                 device=device, seeds=args.esm1v_seeds,
@@ -347,7 +379,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.esm1v import forward_esm1v_ensemble
+            from venusrem2.baseline.esm1v import forward_esm1v_ensemble
             return partial(
                 forward_esm1v_ensemble,
                 device=device, seeds=args.esm1v_seeds,
@@ -357,7 +389,7 @@ def create_baseline_forward_fn(
             )
 
     elif baseline_type == "saprot":
-        from venus_orbit.models.weights import ensure_foldseek_bin
+        from venusrem2.models.weights import ensure_foldseek_bin
         args.foldseek_bin = ensure_foldseek_bin(
             cache_dir=getattr(args, "cache_dir", None),
             explicit=getattr(args, "foldseek_bin", None),
@@ -366,7 +398,7 @@ def create_baseline_forward_fn(
         saprot_model = state.extra["saprot_model"]
         saprot_tokenizer = state.extra["saprot_tokenizer"]
         if scoring_strategy == "wt-marginals":
-            from venus_orbit.baseline.saprot import forward_saprot_wt_marginal
+            from venusrem2.baseline.saprot import forward_saprot_wt_marginal
             return partial(
                 forward_saprot_wt_marginal,
                 model=saprot_model, saprot_tokenizer=saprot_tokenizer,
@@ -375,7 +407,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.saprot import forward_saprot_masked_marginal
+            from venusrem2.baseline.saprot import forward_saprot_masked_marginal
             return partial(
                 forward_saprot_masked_marginal,
                 model=saprot_model, saprot_tokenizer=saprot_tokenizer,
@@ -387,14 +419,14 @@ def create_baseline_forward_fn(
     elif baseline_type == "protssn":
         protssn_pack = state.extra["protssn_pack"]
         if scoring_strategy == "masked-marginals":
-            from venus_orbit.baseline.protssn import forward_protssn_masked_marginal
+            from venusrem2.baseline.protssn import forward_protssn_masked_marginal
             return partial(
                 forward_protssn_masked_marginal,
                 pdb_file=pdb_file, device=device, esm_tokenizer=tokenizer,
                 protssn_pack=protssn_pack, logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.protssn import forward_protssn
+            from venusrem2.baseline.protssn import forward_protssn
             return partial(
                 forward_protssn,
                 pdb_file=pdb_file, device=device, esm_tokenizer=tokenizer,
@@ -402,7 +434,7 @@ def create_baseline_forward_fn(
             )
 
     elif baseline_type == "esm_if":
-        from venus_orbit.baseline.esm_if import forward_esm_if
+        from venusrem2.baseline.esm_if import forward_esm_if
         helpers = state.extra.get("esm_if_helpers") or {}
         return partial(
             forward_esm_if,
@@ -415,7 +447,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "protein_mpnn":
-        from venus_orbit.baseline.protein_mpnn import forward_protein_mpnn
+        from venusrem2.baseline.protein_mpnn import forward_protein_mpnn
         return partial(
             forward_protein_mpnn,
             pdb_file=pdb_file, device=device, esm_tokenizer=tokenizer,
@@ -427,7 +459,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "progen2":
-        from venus_orbit.baseline.progen2 import forward_progen2
+        from venusrem2.baseline.progen2 import forward_progen2
         return partial(
             forward_progen2,
             model=state.extra["progen2_model"],
@@ -438,7 +470,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "progen3":
-        from venus_orbit.baseline.progen3 import forward_progen3
+        from venusrem2.baseline.progen3 import forward_progen3
         return partial(
             forward_progen3,
             model=state.extra["progen3_model"],
@@ -449,7 +481,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "protgpt2":
-        from venus_orbit.baseline.protgpt2 import forward_protgpt2
+        from venusrem2.baseline.protgpt2 import forward_protgpt2
         return partial(
             forward_protgpt2,
             model=state.extra["protgpt2_model"],
@@ -460,7 +492,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "rita":
-        from venus_orbit.baseline.rita import forward_rita
+        from venusrem2.baseline.rita import forward_rita
         return partial(
             forward_rita,
             model=state.extra["rita_model"],
@@ -471,7 +503,20 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "esm3":
-        from venus_orbit.baseline.esm3 import forward_esm3
+        if scoring_strategy == "masked-marginals":
+            from venusrem2.baseline.esm3 import forward_esm3_masked_marginal
+            return partial(
+                forward_esm3_masked_marginal,
+                model=state.extra["esm3_model"],
+                tokenizer=state.extra["esm3_tokenizer"],
+                esm_tokenizer=None,
+                device=device, max_residue_len=model_max_residue_len,
+                long_seq_mode=args.long_seq_mode,
+                long_seq_overlap=args.long_seq_overlap,
+                model_type=state.extra.get("esm3_model_type", "esmc"),
+                logger=logger, protein_name=protein_name,
+            )
+        from venusrem2.baseline.esm3 import forward_esm3
         return partial(
             forward_esm3,
             model=state.extra["esm3_model"],
@@ -483,7 +528,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "tranception":
-        from venus_orbit.baseline.tranception import forward_tranception
+        from venusrem2.baseline.tranception import forward_tranception
         return partial(
             forward_tranception,
             model=state.extra["tranception_model"],
@@ -495,7 +540,7 @@ def create_baseline_forward_fn(
         )
 
     elif baseline_type == "carp":
-        from venus_orbit.baseline.carp import forward_carp
+        from venusrem2.baseline.carp import forward_carp
         return partial(
             forward_carp,
             model=state.extra["carp_model"],
@@ -506,9 +551,25 @@ def create_baseline_forward_fn(
             logger=logger, protein_name=protein_name,
         )
 
+    elif baseline_type in ("mifst", "mif_st"):
+        if not pdb_file:
+            return None
+        from venusrem2.baseline.mifst import forward_mifst
+        return partial(
+            forward_mifst,
+            pdb_file=pdb_file,
+            device=device,
+            model=state.extra["mifst_model"],
+            collater=state.extra["mifst_collater"],
+            esm_tokenizer=tokenizer,
+            protein_alphabet=state.extra["mifst_alphabet"],
+            logger=logger,
+            protein_name=protein_name,
+        )
+
     elif baseline_type == "s2f":
         if not state.extra.get("s2f_lightweight", True):
-            from venus_orbit.baseline.s2f import forward_s2f
+            from venusrem2.baseline.s2f import forward_s2f
             return partial(
                 forward_s2f,
                 task=state.extra["s2f_task"], esm_tokenizer=tokenizer,
@@ -517,7 +578,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.s2f.s2f import forward_s2f_lightweight
+            from venusrem2.baseline.s2f.s2f import forward_s2f_lightweight
             return partial(
                 forward_s2f_lightweight,
                 model=model, tokenizer=tokenizer, device=device,
@@ -528,7 +589,7 @@ def create_baseline_forward_fn(
 
     elif baseline_type == "s3f":
         if scoring_strategy == "masked-marginals":
-            from venus_orbit.baseline.s2f import forward_s3f_masked_marginal
+            from venusrem2.baseline.s2f import forward_s3f_masked_marginal
             return partial(
                 forward_s3f_masked_marginal,
                 task=state.extra["s2f_task"], esm_tokenizer=tokenizer,
@@ -537,7 +598,7 @@ def create_baseline_forward_fn(
                 logger=logger, protein_name=protein_name,
             )
         else:
-            from venus_orbit.baseline.s2f import forward_s2f
+            from venusrem2.baseline.s2f import forward_s2f
             return partial(
                 forward_s2f,
                 task=state.extra["s2f_task"], esm_tokenizer=tokenizer,
@@ -548,8 +609,8 @@ def create_baseline_forward_fn(
             )
 
     elif baseline_type == "auto" and scoring_strategy == "masked-marginals":
-        from venus_orbit.backbone.forward_utils import forward_masked_marginal
-        from venus_orbit.scoring.score_protein import read_seq
+        from venusrem2.backbone.forward_utils import forward_masked_marginal
+        from venusrem2.scoring.score_protein import read_seq
         mask_use_structure = (args.backbone_mode == "prosst" and structure_fasta is not None)
         mask_struc_seq = None
         if mask_use_structure:
@@ -574,28 +635,20 @@ def create_native_scorer_fn(
     device,
     logger,
 ) -> Optional[Callable]:
-    """Return a native per-mutation scorer for baselines that support it."""
+    """Return a native per-mutation scorer for baselines that support it.
+
+    S3F intentionally has no native scorer here: raw/VenusREM2 both use LxV from
+    ``--scoring_strategy`` (wt-marginals / masked-marginals), matching ESM/SaProt.
+    ProteinGym's official site-mask scorer lives in ``score_s3f_official_native``
+    for reference only and is not wired into the VenusREM2 pipeline.
+    """
     if state.baseline_type == "s3f":
-        from venus_orbit.baseline.s2f.s2f import score_s3f_official_native
-        pdb_file = (
-            f"{args.pdb_dir}/{protein_name}.pdb"
-            if args.pdb_dir and os.path.exists(f"{args.pdb_dir}/{protein_name}.pdb")
-            else None
-        )
-        return partial(
-            score_s3f_official_native,
-            task=state.extra["s2f_task"],
-            device=device,
-            pdb_file=pdb_file,
-            config=state.extra["s2f_config"],
-            logger=logger,
-            protein_name=protein_name,
-        )
+        return None
 
     if state.baseline_type != "tranception":
         return None
 
-    from venus_orbit.baseline.tranception import score_tranception_native
+    from venusrem2.baseline.tranception import score_tranception_native
     return partial(
         score_tranception_native,
         model=state.extra["tranception_model"],

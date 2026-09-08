@@ -1,5 +1,5 @@
 """
-S2F / S3F baseline adapter for VenusREM-Orbit.
+S2F / S3F baseline adapter for VenusREM2.
 
 S2F (Sequence-to-Function) uses ESM-2 fine-tuned with a classification head
 predicting 20 amino acid types. The scoring is delta-log-likelihood:
@@ -131,11 +131,11 @@ def load_s2f_model(
     from transformers import AutoTokenizer
 
     # Import model/task registrations so torchdrug can instantiate them
-    from venus_orbit.baseline.s2f import model as _model_reg  # noqa: F401
-    from venus_orbit.baseline.s2f import task as _task_reg  # noqa: F401
-    from venus_orbit.baseline.s2f import gvp as _gvp_reg  # noqa: F401
-    from venus_orbit.baseline.esm_if.esm_if import _fair_esm_modules
-    from venus_orbit.models.weights import ensure_fair_esm_source
+    from venusrem2.baseline.s2f import model as _model_reg  # noqa: F401
+    from venusrem2.baseline.s2f import task as _task_reg  # noqa: F401
+    from venusrem2.baseline.s2f import gvp as _gvp_reg  # noqa: F401
+    from venusrem2.baseline.esm_if.esm_if import _fair_esm_modules
+    from venusrem2.models.weights import ensure_fair_esm_source
 
     import yaml
     with open(config_path, "r") as f:
@@ -223,7 +223,7 @@ def load_s2f_model_lightweight(
         the standard baseline adapter interface.
     """
     from transformers import AutoModelForMaskedLM, AutoTokenizer
-    from venus_orbit.backbone.forward_utils import infer_model_max_residue_len
+    from venusrem2.backbone.forward_utils import infer_model_max_residue_len
 
     model = AutoModelForMaskedLM.from_pretrained(esm_model_name, trust_remote_code=True)
     model = model.to(device).eval()
@@ -269,7 +269,7 @@ def _s3f_load_wild_type_and_surface(
     protein_name=None,
 ):
     """Load full-structure WT graph + optional surface (start=0, end=L)."""
-    from venus_orbit.baseline.s2f import dataset as s2f_dataset
+    from venusrem2.baseline.s2f import dataset as s2f_dataset
 
     if pdb_file is None or not os.path.exists(pdb_file):
         return None, None
@@ -322,7 +322,7 @@ def _s3f_infer_sequence_graphs(
     batch_size: int = 8,
 ):
     """Run S3F inference over a list of sequence graphs; return list of [L_i, 20] preds."""
-    from venus_orbit.baseline.s2f import dataset as s2f_dataset
+    from venusrem2.baseline.s2f import dataset as s2f_dataset
 
     if wild_type is not None:
         _dataset = s2f_dataset.MutantDataset(sequence_graphs, wild_type, surf_graph=surf_graph)
@@ -558,18 +558,17 @@ def score_s3f_official_native(
     logger=None,
     protein_name: Optional[str] = None,
 ):
-    """ProteinGym S3F native per-mutant scoring.
+    """ProteinGym S3F official native per-mutant scoring (reference only).
 
-    This mirrors ProteinGym's S3F baseline: build one masked sequence per
-    unique mutation-site tuple, choose the 1022-aa window around that site tuple,
-    run S3F, and compute sum(log P(mutant) - log P(wild type)).
+    Mirrors ProteinGym's S3F baseline (site-mask windows). **Not wired** into the
+    VenusREM2 pipeline: VenusREM2 S3F uses ESM-style LxV from ``--scoring_strategy``.
     """
     if not HAS_TORCHDRUG:
         raise ImportError("TorchDrug is required for score_s3f_official_native.")
     if pdb_file is None or not os.path.exists(pdb_file):
         raise RuntimeError(f"S3F native scoring requires PDB structure for {protein_name}")
 
-    from venus_orbit.baseline.s2f import dataset as s2f_dataset
+    from venusrem2.baseline.s2f import dataset as s2f_dataset
 
     device_obj = torch.device(device) if isinstance(device, str) else device
     seq_len = len(sequence)
@@ -708,7 +707,7 @@ def forward_s2f_lightweight(
     Returns:
         Tensor of shape [L, esm_vocab_size] with log-probabilities.
     """
-    from venus_orbit.backbone.forward_utils import forward_sequence_logits
+    from venusrem2.backbone.forward_utils import forward_sequence_logits
 
     return forward_sequence_logits(
         model=model,

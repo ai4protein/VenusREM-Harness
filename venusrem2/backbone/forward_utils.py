@@ -1,6 +1,6 @@
 import torch
 
-from venus_orbit.baseline.prosst.structure_tokens import (
+from venusrem2.baseline.prosst.structure_tokens import (
     backbone_supports_structure_tokens,
     infer_structure_vocab_subdir,
     resolve_structure_fasta_path,
@@ -60,7 +60,13 @@ def forward_masked_marginal(
     structure_sequence=None,
 ):
     seq_len = len(sequence)
-    mask_token_id = tokenizer.mask_token_id
+    mask_token_id = getattr(tokenizer, "mask_token_id", None)
+    if mask_token_id is None:
+        name = getattr(tokenizer, "name_or_path", type(tokenizer).__name__)
+        raise ValueError(
+            f"Tokenizer {name!r} has no mask_token_id; "
+            "refusing --scoring_strategy masked-marginals."
+        )
     vocab_size = getattr(model.config, "vocab_size", tokenizer.vocab_size)
     all_logits = torch.zeros(seq_len, vocab_size, device=device)
 

@@ -5,28 +5,31 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
-from venus_orbit.models.registry import get_model
-from venus_orbit.models.weights import default_cache_dir, ensure_dir
+from venusrem2.models.registry import get_model
+from venusrem2.models.weights import default_cache_dir, ensure_dir, resolve_existing_dir, resolve_existing_weight
+from venusrem2.naming import DEFAULT_PROSST_ID, PROSST_ENSEMBLE_IDS, fill_model_out_names
 
 
 def resolve_model_name(args: Any) -> str:
-    """Prefer --model; fall back to --baseline_type; default prosst."""
-    model = getattr(args, "model", None)
+    """Prefer --model; fall back to --baseline_type; default esm2."""
+    model = getattr(args, "model", None) or os.environ.get("VENUSREM2_MODEL") or os.environ.get("REM2_MODEL")
     if model:
         return model.lower()
     baseline = getattr(args, "baseline_type", None) or "auto"
-    if baseline == "auto":
-        # Heuristic: ProSST-style HF ids register as "prosst", others as "auto".
-        names = getattr(args, "model_name", None) or []
-        if names and "prosst" in str(names[0]).lower():
+    if baseline != "auto":
+        return baseline.lower()
+    names = getattr(args, "model_name", None) or []
+    # argparse default ProSST-2048 is treated as unset.
+    if names and names != [DEFAULT_PROSST_ID]:
+        if "prosst" in str(names[0]).lower():
             return "prosst"
-        if names:
-            return "auto"
-        return "prosst"
-    return baseline.lower()
+        return "auto"
+    return "esm2"
 
 
-def apply_model_defaults(args: Any, model_name: str, cache_dir: Optional[str] = None) -> str:
+def apply_model_defaults(
+    args: Any, model_name: str, cache_dir: Optional[str] = None, logger: Any = None
+) -> str:
     """Fill missing cache paths / model ids / baseline_type for a registered model."""
     cache = default_cache_dir(cache_dir or getattr(args, "cache_dir", None))
     args.cache_dir = cache
@@ -37,12 +40,16 @@ def apply_model_defaults(args: Any, model_name: str, cache_dir: Optional[str] = 
     args.baseline_type = baseline_type
 
     model_id = getattr(args, "model_id", None)
-    default_prosst = "AI4Protein/ProSST-2048"
     names = list(getattr(args, "model_name", None) or [])
-    on_legacy_default = (not names) or names == [default_prosst]
+    on_legacy_default = (not names) or names == [DEFAULT_PROSST_ID]
+
+    if model_name == "auto" and not model_id and (on_legacy_default or names == ["auto"]):
+        raise SystemExit("--model auto requires --model_id (Hugging Face repo or local path)")
 
     if model_id:
         args.model_name = [model_id]
+    elif model_name == "venusrem2" and on_legacy_default:
+        args.model_name = list(PROSST_ENSEMBLE_IDS)
     elif on_legacy_default:
         # Always stamp a model-specific label so CLI score columns
         # (`{basename}__raw_backbone`) are not left as ProSST-2048.
@@ -51,8 +58,10 @@ def apply_model_defaults(args: Any, model_name: str, cache_dir: Optional[str] = 
         else:
             args.model_name = [model_name]
 
-    if model_name == "prosst" and getattr(args, "backbone_mode", "auto") == "auto":
+    if model_name in ("prosst", "venusrem", "venusrem2") and getattr(args, "backbone_mode", "auto") == "auto":
         args.backbone_mode = "prosst"
+
+    fill_model_out_names(args, model_name)
 
     # Dedicated legacy id flags.
     if baseline_type == "progen2":
@@ -82,29 +91,31 @@ def apply_model_defaults(args: Any, model_name: str, cache_dir: Optional[str] = 
             args.carp_model_name = model_id
 
     if baseline_type == "protssn" and not getattr(args, "protssn_model_dir", None):
-        args.protssn_model_dir = ensure_dir(os.path.join(cache, "protssn"))
+        cached = resolve_existing_dir("protssn", cache_dir=cache)
+        args.protssn_model_dir = cached or ensure_dir(os.path.join(cache, "protssn"))
 
     if baseline_type == "protein_mpnn" and not getattr(args, "protein_mpnn_checkpoint", None):
-        args.protein_mpnn_checkpoint = ensure_dir(os.path.join(cache, "protein_mpnn"))
+        cached = resolve_existing_weight("protein_mpnn", "v_48_020.pt", cache_dir=cache)
+        args.protein_mpnn_checkpoint = cached or ensure_dir(os.path.join(cache, "protein_mpnn"))
 
     if baseline_type == "saprot":
-        from venus_orbit.models.weights import ensure_foldseek_bin
+        from venusrem2.models.weights import ensure_foldseek_bin
 
         args.foldseek_bin = ensure_foldseek_bin(
             cache_dir=cache,
             explicit=getattr(args, "foldseek_bin", None),
-            logger=None,
+            logger=logger,
         )
 
     if baseline_type == "s3f":
-        from venus_orbit.models.weights import bundled_s3f_config, ensure_s3f_checkpoint
+        from venusrem2.models.weights import bundled_s3f_config, ensure_s3f_checkpoint
 
         if not getattr(args, "s2f_config", None):
             args.s2f_config = bundled_s3f_config()
         args.s2f_checkpoint = ensure_s3f_checkpoint(
             cache_dir=cache,
             explicit=getattr(args, "s2f_checkpoint", None),
-            logger=None,
+            logger=logger,
         )
         # Prefer AF2 assay-resolved surfaces under base_dir when present.
         if not getattr(args, "s3f_surface_dir", None) and getattr(args, "base_dir", None):
@@ -112,7 +123,7 @@ def apply_model_defaults(args: Any, model_name: str, cache_dir: Optional[str] = 
             if os.path.isdir(cand):
                 args.s3f_surface_dir = cand
 
-    if model_name in ("esm2", "esm1b", "esm1v") and getattr(args, "backbone_mode", "auto") == "auto":
+    if baseline_type in ("esm2", "esm1b", "esm1v", "mifst", "mif_st", "mif-st") and getattr(args, "backbone_mode", "auto") == "auto":
         args.backbone_mode = "plain_mlm"
 
     return cache

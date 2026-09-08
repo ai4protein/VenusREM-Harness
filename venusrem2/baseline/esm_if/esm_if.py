@@ -1,8 +1,8 @@
 """
-ESM-IF1 inverse folding adapter for the Orbit pipeline.
+ESM-IF1 inverse folding adapter for the VenusREM2 pipeline.
 
 Extracts per-position logits from teacher-forced decoding and projects
-them to the ESM-2 tokenizer vocabulary so the full Orbit recipe
+them to the ESM-2 tokenizer vocabulary so the full VenusREM2 recipe
 (MSA fusion, CCD, RSA, pLDDT) can run unchanged.
 
 Loads facebookresearch/esm sources in isolation so it does not conflict
@@ -112,7 +112,7 @@ def load_esm_if_model(
     """Load ESM-IF1 and ESM-2 tokenizer; returns (model, alphabet, tokenizer, helpers)."""
     from transformers import AutoTokenizer
 
-    from venus_orbit.models.weights import ensure_esm_if_checkpoint, ensure_fair_esm_source
+    from venusrem2.models.weights import ensure_esm_if_checkpoint, ensure_fair_esm_source
 
     _patch_biotite()
     repo_dir = ensure_fair_esm_source(cache_dir=cache_dir, logger=logger)

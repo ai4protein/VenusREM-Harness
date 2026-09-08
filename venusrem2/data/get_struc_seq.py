@@ -3,7 +3,7 @@ import os
 
 from tqdm import tqdm
 
-from venus_orbit.baseline.prosst.get_sst_seq import SSTPredictor
+from venusrem2.baseline.prosst.get_sst_seq import SSTPredictor
 
 
 if __name__ == '__main__':

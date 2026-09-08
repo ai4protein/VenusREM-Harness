@@ -30,8 +30,8 @@ PRIOR_RAW_COL = {
     "s3f": "S3F (wt raw)",
 }
 PRIOR_MSA_COL = {"prosst": "VenusREM"}
-PRIOR_FULL_ORBIT_COL = {
-    "prosst": "ProSST (Orbit)",
+PRIOR_FULL_VENUSREM2_COL = {
+    "prosst": "ProSST (VenusREM2)",
     "esm2": "esm2_650m_wt",
     "esm1b": "esm1b_wt",
     "esm1v": "esm1v_wt",
@@ -44,7 +44,7 @@ PRIOR_FULL_ORBIT_COL = {
     "rita": "rita_xl",
     "esm3": "esmc",
     "carp": "carp_640m",
-    "s3f": "S3F (wt Orbit)",
+    "s3f": "S3F (wt VenusREM2)",
 }
 
 MODEL_ORDER = [
@@ -56,13 +56,13 @@ MODEL_ORDER = [
 
 def load_prior():
     base = (
-        ROOT / "results_and_figures" / "proteingym_raw_vs_orbit_official"
+        ROOT / "results_and_figures" / "proteingym_raw_vs_venusrem2_official"
         / "performance" / "Spearman"
     )
     out = {}
     for kind, fname in [
         ("raw", "DMS_substitutions_Raw_Spearman_DMS_level.csv"),
-        ("orbit", "DMS_substitutions_Orbit_Spearman_DMS_level.csv"),
+        ("venusrem2", "DMS_substitutions_VenusREM2_Spearman_DMS_level.csv"),
     ]:
         df = pd.read_csv(base / fname)
         row = df[df["DMS ID"].astype(str) == PROTEIN]
@@ -151,8 +151,8 @@ def main():
             continue
         smoke_raw, smoke_msa = read_smoke_scores(m)
         prior_raw = prior["raw"].get(PRIOR_RAW_COL[m]) if m in PRIOR_RAW_COL else None
-        prior_msa = prior["orbit"].get(PRIOR_MSA_COL[m]) if m in PRIOR_MSA_COL else None
-        prior_full = prior["orbit"].get(PRIOR_FULL_ORBIT_COL[m]) if m in PRIOR_FULL_ORBIT_COL else None
+        prior_msa = prior["venusrem2"].get(PRIOR_MSA_COL[m]) if m in PRIOR_MSA_COL else None
+        prior_full = prior["venusrem2"].get(PRIOR_FULL_VENUSREM2_COL[m]) if m in PRIOR_FULL_VENUSREM2_COL else None
         d_raw = delta(smoke_raw, prior_raw)
         d_msa = delta(smoke_msa, prior_msa)
         d_full = delta(smoke_msa, prior_full)
@@ -168,8 +168,8 @@ def main():
                 "smoke_msa": smoke_msa,
                 "prior_msa_ref": prior_msa,
                 "delta_msa_ref": d_msa,
-                "prior_full_orbit": prior_full,
-                "delta_vs_full_orbit": d_full,
+                "prior_full_venusrem2": prior_full,
+                "delta_vs_full_venusrem2": d_full,
                 "error": r.get("error"),
                 "elapsed_sec": r.get("elapsed_sec"),
             }
@@ -185,10 +185,10 @@ def main():
                 "spearman_raw_backbone": r["smoke_raw"],
                 "prior_raw": r["prior_raw"],
                 "prior_msa_ref": r["prior_msa_ref"],
-                "prior_full_orbit": r["prior_full_orbit"],
+                "prior_full_venusrem2": r["prior_full_venusrem2"],
                 "delta_vs_prior_raw": r["delta_raw"],
                 "delta_vs_msa_ref": r["delta_msa_ref"],
-                "delta_vs_full_orbit": r["delta_vs_full_orbit"],
+                "delta_vs_full_venusrem2": r["delta_vs_full_venusrem2"],
                 "verdict_raw": r["verdict_raw"],
                 "elapsed_sec": r["elapsed_sec"],
                 "error": r["error"],
@@ -201,9 +201,9 @@ def main():
         f"# Alignment verdict — `{PROTEIN}`",
         "",
         "Primary gate: **smoke_raw vs prior_raw** (`|Δ|<0.02` PASS).",
-        "MSA gate: only **prosst** has MSA-only prior (`VenusREM`); full Orbit is gap monitor.",
+        "MSA gate: only **prosst** has MSA-only prior (`VenusREM`); full VenusREM2 is gap monitor.",
         "",
-        "| model | status | smoke_raw | prior_raw | Δraw | verdict | smoke_msa | msa_ref | Δmsa | full_orbit | Δfull |",
+        "| model | status | smoke_raw | prior_raw | Δraw | verdict | smoke_msa | msa_ref | Δmsa | full_venusrem2 | Δfull |",
         "|---|---|---:|---:|---:|---|---:|---:|---:|---:|---:|",
     ]
     for r in rows:
@@ -211,7 +211,7 @@ def main():
             f"| {r['model']} | {r['status']} | {fmt(r['smoke_raw'])} | {fmt(r['prior_raw'])} | "
             f"{fmt(r['delta_raw'])} | {r['verdict_raw']} | {fmt(r['smoke_msa'])} | "
             f"{fmt(r['prior_msa_ref'])} | {fmt(r['delta_msa_ref'])} | "
-            f"{fmt(r['prior_full_orbit'])} | {fmt(r['delta_vs_full_orbit'])} |"
+            f"{fmt(r['prior_full_venusrem2'])} | {fmt(r['delta_vs_full_venusrem2'])} |"
         )
 
     n_ok = sum(1 for r in rows if r["status"] == "ok")
@@ -230,7 +230,7 @@ def main():
         "  On-the-fly surface generation still needs `.[s3f-surface-gen]` / pykeops.",
         "- **s2f**: lightweight ESM2 fallback (scores match esm2); not in official prior table",
         "- **protgpt2 / tranception**: no official prior column (smoke-only regression)",
-        "- **smoke_msa vs full Orbit**: expected gap (~0.03–0.10); smoke is MSA α=0.8 `log_odds` only",
+        "- **smoke_msa vs full VenusREM2**: expected gap (~0.03–0.10); smoke is MSA α=0.8 `log_odds` only",
         "",
         "Artifacts: `scores/{model}/scores/PIN1_….csv`, `records.jsonl`, `summary.csv`, `logs/`",
         "",

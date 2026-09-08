@@ -1,4 +1,4 @@
-"""Generate n-point saturation mutagenesis libraries for Orbit scoring."""
+"""Generate n-point saturation mutagenesis libraries for VenusREM2 scoring."""
 
 from __future__ import annotations
 

@@ -8,18 +8,18 @@ from scipy.stats import spearmanr
 BASELINES = {
     "ESM-2 650M": {
         "vanilla": ("result/baseline_esm2_vanilla", "ESM2-650M"),
-        "orbit": ("result/baseline_esm2_orbit", "ESM2-650M-Orbit"),
-        "orbit_ccd": ("result/baseline_esm2_orbit_ccd", "ESM2-650M-OrbitCCD"),
+        "venusrem2": ("result/baseline_esm2_venusrem2", "ESM2-650M-VenusREM2"),
+        "venusrem2_ccd": ("result/baseline_esm2_venusrem2_ccd", "ESM2-650M-VenusREM2CCD"),
     },
     "ESM-1v (5avg)": {
         "vanilla": ("result/baseline_esm1v_vanilla", "ESM1v-Ensemble"),
-        "orbit": ("result/baseline_esm1v_orbit", "ESM1v-Ensemble-Orbit"),
-        "orbit_ccd": ("result/baseline_esm1v_orbit_ccd", "ESM1v-Ensemble-OrbitCCD"),
+        "venusrem2": ("result/baseline_esm1v_venusrem2", "ESM1v-Ensemble-VenusREM2"),
+        "venusrem2_ccd": ("result/baseline_esm1v_venusrem2_ccd", "ESM1v-Ensemble-VenusREM2CCD"),
     },
     "SaProt 650M": {
         "vanilla": ("result/baseline_saprot_vanilla", "SaProt-650M"),
-        "orbit": ("result/baseline_saprot_orbit", "SaProt-650M-Orbit"),
-        "orbit_ccd": ("result/baseline_saprot_orbit_ccd", "SaProt-650M-OrbitCCD"),
+        "venusrem2": ("result/baseline_saprot_venusrem2", "SaProt-650M-VenusREM2"),
+        "venusrem2_ccd": ("result/baseline_saprot_venusrem2_ccd", "SaProt-650M-VenusREM2CCD"),
     },
 }
 
@@ -44,7 +44,7 @@ def compute_mean_spearman(df):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compare baseline PLMs with Orbit enhancement")
+    parser = argparse.ArgumentParser(description="Compare baseline PLMs with VenusREM2 enhancement")
     parser.add_argument("--base_dir", type=str, default=".", help="Project root directory")
     parser.add_argument("--output", type=str, default=None, help="Output CSV path for detailed results")
     args = parser.parse_args()
@@ -53,10 +53,10 @@ def main():
 
     print()
     print("=" * 85)
-    print("  Baseline PLM + Orbit Enhancement Comparison (ProteinGym, 217 DMS)")
+    print("  Baseline PLM + VenusREM2 Enhancement Comparison (ProteinGym, 217 DMS)")
     print("=" * 85)
     print()
-    print(f"{'Baseline':<16} | {'Vanilla':>8} | {'+Orbit':>8} | {'+Orbit+CCD':>11} | {'Δ(Orbit)':>9} | {'Δ(CCD)':>9}")
+    print(f"{'Baseline':<16} | {'Vanilla':>8} | {'+VenusREM2':>8} | {'+VenusREM2+CCD':>11} | {'Δ(VenusREM2)':>9} | {'Δ(CCD)':>9}")
     print("-" * 85)
 
     all_results = []
@@ -67,10 +67,12 @@ def main():
             scores[config_key] = compute_mean_spearman(df)
 
         vanilla = scores.get("vanilla", float("nan"))
-        orbit = scores.get("orbit", float("nan"))
-        orbit_ccd = scores.get("orbit_ccd", float("nan"))
-        delta_orbit = orbit - vanilla if not (pd.isna(orbit) or pd.isna(vanilla)) else float("nan")
-        delta_ccd = orbit_ccd - vanilla if not (pd.isna(orbit_ccd) or pd.isna(vanilla)) else float("nan")
+        venusrem2 = scores.get("venusrem2", float("nan"))
+        venusrem2_ccd = scores.get("venusrem2_ccd", float("nan"))
+        delta_venusrem2 = (
+            venusrem2 - vanilla if not (pd.isna(venusrem2) or pd.isna(vanilla)) else float("nan")
+        )
+        delta_ccd = venusrem2_ccd - vanilla if not (pd.isna(venusrem2_ccd) or pd.isna(vanilla)) else float("nan")
 
         def fmt(v):
             return f"{v:.4f}" if not pd.isna(v) else "  N/A  "
@@ -81,14 +83,17 @@ def main():
             sign = "+" if v >= 0 else ""
             return f"{sign}{v:.4f}"
 
-        print(f"{baseline_name:<16} | {fmt(vanilla):>8} | {fmt(orbit):>8} | {fmt(orbit_ccd):>11} | {fmt_delta(delta_orbit):>9} | {fmt_delta(delta_ccd):>9}")
+        print(
+            f"{baseline_name:<16} | {fmt(vanilla):>8} | {fmt(venusrem2):>8} | "
+            f"{fmt(venusrem2_ccd):>11} | {fmt_delta(delta_venusrem2):>9} | {fmt_delta(delta_ccd):>9}"
+        )
 
         all_results.append({
             "baseline": baseline_name,
             "vanilla": vanilla,
-            "orbit": orbit,
-            "orbit_ccd": orbit_ccd,
-            "delta_orbit": delta_orbit,
+            "venusrem2": venusrem2,
+            "venusrem2_ccd": venusrem2_ccd,
+            "delta_venusrem2": delta_venusrem2,
             "delta_ccd": delta_ccd,
         })
 

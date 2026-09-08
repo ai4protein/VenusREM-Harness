@@ -83,6 +83,116 @@ def _load_rsa_with_biopython(resolved: str, seq_len: int) -> torch.Tensor:
     return _rsa_tensor_from_values(seq_len, rsa_vals)
 
 
+_EXPERIMENTAL_EXPDTA = (
+    "X-RAY",
+    "NEUTRON",
+    "ELECTRON CRYSTALLOGRAPHY",
+    "ELECTRON MICROSCOPY",
+    "SOLUTION NMR",
+    "SOLID-STATE NMR",
+    "FIBER DIFFRACTION",
+    "POWDER DIFFRACTION",
+    "NMR",
+)
+_PREDICTED_HINTS = (
+    "ALPHAFOLD",
+    "COLABFOLD",
+    "ESMFOLD",
+    "OMEGAFOLD",
+    "ROSETTAFOLD",
+    "OPENFOLD",
+    "THEORETICAL MODEL",
+    "AF2",
+    "AF3",
+    "PLDDT",
+)
+_REFINEMENT_HINTS = ("PHENIX", "REFMAC", "BUSTER", "SHELX", "REFINE")
+
+
+def _header_lines(path: str, limit: int = 400) -> list[str]:
+    lines: list[str] = []
+    try:
+        with open(path, "r", errors="replace") as handle:
+            for i, raw in enumerate(handle):
+                if i >= limit:
+                    break
+                rec = raw[:6].strip().upper()
+                if rec in {"ATOM", "HETATM"}:
+                    break
+                lines.append(raw.rstrip("\n"))
+    except OSError:
+        return []
+    return lines
+
+
+def _sample_ca_bfactors(path: str, limit: int = 256) -> list[float]:
+    values: list[float] = []
+    try:
+        with open(path, "r", errors="replace") as handle:
+            for raw in handle:
+                if not raw.startswith("ATOM"):
+                    continue
+                if len(raw) < 66:
+                    continue
+                if raw[12:16].strip() != "CA":
+                    continue
+                try:
+                    values.append(float(raw[60:66]))
+                except ValueError:
+                    continue
+                if len(values) >= limit:
+                    break
+    except OSError:
+        return []
+    return values
+
+
+def classify_pdb_origin(path: str) -> tuple[str, str]:
+    """Return ``(kind, detail)``: predicted / experimental / unknown.
+
+    Experimental structures (crystal, NMR, cryo-EM) store temperature factors in
+    the B-factor column, not pLDDT.
+    """
+    header = "\n".join(_header_lines(path)).upper()
+    expdta = ""
+    for line in header.splitlines():
+        if line.startswith("EXPDTA"):
+            expdta = line[6:].strip()
+            break
+
+    if expdta:
+        if any(key in expdta for key in _PREDICTED_HINTS):
+            return "predicted", expdta
+        if any(key in expdta for key in _EXPERIMENTAL_EXPDTA):
+            return "experimental", expdta or "experimental"
+
+    if any(key in header for key in _PREDICTED_HINTS):
+        return "predicted", "predicted-model remark"
+    if any(key in header for key in _REFINEMENT_HINTS) and any(
+        key in header for key in ("X-RAY", "CRYSTAL", "DIFFRACTION", "NMR", "MICROSCOPY")
+    ):
+        return "experimental", "refinement of an experimental structure"
+
+    bfactors = _sample_ca_bfactors(path)
+    if bfactors and max(bfactors) > 100.5:
+        return "experimental", "B-factors > 100 (temperature factors, not pLDDT)"
+    return "unknown", ""
+
+
+def plddt_skip_reason(path: Optional[str]) -> Optional[str]:
+    """Why pLDDT should not be read from this PDB, or None if it is allowed."""
+    if not path:
+        return None
+    kind, detail = classify_pdb_origin(path)
+    if kind != "experimental":
+        return None
+    label = detail or "experimental"
+    return (
+        f"PDB looks like a crystal/experimental structure ({label}); "
+        "pLDDT does not apply (B-factor is a temperature factor). Skipping pLDDT decay."
+    )
+
+
 def load_residue_rsa_weights_from_pdb(
     seq_len: int,
     protein_name: Optional[str],
@@ -109,6 +219,8 @@ def load_residue_plddt_from_pdb(
 ) -> Optional[torch.Tensor]:
     resolved = resolve_pdb_file(protein_name=protein_name, pdb_file=pdb_file, pdb_dir=pdb_dir)
     if resolved is None:
+        return None
+    if plddt_skip_reason(resolved):
         return None
     try:
         from Bio.PDB import PDBParser

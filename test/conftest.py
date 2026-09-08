@@ -1,4 +1,4 @@
-"""Shared fixtures for Venus-Orbit integration tests."""
+"""Shared fixtures for VenusREM2 integration tests."""
 
 from __future__ import annotations
 

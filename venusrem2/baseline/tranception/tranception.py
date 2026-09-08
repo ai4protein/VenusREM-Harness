@@ -1,11 +1,11 @@
 """
-Tranception baseline adapter for VenusREM-Orbit.
+Tranception baseline adapter for VenusREM2.
 
 Tranception is an autoregressive protein language model based on GPT-2,
 supporting bidirectional scoring (L->R and R->L) and optional MSA retrieval.
 This adapter scores single protein sequences using forward + reverse
 log-probability averaging, then projects per-residue log-probs to ESM2
-vocabulary for Orbit compatibility.
+vocabulary for VenusREM2 compatibility.
 
 Reference: Notin et al., "Tranception: Protein Fitness Prediction with
 Autoregressive Transformers and Inference-time Retrieval", ICML 2022.
@@ -20,8 +20,8 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
-from venus_orbit.baseline.tranception.model import TranceptionConfig, TranceptionLMHeadModel
-from venus_orbit.baseline.tranception.model.utils import scoring_utils
+from venusrem2.baseline.tranception.model import TranceptionConfig, TranceptionLMHeadModel
+from venusrem2.baseline.tranception.model.utils import scoring_utils
 
 # Tranception tokenizer vocab layout (from Basic_tokenizer):
 #   0: [UNK], 1: [CLS], 2: [SEP], 3: [PAD], 4: [MASK]

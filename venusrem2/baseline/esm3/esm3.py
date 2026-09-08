@@ -1,5 +1,5 @@
 """
-ESM3 / ESM-C baseline adapter for VenusREM-Orbit.
+ESM3 / ESM-C baseline adapter for VenusREM2.
 
 ESM3 and ESM-C are EvolutionaryScale's protein language models.
 ESM-C is a sequence-only masked language model (available in 300M/600M/6B).

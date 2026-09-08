@@ -1,1 +1,1 @@
-"""Venus-Orbit tests."""
+"""VenusREM2 tests."""

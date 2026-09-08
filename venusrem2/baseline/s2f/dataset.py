@@ -18,7 +18,7 @@ from torchdrug import data, utils, core
 from torchdrug.layers import functional
 from torchdrug.core import Registry as R
 
-from venus_orbit.baseline.s2f import residue_constants
+from venusrem2.baseline.s2f import residue_constants
 
 
 # protein gym datasets

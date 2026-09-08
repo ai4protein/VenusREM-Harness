@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from venus_orbit.backbone.forward_utils import (
+from venusrem2.backbone.forward_utils import (
     force_config_max_residue_len,
     forward_masked_marginal,
     forward_sequence_logits,

@@ -1,4 +1,4 @@
-from venus_orbit.baseline.saprot.saprot import (
+from venusrem2.baseline.saprot.saprot import (
     get_saprot_3di,
     build_saprot_joint_sequence,
     forward_saprot_masked_marginal,

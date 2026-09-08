@@ -1,10 +1,10 @@
 """
-CARP baseline adapter for VenusREM-Orbit.
+CARP baseline adapter for VenusREM2.
 
 CARP (Convolutional Autoregressive Protein) is a masked protein language model
 based on ByteNet with dilated convolutions. This adapter scores single protein
 sequences using masked-marginals, then projects per-residue log-probs to ESM2
-vocabulary for Orbit compatibility.
+vocabulary for VenusREM2 compatibility.
 
 Models are hosted on Zenodo and auto-downloaded via torch.hub on first use.
 
@@ -13,6 +13,8 @@ protein sequence modeling", Cell Systems 2024.
 """
 
 from typing import Optional, Tuple
+
+import os
 
 import torch
 import torch.nn.functional as F
@@ -33,9 +35,11 @@ CARP_MODELS = {
 def load_carp_model(
     model_name: str,
     device: torch.device,
+    cache_dir: Optional[str] = None,
+    logger=None,
 ) -> Tuple:
     """
-    Load a CARP model from Zenodo (auto-download).
+    Load a CARP model from cache, or prompt to download from Zenodo.
 
     Args:
         model_name: One of "carp_600k", "carp_38M", "carp_76M", "carp_640M"
@@ -46,12 +50,32 @@ def load_carp_model(
     from sequence_models.pretrained import load_carp
     from sequence_models.collaters import SimpleCollater
     from sequence_models.constants import PROTEIN_ALPHABET
+    from venusrem2.models.weights import (
+        default_cache_dir,
+        ensure_url_file,
+        log_cache_hit,
+        resolve_existing_weight,
+        weight_candidates,
+    )
 
     name = CARP_MODELS.get(model_name, model_name)
-    url = CARP_ZENODO_URL + f"{name}.pt?download=1"
-    model_data = torch.hub.load_state_dict_from_url(
-        url, progress=True, map_location="cpu"
-    )
+    fname = f"{name}.pt"
+    existing = resolve_existing_weight("carp", fname, cache_dir=cache_dir)
+    hub = os.path.join(os.path.expanduser("~"), ".cache", "torch", "hub", "checkpoints", fname)
+    if existing:
+        path = log_cache_hit(f"CARP {name}", existing, logger)
+    elif os.path.isfile(hub) and os.path.getsize(hub) > 0:
+        path = log_cache_hit(f"CARP {name}", hub, logger)
+    else:
+        dest = os.path.join(default_cache_dir(cache_dir), "carp", fname)
+        path = ensure_url_file(
+            CARP_ZENODO_URL + f"{fname}?download=1",
+            dest,
+            logger=logger,
+            name=f"CARP {name}",
+            looked_in=weight_candidates("carp", fname, cache_dir=cache_dir) + [hub],
+        )
+    model_data = torch.load(path, map_location="cpu", weights_only=False)
     model = load_carp(model_data)
     model = model.to(device).eval()
 

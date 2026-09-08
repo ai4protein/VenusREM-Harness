@@ -46,7 +46,7 @@ def load_cached_logits(
             )
         log_warn_local("Logits cache miss; falling back to forward")
 
-    if cache_miss_policy == "error" and logits is None:
+    if cache_miss_policy == "error" and reuse_logits_cache and logits is None:
         raise FileNotFoundError(
             f"Required logits cache is missing/invalid: {logits_cache_path}"
         )
