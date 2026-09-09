@@ -17,8 +17,7 @@
       <nav class="tabs" aria-label="Dashboard sections">
         <a href="#/predict" id="tab-predict" class="tab">New</a>
         <a href="#/runs" id="tab-runs" class="tab is-active">Runs</a>
-        <a href="#/structure" id="tab-structure" class="tab is-disabled" aria-disabled="true" title="Open a run first">Structure</a>
-        <a href="#/select" id="tab-select" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Select</a>
+        <a href="#/review" id="tab-review" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Review</a>
       </nav>
       <div class="header-right">
         <span id="conn-status" class="status-pill is-off" title="API health">Offline</span>
@@ -38,7 +37,7 @@
       <section id="page-runs" class="page" hidden>
         <div class="page-head">
           <h1>Runs</h1>
-          <p class="muted">Open a run to watch scoring. Structure and top-K unlock after it finishes.</p>
+          <p class="muted">Open a run to watch scoring. Review opens after it finishes.</p>
         </div>
         <div id="runs-body" class="panel">Loading runs…</div>
       </section>
@@ -46,29 +45,11 @@
       <section id="page-predict" class="page" hidden>
         <div class="page-head">
           <h1>New job</h1>
-          <p class="muted">Submit what you have first. The next step only offers models that match those inputs.</p>
+          <p class="muted">Pick a model, then drop files or enter an accession in one box. Submit opens Runs.</p>
           <p class="job-tip">Full ProteinGym-level scoring needs at least a PDB and an MSA.</p>
         </div>
 
-        <div class="panel board-panel" id="pg-board">
-          <div class="board-head">
-            <div>
-              <h2>ProteinGym substitutions</h2>
-              <p class="muted">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
-            </div>
-            <span class="board-metric">Higher is better</span>
-          </div>
-          <ol class="board" id="leaderboard-body"></ol>
-          <p class="board-note" id="leaderboard-note"></p>
-        </div>
-
-        <ol class="flow-rail" id="new-rail" aria-label="New job steps">
-          <li><button type="button" class="flow-dot is-on" data-wiz-tab="1">1. Inputs</button></li>
-          <li><button type="button" class="flow-dot" data-wiz-tab="2">2. Model</button></li>
-          <li><button type="button" class="flow-dot" data-wiz-tab="3">3. Mutants</button></li>
-        </ol>
-
-        <div class="panel demo-panel" data-wiz-panel="1">
+        <div class="panel demo-panel">
           <div>
             <h2>Skip the form</h2>
             <p class="muted">Bundled HCP_LAMBD + ESM-2 8M. Same as <code>rem2 demo</code>.</p>
@@ -77,28 +58,36 @@
         </div>
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
-          <section data-wiz-panel="1">
-            <h2>What you have</h2>
-            <p class="field-hint">Need a FASTA or a PDB (file or accession). MSA is optional here; without it, rem2 uses α=0.</p>
-            <div class="file-grid file-grid-3">
-              <label class="file-field">
-                <span>FASTA</span>
-                <span class="file-name" data-for="file-fasta">choose a file</span>
-                <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+          <section>
+            <h2>Model</h2>
+            <div id="model-cards" class="model-cards"></div>
+            <label class="more-models">
+              <span>More models</span>
+              <select id="model-select" name="model"></select>
+            </label>
+            <p id="model-meta" class="field-hint"></p>
+            <details class="advanced">
+              <summary>Recipe</summary>
+              <div id="recipe-radios" class="seg">
+                <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full rem2</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
+              </div>
+              <p id="recipe-hint" class="field-hint"></p>
+            </details>
+          </section>
+
+          <section>
+            <h2>Inputs</h2>
+            <p class="field-hint">One box: drop FASTA / PDB / MSA / mutants, or type a PDB / UniProt id. MSA is optional — skip → α=0.</p>
+            <div class="intake" id="intake-box">
+              <label class="intake-drop" id="intake-drop">
+                <input type="file" id="file-bundle" multiple accept=".fa,.fasta,.faa,.txt,.fna,.pdb,.ent,.cif,.a2m,.a3m,.sto,.csv,.tsv">
+                <strong>Drop FASTA, PDB, MSA, or mutants CSV</strong>
+                <span>or click to upload</span>
               </label>
-              <label class="file-field">
-                <span>PDB file</span>
-                <span class="file-name" data-for="file-pdb">optional — unlocks structure models</span>
-                <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
-              </label>
-              <label class="file-field">
-                <span>MSA</span>
-                <span class="file-name" data-for="file-msa">optional — skip → α=0</span>
-                <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-              </label>
-            </div>
-            <fieldset class="field fetch-box">
-              <legend>Or a structure accession</legend>
+              <div class="intake-or">or an accession</div>
               <div class="field-row">
                 <label>PDB id
                   <input type="text" name="pdb_id" id="f-pdb-id" placeholder="2L6Q" autocomplete="off">
@@ -115,52 +104,33 @@
                   </select>
                 </label>
               </div>
-            </fieldset>
-            <div id="input-gate" class="input-gate" aria-live="polite"></div>
-          </section>
-
-          <section data-wiz-panel="2" hidden>
-            <h2>Which model</h2>
-            <div id="model-gate" class="input-gate" aria-live="polite"></div>
-            <div class="field">
-              <label for="model-select">Model</label>
-              <select id="model-select" name="model"></select>
-              <p id="model-meta" class="field-hint"></p>
+              <div id="intake-files" class="intake-files"></div>
+              <div class="intake-hidden">
+                <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+                <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+                <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+                <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+              </div>
             </div>
-            <fieldset class="field">
-              <legend>Recipe</legend>
-              <div id="recipe-radios" class="seg">
-                <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full rem2</label>
-                <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
-                <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
-                <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
-              </div>
-              <p id="recipe-hint" class="field-hint"></p>
-            </fieldset>
-          </section>
-
-          <section data-wiz-panel="3" hidden>
-            <h2>Which mutants</h2>
-            <p class="field-hint">No CSV means single-site saturation of the whole sequence.</p>
-            <label class="file-field">
-              <span>Mutants CSV</span>
-              <span class="file-name" data-for="file-mutants">empty → saturation</span>
-              <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
-            </label>
-            <fieldset id="saturation-fields" class="field sat-box">
-              <legend>Saturation limits</legend>
-              <div class="field-row">
-                <label>mutant_sites
-                  <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
-                </label>
-                <label>positions
-                  <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
-                </label>
-                <label>residue_range
-                  <input type="text" name="residue_range" id="f-range" placeholder="10-20">
-                </label>
-              </div>
-            </fieldset>
+            <div id="input-gate" class="input-gate" aria-live="polite"></div>
+            <details class="advanced">
+              <summary>Mutants and limits</summary>
+              <p class="field-hint">No CSV means single-site saturation of the whole sequence.</p>
+              <fieldset id="saturation-fields" class="field sat-box">
+                <legend>Saturation limits</legend>
+                <div class="field-row">
+                  <label>mutant_sites
+                    <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
+                  </label>
+                  <label>positions
+                    <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
+                  </label>
+                  <label>residue_range
+                    <input type="text" name="residue_range" id="f-range" placeholder="10-20">
+                  </label>
+                </div>
+              </fieldset>
+            </details>
             <details class="advanced">
               <summary>Advanced</summary>
               <div class="field-row">
@@ -181,15 +151,29 @@
                 <pre id="cli-preview" class="cli"></pre>
               </div>
             </details>
+            <div id="model-gate" class="input-gate" hidden></div>
           </section>
 
           <p id="form-error" class="form-error" hidden></p>
-          <div class="wiz-nav">
-            <button type="button" class="btn" id="btn-wiz-back" hidden>Back</button>
-            <button type="button" class="btn btn-primary" id="btn-wiz-next">Next</button>
-            <button type="submit" id="btn-submit" class="btn btn-primary" hidden>Start scoring</button>
+          <div class="form-actions">
+            <button type="submit" id="btn-submit" class="btn btn-primary">Start scoring</button>
           </div>
         </form>
+
+        <div class="panel board-panel" id="pg-board">
+          <div class="board-head">
+            <div>
+              <h2 id="board-title">ProteinGym substitutions</h2>
+              <p class="muted" id="board-sub">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
+            </div>
+            <span class="board-metric">Higher is better</span>
+          </div>
+          <div class="board-filters" id="board-filters" role="tablist" aria-label="Leaderboard filters"></div>
+          <div class="board-table-wrap">
+            <table class="board-table" id="leaderboard-body"></table>
+          </div>
+          <p class="board-note" id="leaderboard-note"></p>
+        </div>
       </section>
 
       <section id="page-workspace" class="page" hidden>

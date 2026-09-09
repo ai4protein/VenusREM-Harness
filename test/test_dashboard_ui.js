@@ -49,6 +49,9 @@ this.modelUnlocked = modelUnlocked;
 this.modelLockReason = modelLockReason;
 this.preferredModel = preferredModel;
 this.inputGateMessage = inputGateMessage;
+this.highlightPositions = highlightPositions;
+this.classifyIntakeFile = classifyIntakeFile;
+this.currentBoard = currentBoard;
 `;
 
 const context = vm.createContext({
@@ -121,7 +124,7 @@ check("clampK", () => {
   assert.strictEqual(context.clampK("2"), 5);
   assert.strictEqual(context.clampK(20), 20);
   assert.strictEqual(context.clampK(999), 100);
-  assert.strictEqual(context.clampK("nope"), 20);
+  assert.strictEqual(context.clampK("nope"), 30);
 });
 
 check("isLive", () => {
@@ -164,16 +167,19 @@ check("parseHash routes", () => {
   assert.strictEqual(run.page, "workspace");
   assert.strictEqual(run.id, "abc12");
   context.location.hash = "#/structure/abc12";
-  assert.strictEqual(context.parseHash().page, "structure");
+  assert.strictEqual(context.parseHash().page, "review");
+  assert.strictEqual(context.parseHash().id, "abc12");
   context.location.hash = "#/select/abc12";
-  assert.strictEqual(context.parseHash().page, "select");
+  assert.strictEqual(context.parseHash().page, "review");
+  context.location.hash = "#/review/abc12";
+  assert.strictEqual(context.parseHash().page, "review");
   context.location.hash = "#/select";
-  assert.strictEqual(context.parseHash().page, "select");
+  assert.strictEqual(context.parseHash().page, "review");
   context.location.hash = "#/nope";
   assert.strictEqual(context.parseHash().page, "runs");
 });
 
-check("residue bar sits on the structure", () => {
+check("residue bar sits on the review page", () => {
   context.state.job = { sequence: "ACDEY" };
   context.state.picked = { resi: 3, resn: "D", chain: "A" };
   const strip = context.aaStripHtml("ACDEY", [2]);
@@ -184,10 +190,11 @@ check("residue bar sits on the structure", () => {
   const nav = context.aaNavHtml("ACDEY");
   assert.ok(nav.includes('id="aa-jump"'));
   assert.ok(nav.includes("data-aa=\"prev\""));
-  const panel = context.molPanelHtml("bench");
-  assert.ok(panel.includes('id="aa-strip"'));
-  assert.ok(panel.includes('id="aa-nav"'));
-  assert.ok(panel.indexOf("aa-strip") < panel.indexOf("mol-host"));
+  const bench = context.proteinBenchHtml("review", "<p>side</p>", "<div id='mol-host'></div>");
+  assert.ok(bench.includes('id="aa-strip"'));
+  assert.ok(bench.includes('id="aa-nav"'));
+  assert.ok(bench.includes("review-seq"));
+  assert.ok(bench.indexOf("aa-strip") < bench.indexOf("mol-host"));
 });
 
 check("protein bench markup", () => {
@@ -198,13 +205,13 @@ check("protein bench markup", () => {
   assert.ok(html.includes("protein-side-pane"));
 });
 
-check("nextActions hide structure when already on bench", () => {
+check("nextActions point at the merged review page", () => {
   const job = { id: "r1", status: "done", has_pdb: true };
   const full = context.nextActionsHtml(job);
-  assert.ok(full.includes("#/structure/r1"));
-  const slim = context.nextActionsHtml(job, { hideStructure: true });
-  assert.ok(!slim.includes("#/structure/r1"));
-  assert.ok(slim.includes("#/select/r1"));
+  assert.ok(full.includes("#/review/r1"));
+  const slim = context.nextActionsHtml(job, { hideReview: true });
+  assert.ok(!slim.includes("#/review/r1"));
+  assert.ok(slim.includes("#/predict"));
   assert.strictEqual(context.nextActionsHtml({ id: "r1", status: "running" }), "");
 });
 
@@ -240,16 +247,15 @@ check("full rem2 treats MSA as optional", () => {
 
 check("html flow chrome", () => {
   assert.ok(html.includes('id="tab-predict"'));
-  assert.ok(html.includes('id="tab-structure"'));
-  assert.ok(html.includes('id="tab-select"') && html.includes("is-disabled"));
-  assert.ok(html.includes('data-wiz-tab="1"'));
-  assert.ok(html.includes('data-wiz-tab="2"'));
-  assert.ok(html.includes('data-wiz-tab="3"'));
-  assert.ok(html.includes('id="btn-submit"') && html.includes("hidden>Start scoring"));
+  assert.ok(html.includes('id="tab-review"') && html.includes("is-disabled"));
+  assert.ok(!html.includes("1. Inputs"));
+  assert.ok(html.includes('id="btn-submit"') && html.includes("Start scoring"));
+  assert.ok(html.includes('id="intake-box"'));
+  assert.ok(html.includes('id="model-cards"'));
+  assert.ok(html.includes('id="board-filters"'));
   assert.ok(html.includes('value="auto" selected'));
   assert.ok(html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
   assert.ok(html.includes('id="leaderboard-body"'));
-  assert.ok(html.includes("1. Inputs"));
   assert.ok(html.includes("skip → α=0"));
 });
 
@@ -262,6 +268,31 @@ check("fasta-only unlocks sequence models only", () => {
   const msg = context.inputGateMessage(fasta);
   assert.ok(msg.includes("sequence models"));
   assert.ok(msg.includes("α=0"));
+});
+
+check("intake classifies dropped files", () => {
+  assert.strictEqual(context.classifyIntakeFile({ name: "query.fasta" }), "fasta");
+  assert.strictEqual(context.classifyIntakeFile({ name: "2l6q.pdb" }), "pdb");
+  assert.strictEqual(context.classifyIntakeFile({ name: "aln.a2m" }), "msa");
+  assert.strictEqual(context.classifyIntakeFile({ name: "mut.csv" }), "mutants");
+});
+
+check("default highlight uses top mutants", () => {
+  context.state.selectedRow = null;
+  context.state.seqRange = null;
+  context.state.top = { rows: [{ mutant: "A1C" }, { mutant: "V10A" }], k: 30 };
+  const pos = context.highlightPositions().map(Number).sort((a, b) => a - b);
+  assert.strictEqual(pos.join(","), "1,10");
+});
+
+check("leaderboard catalog has filter boards", () => {
+  context.state.boardId = "stability";
+  assert.strictEqual(context.currentBoard().id, "stability");
+  assert.strictEqual(context.currentBoard().rows[0].name, "VenusREM2");
+  assert.strictEqual(context.currentBoard().rows[0].score, 0.691);
+  context.state.boardId = "ablations";
+  assert.strictEqual(context.currentBoard().id, "ablations");
+  assert.strictEqual(context.currentBoard().rows[0].score, 0.556);
 });
 
 check("pdb or accession unlocks VenusREM2", () => {
@@ -279,7 +310,10 @@ check("css protein pane is at least half", () => {
   assert.ok(css.includes("flex: 0 0 56%"));
   assert.ok(css.includes(".aa-strip"));
   assert.ok(css.includes(".aa-cell"));
-  assert.ok(css.includes(".board-row"));
+  assert.ok(css.includes(".board-table"));
+  assert.ok(css.includes(".board-filter"));
+  assert.ok(css.includes(".intake"));
+  assert.ok(css.includes(".review-seq"));
   assert.ok(css.includes(".job-tip"));
 });
 

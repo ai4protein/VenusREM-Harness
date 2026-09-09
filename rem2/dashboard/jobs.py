@@ -304,6 +304,74 @@ def slice_scores(
     return rows, total
 
 
+def values_histogram(values: list[float], bins: int = 16, key: str = "value") -> dict[str, Any]:
+    series = pd.to_numeric(pd.Series(values), errors="coerce").dropna()
+    if series.empty:
+        return {"bins": [], "min": None, "max": None, "key": key}
+    lo = float(series.min())
+    hi = float(series.max())
+    if lo == hi:
+        return {
+            "bins": [{"lo": lo, "hi": hi, "count": int(len(series))}],
+            "min": lo,
+            "max": hi,
+            "key": key,
+        }
+    counts = pd.cut(series, bins=bins, include_lowest=True)
+    hist = []
+    for interval, count in counts.value_counts(sort=False).items():
+        hist.append(
+            {
+                "lo": float(interval.left),
+                "hi": float(interval.right),
+                "count": int(count),
+            }
+        )
+    return {"bins": hist, "min": lo, "max": hi, "key": key}
+
+
+def residue_features(job: dict[str, Any], store: RunStore) -> dict[str, Any]:
+    """Per-residue RSA / pLDDT plus histograms for the review page."""
+    run_id = job["id"]
+    inputs = store.inputs_dir(run_id)
+    result = Path(job.get("out_dir") or store.result_dir(run_id))
+    fasta = existing_fasta(inputs) or _first_file(result / "_inputs" / "aa_seq", (".fasta", ".fa", ".faa"))
+    _name, sequence = _read_fasta_sequence(Path(fasta)) if fasta else ("", job.get("sequence") or "")
+    sequence = sequence or str(job.get("sequence") or "")
+    pdb = resolve_pdb_artifact(inputs, result / "_inputs" / "pdbs")
+    plddt: list[float] = []
+    rsa: list[float] = []
+    has_plddt = False
+    if pdb and sequence:
+        try:
+            from rem2.scoring.structure_weights import (
+                load_residue_plddt_from_pdb,
+                load_residue_rsa_weights_from_pdb,
+                plddt_skip_reason,
+            )
+
+            protein = job.get("protein") or Path(pdb).stem
+            rsa_t = load_residue_rsa_weights_from_pdb(len(sequence), protein, pdb_file=str(pdb))
+            if rsa_t is not None:
+                rsa = [round(float(v), 4) for v in rsa_t.reshape(-1).tolist()[: len(sequence)]]
+            if plddt_skip_reason(str(pdb)) is None:
+                plddt_t = load_residue_plddt_from_pdb(len(sequence), protein, pdb_file=str(pdb))
+                if plddt_t is not None:
+                    has_plddt = True
+                    plddt = [round(float(v) * 100.0, 2) for v in plddt_t.reshape(-1).tolist()[: len(sequence)]]
+        except Exception:
+            pass
+    return {
+        "sequence": sequence,
+        "has_pdb": bool(pdb),
+        "has_plddt": has_plddt,
+        "plddt": plddt,
+        "rsa": rsa,
+        "plddt_histogram": values_histogram(plddt, key="plddt") if plddt else {"bins": [], "key": "plddt"},
+        "rsa_histogram": values_histogram(rsa, key="rsa") if rsa else {"bins": [], "key": "rsa"},
+    }
+
+
 def histogram(frame: pd.DataFrame, primary: Optional[str], bins: int = 24) -> dict[str, Any]:
     if frame.empty or not primary or primary not in frame.columns:
         return {"bins": [], "min": None, "max": None, "primary_score": primary}

@@ -135,6 +135,11 @@ def test_create_run_scores_and_top(client):
     assert hist["bins"]
     assert hist["primary_score"] == "esm2_t6_8M_UR50D__rem2"
 
+    feats = client.get(f"/api/runs/{run_id}/features").json()
+    assert feats["sequence"] == "ACDE"
+    assert "plddt_histogram" in feats
+    assert "rsa_histogram" in feats
+
     fasta = client.get(f"/api/runs/{run_id}/artifact?kind=fasta")
     assert fasta.status_code == 200
     assert "ACDE" in fasta.text
@@ -151,11 +156,35 @@ def test_proteingym_leaderboard(client):
     assert board["rows"][0]["name"] == "VenusREM2"
     assert board["rows"][0]["rank"] == 1
     assert board["rows"][0]["score"] == 0.556
-    assert "pdb" in board["rows"][0]["inputs"]
-    assert "msa" in board["rows"][0]["inputs"]
+    assert "str" in board["rows"][0]["inputs"]
+    assert "evo" in board["rows"][0]["inputs"]
     api = client.get("/api/leaderboard").json()
-    assert api["rows"][0]["name"] == "VenusREM2"
-    assert api["n"] == 217
+    boards = {item["id"]: item for item in api["boards"]}
+    assert set(boards) >= {"substitutions", "stability", "activity", "ablations"}
+    assert boards["substitutions"]["rows"][0]["name"] == "VenusREM2"
+    assert boards["substitutions"]["n"] == 217
+    assert boards["stability"]["rows"][0]["name"] == "VenusREM2"
+    assert boards["stability"]["rows"][0]["score"] == 0.691
+    names = {row["name"] for row in boards["substitutions"]["rows"]}
+    assert names == {
+        "VenusREM2",
+        "AIDO Protein-RAG (16B)",
+        "VenusREM",
+        "ProSST (K=2048)",
+        "S3F-MSA",
+        "Protriever",
+        "ESCOTT",
+        "PoET (200M)",
+        "ESM3 open (1.4B)",
+        "RSALOR",
+        "VespaG",
+        "SaProt (650M)",
+        "TranceptEVE-L",
+        "GEMME",
+        "ProtSSN ensemble",
+    }
+    assert boards["ablations"]["rows"][0]["score"] == 0.556
+    assert boards["ablations"]["rows"][-1]["score"] == 0.524
 
 
 def test_create_run_requires_input(client):
@@ -171,7 +200,7 @@ def test_static_index(client):
     res = client.get("/")
     assert res.status_code == 200
     assert b"REM2 Dashboard" in res.content
-    assert b"Structure" in res.content
+    assert b"Review" in res.content
     assert b"AlphaFold DB" in res.content
     js = client.get("/app.js")
     assert js.status_code == 200
@@ -190,7 +219,8 @@ def test_static_index(client):
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" in res.content
     assert b"leaderboard-body" in res.content
     assert "skip → α=0".encode() in res.content
-    assert b"1. Inputs" in res.content
+    assert b"board-filters" in res.content
+    assert b"intake-box" in res.content
     assert b"New job" in res.content
     vendor = client.get("/vendor/3Dmol-min.js")
     assert vendor.status_code == 200

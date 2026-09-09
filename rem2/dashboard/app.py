@@ -7,7 +7,7 @@ from typing import Optional
 
 from rem2 import __version__
 from rem2.dashboard.inspect import doctor_report, list_model_payload
-from rem2.dashboard.leaderboard import proteingym_board
+from rem2.dashboard.leaderboard import proteingym_catalog
 from rem2.dashboard.jobs import (
     JobRunner,
     attach_structure_meta,
@@ -17,6 +17,7 @@ from rem2.dashboard.jobs import (
     existing_query_pdb,
     histogram,
     load_score_frame,
+    residue_features,
     maybe_fetch_structures,
     resolve_pdb_artifact,
     slice_scores,
@@ -83,7 +84,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
 
     @app.get("/api/leaderboard")
     def leaderboard():
-        return proteingym_board()
+        return proteingym_catalog()
 
     @app.get("/api/runs")
     def list_runs():
@@ -127,7 +128,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         }
 
     @app.get("/api/runs/{run_id}/top")
-    def get_top(run_id: str, k: int = 20):
+    def get_top(run_id: str, k: int = 30):
         job = store.load_job(run_id)
         if job is None:
             raise HTTPException(404, "run not found")
@@ -138,6 +139,14 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
             frame, primary=primary, offset=0, limit=max(1, min(k, 500)), sort="-score"
         )
         return {"rows": rows, "k": k, "primary_score": primary}
+
+    @app.get("/api/runs/{run_id}/features")
+    def get_features(run_id: str):
+        job = store.load_job(run_id)
+        if job is None:
+            raise HTTPException(404, "run not found")
+        attach_structure_meta(job, store)
+        return residue_features(job, store)
 
     @app.get("/api/runs/{run_id}/histogram")
     def get_histogram(run_id: str):

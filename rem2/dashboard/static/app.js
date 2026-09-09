@@ -50,20 +50,68 @@
     { name: "proteinmpnn", description: "ProteinMPNN", supports_tf: true, needs_pdb: true, needs_msa: false, input_kind: "structure" },
   ];
 
-  var FALLBACK_BOARD = {
-    id: "proteingym_substitutions",
-    title: "ProteinGym substitutions",
-    metric: "Mean Spearman",
-    n: 217,
+  var FALLBACK_PAPER = [
+    { name: "VenusREM2", model: "venusrem2", highlight: true, inputs: ["seq", "str", "evo"], note: "ProSST ensemble + rem2", average: 0.556, activity: 0.541, binding: 0.495, expression: 0.557, organismal: 0.494, stability: 0.691 },
+    { name: "AIDO Protein-RAG (16B)", inputs: ["str", "evo"], average: 0.518, activity: 0.517, binding: 0.426, expression: 0.522, organismal: 0.491, stability: 0.635 },
+    { name: "VenusREM", inputs: ["seq", "str", "evo"], average: 0.518, activity: 0.495, binding: 0.454, expression: 0.533, organismal: 0.459, stability: 0.650 },
+    { name: "ProSST (K=2048)", inputs: ["seq", "str"], average: 0.507, activity: 0.476, binding: 0.445, expression: 0.530, organismal: 0.431, stability: 0.653 },
+    { name: "S3F-MSA", inputs: ["str", "evo"], average: 0.496, activity: 0.502, binding: 0.440, expression: 0.479, organismal: 0.477, stability: 0.581 },
+    { name: "Protriever", inputs: ["evo"], average: 0.479, activity: 0.487, binding: 0.396, expression: 0.496, organismal: 0.479, stability: 0.537 },
+    { name: "ESCOTT", inputs: ["str", "evo"], average: 0.476, activity: 0.499, binding: 0.389, expression: 0.468, organismal: 0.466, stability: 0.557 },
+    { name: "PoET (200M)", inputs: ["evo"], average: 0.470, activity: 0.494, binding: 0.396, expression: 0.466, organismal: 0.475, stability: 0.519 },
+    { name: "ESM3 open (1.4B)", inputs: ["seq", "str"], average: 0.466, activity: 0.430, binding: 0.400, expression: 0.470, organismal: 0.389, stability: 0.641 },
+    { name: "RSALOR", inputs: ["str", "evo"], average: 0.465, activity: 0.479, binding: 0.416, expression: 0.427, organismal: 0.426, stability: 0.575 },
+    { name: "VespaG", inputs: ["seq"], average: 0.458, activity: 0.493, binding: 0.370, expression: 0.456, organismal: 0.437, stability: 0.533 },
+    { name: "SaProt (650M)", model: "saprot", inputs: ["seq", "str"], average: 0.457, activity: 0.458, binding: 0.378, expression: 0.488, organismal: 0.366, stability: 0.592 },
+    { name: "TranceptEVE-L", inputs: ["seq", "evo"], average: 0.456, activity: 0.487, binding: 0.376, expression: 0.457, organismal: 0.459, stability: 0.500 },
+    { name: "GEMME", inputs: ["evo"], average: 0.455, activity: 0.482, binding: 0.383, expression: 0.438, organismal: 0.452, stability: 0.519 },
+    { name: "ProtSSN ensemble", inputs: ["seq", "str"], average: 0.449, activity: 0.466, binding: 0.366, expression: 0.449, organismal: 0.396, stability: 0.568 },
+  ];
+  function fallbackBoardRows(metric) {
+    return FALLBACK_PAPER.slice()
+      .sort(function (a, b) { return b[metric] - a[metric]; })
+      .map(function (row, i) {
+        return {
+          rank: i + 1,
+          name: row.name,
+          model: row.model,
+          inputs: row.inputs,
+          note: row.note,
+          highlight: !!row.highlight,
+          score: row[metric],
+        };
+      });
+  }
+  var FALLBACK_CATALOG = {
+    default: "substitutions",
     url: "https://proteingym.org/benchmarks",
-    note: "Published full rem2 numbers used a PDB and an MSA. Sequence-only runs skip structure terms and set α=0.",
-    rows: [
-      { rank: 1, name: "VenusREM2", model: "venusrem2", score: 0.556, inputs: ["pdb", "msa"], highlight: true },
-      { rank: 2, name: "rem2 · ESM-2 650M", model: "esm2", score: 0.468, inputs: ["pdb", "msa"] },
-      { rank: 3, name: "rem2 · ESM-1v", model: "esm1v", score: 0.457, inputs: ["pdb", "msa"] },
-      { rank: 4, name: "rem2 · SaProt", model: "saprot", score: 0.454, inputs: ["pdb", "msa"] },
+    metric: "Mean Spearman",
+    boards: [
+      { id: "substitutions", label: "Substitutions", title: "ProteinGym substitutions", n: 217, note: "Official 217-assay ProteinGym protocol from the REM2 paper.", rows: fallbackBoardRows("average") },
+      { id: "stability", label: "Stability", title: "ProteinGym stability", n: 217, note: "Paper Table 1 Stability column.", rows: fallbackBoardRows("stability") },
+      { id: "activity", label: "Activity", title: "ProteinGym activity", n: 217, note: "Paper Table 1 Activity column.", rows: fallbackBoardRows("activity") },
+      { id: "binding", label: "Binding", title: "ProteinGym binding", n: 217, note: "Paper Table 1 Binding column.", rows: fallbackBoardRows("binding") },
+      { id: "expression", label: "Expression", title: "ProteinGym expression", n: 217, note: "Paper Table 1 Expression column.", rows: fallbackBoardRows("expression") },
+      { id: "organismal", label: "Organismal", title: "ProteinGym organismal fitness", n: 217, note: "Paper Table 1 Organismal column.", rows: fallbackBoardRows("organismal") },
+      {
+        id: "ablations",
+        label: "Full rem2",
+        title: "VenusREM2 recipe ladder",
+        n: 217,
+        note: "VenusREM2 staged scores from the paper: raw 0.524 → full rem2 0.556.",
+        rows: [
+          { rank: 1, name: "VenusREM2 · rem2", model: "venusrem2", score: 0.556, inputs: ["seq", "str", "evo"], highlight: true, note: "+ pLDDT (full)" },
+          { rank: 2, name: "VenusREM2 · + RSA", model: "venusrem2", score: 0.554, inputs: ["seq", "str", "evo"], note: "gated CCD + RSA" },
+          { rank: 3, name: "VenusREM2 · + gated CCD", model: "venusrem2", score: 0.550, inputs: ["seq", "str", "evo"], note: "adaptive mix + coherence gate" },
+          { rank: 4, name: "VenusREM2 · adaptive mix", model: "venusrem2", score: 0.542, inputs: ["seq", "str", "evo"], note: "entropy-α MSA" },
+          { rank: 5, name: "VenusREM2 · + ungated CCD", model: "venusrem2", score: 0.538, inputs: ["seq", "str", "evo"], note: "mix + κ=1" },
+          { rank: 6, name: "VenusREM2 · raw", model: "venusrem2", score: 0.524, inputs: ["seq", "str", "evo"], note: "uncalibrated ProSST ensemble" },
+        ],
+      },
     ],
   };
+  var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
+  var FEATURED_MODELS = ["venusrem2", "esm2", "esm2-8m", "saprot"];
 
   var PIPELINE = [
     { id: "fwd", label: "Forward", on: ["full", "raw", "msa", "ccd"] },
@@ -80,7 +128,10 @@
     connected: false,
     models: FALLBACK_MODELS.slice(),
     recipes: FALLBACK_RECIPES.slice(),
+    catalog: FALLBACK_CATALOG,
     board: FALLBACK_BOARD,
+    boardId: "substitutions",
+    features: null,
     runs: [],
     job: null,
     scores: null,
@@ -92,7 +143,8 @@
     sort: "-score",
     offset: 0,
     query: "",
-    k: 20,
+    k: 30,
+    seqRange: null,
     molFailed: false,
     pdbText: null,
     structureSource: "",
@@ -111,7 +163,7 @@
     },
     logText: null,
     logMissing: "",
-    wizardStep: 1,
+    seqDrag: null,
     split: {
       review: 56,
       structure: 64,
@@ -597,15 +649,10 @@
 
   function updateSelectTab() {
     var job = activeJob();
-    var id = (job && job.id) || state.activeRunId;
+    var id = job && job.id;
     setTabEnabled(
-      els.tabStructure,
-      id ? "#/structure/" + encodeURIComponent(id) : "",
-      "Open a run first"
-    );
-    setTabEnabled(
-      els.tabSelect,
-      job && job.status === "done" ? "#/select/" + encodeURIComponent(job.id) : "",
+      els.tabReview,
+      job && job.status === "done" ? "#/review/" + encodeURIComponent(id) : "",
       id ? "Wait until scoring finishes" : "Open a finished run first"
     );
   }
@@ -615,10 +662,11 @@
       runs: els.tabRuns,
       workspace: els.tabRuns,
       predict: els.tabPredict,
-      select: els.tabSelect,
-      structure: els.tabStructure,
+      review: els.tabReview,
+      select: els.tabReview,
+      structure: els.tabReview,
     };
-    var tabs = [els.tabRuns, els.tabPredict, els.tabSelect, els.tabStructure];
+    var tabs = [els.tabRuns, els.tabPredict, els.tabReview];
     for (var i = 0; i < tabs.length; i++) {
       if (tabs[i]) tabs[i].classList.remove("is-active");
     }
@@ -637,13 +685,9 @@
     if (!raw || raw === "/") return { page: "runs" };
     var parts = raw.split("/").filter(Boolean);
     if (parts[0] === "predict") return { page: "predict" };
-    if (parts[0] === "select") {
-      if (parts[1]) return { page: "select", id: decodeURIComponent(parts[1]) };
-      return { page: "select" };
-    }
-    if (parts[0] === "structure") {
-      if (parts[1]) return { page: "structure", id: decodeURIComponent(parts[1]) };
-      return { page: "structure" };
+    if (parts[0] === "review" || parts[0] === "select" || parts[0] === "structure") {
+      if (parts[1]) return { page: "review", id: decodeURIComponent(parts[1]) };
+      return { page: "review" };
     }
     if (parts[0] === "runs") {
       if (parts[1]) return { page: "workspace", id: decodeURIComponent(parts[1]) };
@@ -705,38 +749,55 @@
     var sel = els.modelSelect;
     if (!sel) return;
     var snap = formSnapshot();
-    var prev = sel.value || snap.model || "";
+    var prev = sel.value || snap.model || "venusrem2";
     sel.innerHTML = "";
     var models = state.models.slice().sort(function (a, b) {
-      var ua = modelUnlocked(a, snap) ? 0 : 1;
-      var ub = modelUnlocked(b, snap) ? 0 : 1;
-      if (ua !== ub) return ua - ub;
       if (a.name === "venusrem2") return -1;
       if (b.name === "venusrem2") return 1;
       return a.name < b.name ? -1 : 1;
     });
-    var open = document.createElement("optgroup");
-    open.label = "Available for these inputs";
-    var locked = document.createElement("optgroup");
-    locked.label = "Locked — add the missing input";
     for (var i = 0; i < models.length; i++) {
       var m = models[i];
-      var reason = modelLockReason(m, snap);
       var opt = document.createElement("option");
       opt.value = m.name;
-      if (reason) {
-        opt.disabled = true;
-        opt.textContent = m.name + " — " + reason;
-        locked.appendChild(opt);
-      } else {
-        opt.textContent = m.name + (m.needs_pdb ? "  (structure)" : "  (sequence)");
-        open.appendChild(opt);
-      }
+      opt.textContent = m.name + (m.needs_pdb ? "  (structure)" : "  (sequence)");
+      sel.appendChild(opt);
     }
-    if (open.childNodes.length) sel.appendChild(open);
-    if (locked.childNodes.length) sel.appendChild(locked);
-    if (prev && modelUnlocked(modelByName(prev), snap)) sel.value = prev;
-    else sel.value = preferredModel(snap);
+    if (prev && modelByName(prev)) sel.value = prev;
+    else sel.value = "venusrem2";
+    renderModelCards();
+    updateModelMeta();
+    updateInputGate();
+    updateCli();
+  }
+
+  function renderModelCards() {
+    var host = $("model-cards");
+    if (!host) return;
+    var current = (els.modelSelect && els.modelSelect.value) || "venusrem2";
+    var names = FEATURED_MODELS.slice();
+    var html = "";
+    for (var i = 0; i < names.length; i++) {
+      var spec = modelByName(names[i]);
+      if (!spec) continue;
+      html +=
+        '<button type="button" class="model-card' +
+        (spec.name === current ? " is-on" : "") +
+        '" data-model="' +
+        esc(spec.name) +
+        '">' +
+        esc(spec.name) +
+        "<small>" +
+        esc(spec.description || (spec.needs_pdb ? "structure" : "sequence")) +
+        "</small></button>";
+    }
+    host.innerHTML = html;
+  }
+
+  function setModel(name) {
+    if (!name || !els.modelSelect) return;
+    if (modelByName(name)) els.modelSelect.value = name;
+    renderModelCards();
     updateModelMeta();
     updateInputGate();
     updateCli();
@@ -768,14 +829,52 @@
     updateCli();
   }
 
+  function currentBoard() {
+    var catalog = state.catalog || FALLBACK_CATALOG;
+    var boards = catalog.boards || [];
+    var id = state.boardId || catalog.default || "substitutions";
+    for (var i = 0; i < boards.length; i++) {
+      if (boards[i].id === id) return boards[i];
+    }
+    return boards[0] || FALLBACK_BOARD;
+  }
+
   function renderLeaderboard() {
-    var host = $("leaderboard-body");
+    var catalog = state.catalog || FALLBACK_CATALOG;
+    var board = currentBoard();
+    state.board = board;
     var note = $("leaderboard-note");
-    var board = state.board || FALLBACK_BOARD;
+    var title = $("board-title");
+    var sub = $("board-sub");
+    var filters = $("board-filters");
+    var host = $("leaderboard-body");
     if (note) note.textContent = board.note || "";
+    if (title) title.textContent = board.title || "ProteinGym substitutions";
+    if (sub) {
+      sub.innerHTML =
+        esc(String(board.n || 217)) +
+        " proteins · mean Spearman · <a href=\"" +
+        esc(catalog.url || "https://proteingym.org/benchmarks") +
+        '" target="_blank" rel="noreferrer">proteingym.org</a>';
+    }
+    if (filters) {
+      filters.innerHTML = (catalog.boards || [])
+        .map(function (item) {
+          return (
+            '<button type="button" class="board-filter' +
+            (item.id === board.id ? " is-on" : "") +
+            '" data-board="' +
+            esc(item.id) +
+            '">' +
+            esc(item.label || item.title) +
+            "</button>"
+          );
+        })
+        .join("");
+    }
     if (!host) return;
     var rows = board.rows || [];
-    host.innerHTML = rows
+    var body = rows
       .map(function (row) {
         var tags = (row.inputs || [])
           .map(function (tag) {
@@ -784,21 +883,25 @@
           .join("");
         var first = row.highlight || row.rank === 1;
         return (
-          '<li class="board-row' +
-          (first ? " is-first" : "") +
-          '"><span class="board-rank">' +
+          '<tr class="' +
+          (first ? "is-first" : "") +
+          '"><td class="board-rank">' +
           esc(String(row.rank)) +
-          '</span><span class="board-name">' +
+          '</td><td><span class="board-name">' +
           esc(row.name) +
           (row.note ? "<small>" + esc(row.note) + "</small>" : "") +
-          '</span><span class="board-tags">' +
+          '</span></td><td class="board-tags">' +
           tags +
-          '</span><span class="board-score">' +
+          '</td><td class="num board-score">' +
           Number(row.score).toFixed(3) +
-          "</span></li>"
+          "</td></tr>"
         );
       })
       .join("");
+    host.innerHTML =
+      "<thead><tr><th>Rank</th><th>Model</th><th>Inputs</th><th class=\"num\">Mean Spearman</th></tr></thead><tbody>" +
+      body +
+      "</tbody>";
   }
 
   async function loadCatalog() {
@@ -820,7 +923,11 @@
     }
     try {
       var board = await apiJson("/api/leaderboard");
-      if (board && Array.isArray(board.rows) && board.rows.length) {
+      if (board && Array.isArray(board.boards) && board.boards.length) {
+        state.catalog = board;
+        if (!state.boardId) state.boardId = board.default || "substitutions";
+        state.board = currentBoard();
+      } else if (board && Array.isArray(board.rows) && board.rows.length) {
         state.board = board;
       }
     } catch (err) {
@@ -831,46 +938,51 @@
     renderLeaderboard();
   }
 
-  function showWizard(step) {
-    var n = Math.max(1, Math.min(3, parseInt(step, 10) || 1));
-    state.wizardStep = n;
-    var panels = document.querySelectorAll("[data-wiz-panel]");
-    for (var i = 0; i < panels.length; i++) {
-      var id = parseInt(panels[i].getAttribute("data-wiz-panel"), 10);
-      setHidden(panels[i], id !== n);
-    }
-    var tabs = document.querySelectorAll("[data-wiz-tab]");
-    for (var t = 0; t < tabs.length; t++) {
-      var tab = tabs[t];
-      var idx = parseInt(tab.getAttribute("data-wiz-tab"), 10);
-      tab.classList.toggle("is-on", idx === n);
-      tab.classList.toggle("is-done", idx < n);
-    }
-    var back = $("btn-wiz-back");
-    var next = $("btn-wiz-next");
-    if (back) setHidden(back, n <= 1);
-    if (next) setHidden(next, n >= 3);
-    if (els.btnSubmit) setHidden(els.btnSubmit, n < 3);
-    if (n === 2) fillModels();
-    else updateInputGate();
+  function classifyIntakeFile(file) {
+    var n = ((file && file.name) || "").toLowerCase();
+    if (/\.(pdb|ent|cif)$/.test(n)) return "pdb";
+    if (/\.(a2m|a3m|sto)$/.test(n)) return "msa";
+    if (/\.(csv|tsv)$/.test(n)) return "mutants";
+    if (/\.(fa|fasta|faa|fna|txt)$/.test(n)) return "fasta";
+    return "";
   }
 
-  function wizardCanAdvance() {
+  function setInputFile(input, file) {
+    if (!input || !file) return;
+    try {
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+    } catch (err) {
+      /* browsers without DataTransfer keep the original picker */
+    }
+  }
+
+  function assignDroppedFiles(fileList) {
+    var files = fileList || [];
+    for (var i = 0; i < files.length; i++) {
+      var kind = classifyIntakeFile(files[i]);
+      if (kind === "fasta") setInputFile($("file-fasta"), files[i]);
+      else if (kind === "pdb") setInputFile($("file-pdb"), files[i]);
+      else if (kind === "msa") setInputFile($("file-msa"), files[i]);
+      else if (kind === "mutants") setInputFile($("file-mutants"), files[i]);
+    }
+    updateFileLabels();
+    renderIntakeFiles();
+    updateInputGate();
+    updateCli();
+  }
+
+  function renderIntakeFiles() {
+    var host = $("intake-files");
+    if (!host) return;
     var snap = formSnapshot();
-    if (state.wizardStep === 1) {
-      if (snap.fasta || snap.pdb || snap.pdb_id || snap.uniprot_id) return true;
-      showFormError("Add a FASTA, PDB file, PDB id, or UniProt accession.");
-      return false;
-    }
-    if (state.wizardStep === 2) {
-      var spec = modelByName(snap.model);
-      var reason = modelLockReason(spec, snap);
-      if (reason) {
-        showFormError((spec && spec.name ? spec.name + " " : "") + reason + ".");
-        return false;
-      }
-    }
-    return true;
+    var bits = [];
+    if (snap.fasta) bits.push('<span class="intake-chip">FASTA · ' + esc(snap.fasta) + "</span>");
+    if (snap.pdb) bits.push('<span class="intake-chip">PDB · ' + esc(snap.pdb) + "</span>");
+    if (snap.msa) bits.push('<span class="intake-chip">MSA · ' + esc(snap.msa) + "</span>");
+    if (snap.mutants) bits.push('<span class="intake-chip">Mutants · ' + esc(snap.mutants) + "</span>");
+    host.innerHTML = bits.join("");
   }
 
   function runPhase(job) {
@@ -905,18 +1017,13 @@
     if (!job || job.status !== "done") return "";
     opts = opts || {};
     var cards = "";
-    if (!opts.hideStructure) {
+    if (!opts.hideReview) {
       cards +=
-        '<a class="next-card" href="#/structure/' +
+        '<a class="next-card" href="#/review/' +
         encodeURIComponent(job.id) +
-        '"><strong>Structure</strong><span>' +
-        (job.has_pdb ? "Open the 3D bench." : "No PDB yet. Fetch RCSB / AlphaFold DB.") +
-        "</span></a>";
+        '"><strong>Review</strong><span>Sequence, structure, top 30, and score / pLDDT / RSA.</span></a>';
     }
     cards +=
-      '<a class="next-card" href="#/select/' +
-      encodeURIComponent(job.id) +
-      '"><strong>Select top-K</strong><span>Export the highest-ranked mutants.</span></a>' +
       '<a class="next-card" href="#/predict"><strong>New job</strong><span>Score another sequence.</span></a>';
     return '<div class="next-row">' + cards + "</div>";
   }
@@ -983,7 +1090,13 @@
   }
 
   function proteinBenchHtml(kind, sideHtml, viewerHtml) {
+    var seq = jobSequence(state.job);
     return (
+      '<div class="review-wrap">' +
+      '<div class="review-seq">' +
+      aaNavHtml(seq) +
+      aaStripHtml(seq, highlightPositions()) +
+      "</div>" +
       '<div class="protein-bench" data-split="' +
       esc(kind) +
       '" data-viewer="end">' +
@@ -993,7 +1106,7 @@
       '<div class="protein-gutter" data-gutter role="separator" aria-orientation="vertical" title="Drag to resize"></div>' +
       '<section class="protein-viewer-pane">' +
       viewerHtml +
-      "</section></div>"
+      "</section></div></div>"
     );
   }
 
@@ -1016,18 +1129,13 @@
     var rows = runs
       .map(function (run) {
         var id = encodeURIComponent(run.id);
+        var dest = run.status === "done" ? "#/review/" + id : "#/runs/" + id;
         var actions =
-          '<a class="btn-link" href="#/runs/' +
-          id +
+          '<a class="btn-link" href="' +
+          dest +
           '">' +
-          (isLive(run.status) ? "Watch" : "Open") +
-          "</a>" +
-          '<a class="btn-link" href="#/structure/' +
-          id +
-          '">Structure</a>';
-        if (run.status === "done") {
-          actions += '<a class="btn-link" href="#/select/' + id + '">Select</a>';
-        }
+          (isLive(run.status) ? "Watch" : "Review") +
+          "</a>";
         return (
           "<tr data-id=\"" +
           esc(run.id) +
@@ -1097,10 +1205,40 @@
     return set;
   }
 
+  function topMutPositions() {
+    var top = (state.top && state.top.rows) || [];
+    var set = {};
+    for (var i = 0; i < top.length; i++) {
+      var muts = parseMutants(mutantField(top[i]));
+      for (var j = 0; j < muts.length; j++) set[muts[j].pos] = true;
+    }
+    return Object.keys(set).map(function (k) {
+      return parseInt(k, 10);
+    });
+  }
+
+  function rangePositions() {
+    var range = state.seqRange;
+    if (!range || !range.lo || !range.hi) return [];
+    var out = [];
+    var lo = Math.min(range.lo, range.hi);
+    var hi = Math.max(range.lo, range.hi);
+    for (var p = lo; p <= hi; p++) out.push(p);
+    return out;
+  }
+
+  function highlightPositions() {
+    return topMutPositions();
+  }
+
   function currentMutPositions() {
-    return parseMutants(mutantField(state.selectedRow)).map(function (m) {
+    var fromRow = parseMutants(mutantField(state.selectedRow)).map(function (m) {
       return m.pos;
     });
+    if (fromRow.length) return fromRow;
+    var ranged = rangePositions();
+    if (ranged.length) return ranged;
+    return topMutPositions();
   }
 
   function renderSequence(seq, positions) {
@@ -1136,6 +1274,9 @@
       var pos = i + 1;
       var cls = "aa-cell seq-aa";
       if (set[pos]) cls += " is-mut";
+      if (state.seqRange && pos >= Math.min(state.seqRange.lo, state.seqRange.hi) && pos <= Math.max(state.seqRange.lo, state.seqRange.hi)) {
+        cls += " is-range";
+      }
       if (picked === pos) cls += " is-pick";
       var showNum = pos === 1 || pos % 10 === 0 || picked === pos;
       html +=
@@ -1197,7 +1338,10 @@
       var cells = strip.querySelectorAll(".aa-cell");
       for (var i = 0; i < cells.length; i++) {
         var pos = parseInt(cells[i].getAttribute("data-pos"), 10);
+        var lo = state.seqRange ? Math.min(state.seqRange.lo, state.seqRange.hi) : 0;
+        var hi = state.seqRange ? Math.max(state.seqRange.lo, state.seqRange.hi) : 0;
         cells[i].classList.toggle("is-pick", pos === picked);
+        cells[i].classList.toggle("is-range", !!(lo && hi && pos >= lo && pos <= hi));
         var num = cells[i].querySelector(".aa-num");
         if (num) num.classList.toggle("is-on", pos === 1 || pos % 10 === 0 || pos === picked);
       }
@@ -1255,7 +1399,7 @@
     if (!bins.length) {
       ctx.fillStyle = "#6d675c";
       ctx.font = "13px ui-sans-serif, system-ui, sans-serif";
-      ctx.fillText("No score histogram yet.", 8, 24);
+      ctx.fillText((data && data.empty) || "No histogram yet.", 8, 24);
       return;
     }
     var max = 1;
@@ -1465,7 +1609,7 @@
       '<div class="page-head"><h1 class="mono">' +
       esc(job.protein || job.id) +
       "</h1>" +
-      '<p class="muted">Follow the steps. Structure and top-K come after scoring finishes.</p></div>' +
+      '<p class="muted">Scoring this run. Review opens when it finishes.</p></div>' +
       runFlowHtml(job) +
       '<div class="panel overview">' +
       ov("protein", job.protein || "—") +
@@ -1494,19 +1638,16 @@
       '<div class="bench-head">' +
       '<div><h1 class="mono">' +
       esc(job.protein || job.id) +
-      "</h1><p class=\"muted\">Candidates on the left. Protein stays on the right — drag the gutter.</p></div>" +
+      "</h1><p class=\"muted\">Top 30 highlighted on the sequence. Drag letters to select. Scores, pLDDT, and RSA on the left.</p></div>" +
       runFlowHtml(job) +
       "</div>" +
       err +
-      nextActionsHtml(job, { hideStructure: hasCoord }) +
-      '<div class="panel seq-box"><h2>Sequence</h2>' +
-      renderSequence(seq, positions) +
+      nextActionsHtml(job, { hideReview: true }) +
+      '<div class="hist-grid">' +
+      histPanelHtml("hist-canvas", "Score distribution", primary) +
+      histPanelHtml("plddt-canvas", "pLDDT distribution", "") +
+      histPanelHtml("rsa-canvas", "RSA distribution", "") +
       "</div>" +
-      '<div class="panel hist-box"><h2>Score distribution</h2>' +
-      '<canvas id="hist-canvas" class="hist-canvas"></canvas>' +
-      '<div class="hist-meta"><span id="hist-tip"> </span><span>' +
-      esc(primary) +
-      "</span></div></div>" +
       '<div class="panel">' +
       '<div class="toolbar">' +
       '<input type="search" id="score-q" placeholder="Search mutants" title="Press Enter" value="' +
@@ -1526,13 +1667,51 @@
         : "");
     var viewer = hasCoord
       ? molPanelHtml("bench")
-      : '<div class="viewer-empty"><h2>No coordinates</h2><p>The protein pane stays here. Fetch RCSB / AlphaFold when you have an id.</p><a class="btn btn-primary" href="#/structure/' +
-        encodeURIComponent(job.id) +
-        '">Fetch structure</a></div>';
+      : '<div class="viewer-empty"><h2>No coordinates</h2><p>The protein pane stays here. Fetch RCSB / AlphaFold when you have an id.</p></div>';
     host.innerHTML = proteinBenchHtml("review", side, viewer);
     mountBench("review");
-    var canvas = $("hist-canvas");
-    if (canvas) drawHistogram(canvas, state.histogram || { bins: [] });
+    drawReviewHists();
+  }
+
+  function histPanelHtml(id, title, extra) {
+    return (
+      '<div class="panel hist-box"><h2>' +
+      esc(title) +
+      "</h2>" +
+      '<canvas id="' +
+      id +
+      '" class="hist-canvas"></canvas>' +
+      '<div class="hist-meta"><span id="' +
+      id +
+      '-tip"> </span><span>' +
+      esc(extra || "") +
+      "</span></div></div>"
+    );
+  }
+
+  function drawReviewHists() {
+    var score = $("hist-canvas");
+    if (score) drawHistogram(score, state.histogram || { bins: [] });
+    var feats = state.features || {};
+    var plddt = $("plddt-canvas");
+    if (plddt) {
+      var pHist = feats.plddt_histogram || { bins: [] };
+      if (!(feats.plddt && feats.plddt.length)) {
+        pHist = {
+          bins: [],
+          empty: feats.has_pdb && !feats.has_plddt
+            ? "Crystal / experimental PDB — no pLDDT."
+            : "No pLDDT yet.",
+        };
+      }
+      drawHistogram(plddt, pHist);
+    }
+    var rsa = $("rsa-canvas");
+    if (rsa) {
+      var rHist = feats.rsa_histogram || { bins: [] };
+      if (!(feats.rsa && feats.rsa.length)) rHist = { bins: rHist.bins || [], empty: rHist.bins && rHist.bins.length ? "" : "No RSA yet." };
+      drawHistogram(rsa, rHist.bins && rHist.bins.length ? rHist : { bins: [], empty: "No RSA yet." });
+    }
   }
 
   function ov(k, v) {
@@ -1623,15 +1802,52 @@
       loadScores().then(patchScores);
     });
     host.addEventListener("mousemove", function (ev) {
-      if (ev.target.id !== "hist-canvas") return;
-      var tip = $("hist-tip");
+      if (!ev.target.classList || !ev.target.classList.contains("hist-canvas")) return;
+      var tip = $(ev.target.id + "-tip") || $("hist-tip");
       if (tip) tip.textContent = histTip(ev.target, ev);
     });
     host.addEventListener("mouseleave", function (ev) {
-      if (ev.target.id !== "hist-canvas") return;
-      var tip = $("hist-tip");
+      if (!ev.target.classList || !ev.target.classList.contains("hist-canvas")) return;
+      var tip = $(ev.target.id + "-tip") || $("hist-tip");
       if (tip) tip.textContent = " ";
     }, true);
+    host.addEventListener("pointerdown", function (ev) {
+      var cell = ev.target.closest && ev.target.closest(".aa-cell[data-pos]");
+      if (!cell || !host.contains(cell)) return;
+      var pos = parseInt(cell.getAttribute("data-pos"), 10);
+      if (!pos) return;
+      state.seqDrag = { start: pos, end: pos };
+      state.seqRange = { lo: pos, hi: pos };
+      state.selectedRow = null;
+      pickSequencePos(pos);
+      refreshAaStripHighlight();
+      try {
+        host.setPointerCapture(ev.pointerId);
+      } catch (err) {
+        /* ignore */
+      }
+    });
+    host.addEventListener("pointermove", function (ev) {
+      if (!state.seqDrag) return;
+      var el = document.elementFromPoint(ev.clientX, ev.clientY);
+      var cell = el && el.closest && el.closest(".aa-cell[data-pos]");
+      if (!cell) return;
+      var pos = parseInt(cell.getAttribute("data-pos"), 10);
+      if (!pos) return;
+      state.seqDrag.end = pos;
+      state.seqRange = {
+        lo: Math.min(state.seqDrag.start, pos),
+        hi: Math.max(state.seqDrag.start, pos),
+      };
+      refreshAaStripHighlight();
+    });
+    host.addEventListener("pointerup", function () {
+      if (state.seqDrag) {
+        pickSequencePos(state.seqDrag.end);
+        applyView({ zoom: "sel" });
+      }
+      state.seqDrag = null;
+    });
   }
 
   function patchScores() {
@@ -1951,8 +2167,7 @@
       '<div class="mol-fs-target" id="mol-fs-box">' +
       '<div class="mol-top">' +
       overlay +
-      aaNavHtml(seq) +
-      aaStripHtml(seq, currentMutPositions()) +
+      (bench ? "" : aaNavHtml(seq) + aaStripHtml(seq, currentMutPositions())) +
       "</div>" +
       '<div id="mol-host" class="viewer-host viewer-host-fill"></div>' +
       '<div class="mol-chrome"><div class="mol-legend" id="mol-legend"></div>' +
@@ -2261,7 +2476,7 @@
 
   function refreshSequenceHighlight() {
     var host = document.querySelector(".seq-box");
-    var muts = currentMutPositions();
+    var muts = highlightPositions();
     if (host) {
       var h2 = host.querySelector("h2");
       host.innerHTML = "";
@@ -2312,6 +2527,14 @@
       state.histogram = await apiJson("/api/runs/" + encodeURIComponent(id) + "/histogram");
     } catch (err) {
       state.histogram = { bins: [] };
+    }
+  }
+
+  async function loadFeatures(id) {
+    try {
+      state.features = await apiJson("/api/runs/" + encodeURIComponent(id) + "/features");
+    } catch (err) {
+      state.features = { plddt_histogram: { bins: [] }, rsa_histogram: { bins: [] }, has_plddt: false };
     }
   }
 
@@ -2380,7 +2603,7 @@
       return;
     }
     await loadFastaIfNeeded(state.job);
-    await Promise.all([loadScores(), loadHistogram(id), loadLog(id)]);
+    await Promise.all([loadScores(), loadHistogram(id), loadLog(id), loadTop(id), loadFeatures(id)]);
     renderWorkspace();
     if ($("mol-host")) {
       await maybeLoadViewer(state.job, selectionResis());
@@ -2508,7 +2731,7 @@
 
   function clampK(v) {
     var n = parseInt(v, 10);
-    if (!isFinite(n)) n = 20;
+    if (!isFinite(n)) n = 30;
     return Math.min(100, Math.max(5, n));
   }
 
@@ -2778,7 +3001,6 @@
       var reason = modelLockReason(spec, snap);
       if (reason) {
         showFormError((spec && spec.name ? spec.name + " " : "") + reason + ".");
-        showWizard(2);
         return;
       }
     }
@@ -2789,7 +3011,6 @@
       var id = job && job.id;
       if (!id) throw new Error("Server did not return a run id.");
       setActiveRun(id);
-      showWizard(1);
       var dest = "#/runs/" + encodeURIComponent(id);
       go(dest);
       if (location.hash !== dest) location.hash = dest;
@@ -2886,10 +3107,10 @@
   async function onRoute() {
     flash("");
     var route = parseHash();
-    if (route.page !== "workspace" && route.page !== "structure") setBenchMode(false);
-    if ((route.page === "select" || route.page === "structure") && !route.id) {
+    if (route.page !== "workspace" && route.page !== "review") setBenchMode(false);
+    if (route.page === "review" && !route.id) {
       if (state.activeRunId) {
-        go("#/" + route.page + "/" + encodeURIComponent(state.activeRunId));
+        go("#/review/" + encodeURIComponent(state.activeRunId));
         return;
       }
       go("#/runs");
@@ -2897,7 +3118,7 @@
     }
     state.route = route;
     setTabs(route.page);
-    if (route.page !== "workspace" && route.page !== "structure") teardownViewer();
+    if (route.page !== "workspace" && route.page !== "review") teardownViewer();
     if (route.page === "runs") {
       showPage("page-runs");
       try {
@@ -2910,21 +3131,17 @@
       }
     } else if (route.page === "predict") {
       showPage("page-predict");
-      showWizard(state.wizardStep || 1);
+      fillModels();
       updateCli();
-    } else if (route.page === "workspace") {
+      renderLeaderboard();
+    } else if (route.page === "workspace" || route.page === "review") {
       showPage("page-workspace");
       setActiveRun(route.id);
       await loadWorkspace(route.id);
-    } else if (route.page === "structure") {
-      showPage("page-structure");
-      setActiveRun(route.id);
-      teardownViewer();
-      await loadStructure(route.id);
-    } else if (route.page === "select") {
-      showPage("page-select");
-      setActiveRun(route.id);
-      await loadSelect(route.id);
+      if (route.page === "workspace" && state.job && state.job.status === "done") {
+        go("#/review/" + encodeURIComponent(state.job.id));
+        return;
+      }
     }
     schedulePoll();
   }
@@ -2979,7 +3196,7 @@
       } catch (err) {
         state.connected = false;
       }
-      if (state.route.page === "workspace" && state.route.id) {
+      if ((state.route.page === "workspace" || state.route.page === "review") && state.route.id) {
         var prev = state.job && state.job.status;
         var prevPhase = runPhase(state.job);
         var hadPdb = state.job && state.job.has_pdb;
@@ -2991,7 +3208,13 @@
           loadHistogram(state.route.id),
           loadLog(state.route.id),
           loadFastaIfNeeded(state.job),
+          loadTop(state.route.id),
+          loadFeatures(state.route.id),
         ]);
+        if (prev !== "done" && state.job.status === "done" && state.route.page === "workspace") {
+          go("#/review/" + encodeURIComponent(state.job.id));
+          return;
+        }
         var pdbArrived = state.job.has_pdb && !hadPdb;
         var statusChanged = prev !== state.job.status;
         var phaseChanged = prevPhase !== runPhase(state.job);
@@ -3003,34 +3226,7 @@
           var logEl = $("run-log");
           if (logEl) logEl.textContent = lastLogLines(state.logText, 30) || "Waiting for rem2…";
           if ($("score-table")) patchScores();
-          var canvas = $("hist-canvas");
-          if (canvas) drawHistogram(canvas, state.histogram || { bins: [] });
-        }
-        updateChrome();
-      } else if (state.route.page === "select" && state.route.id && state.job && isLive(state.job.status)) {
-        state.job = await apiJson("/api/runs/" + encodeURIComponent(state.route.id));
-        await loadTop(state.route.id);
-        renderSelect();
-        updateChrome();
-      } else if (state.route.page === "structure" && state.route.id && state.job && isLive(state.job.status)) {
-        var hadStruct = !!(state.job.has_pdb || currentSourceKey(state.job));
-        var structPhase = runPhase(state.job);
-        state.job = await apiJson("/api/runs/" + encodeURIComponent(state.route.id));
-        state.lastPoll = new Date();
-        state.connected = true;
-        var nowStruct = !!(state.job.has_pdb || currentSourceKey(state.job));
-        if (hadStruct !== nowStruct || structPhase !== runPhase(state.job) || state.job.status !== "running") {
-          renderStructure();
-          if (nowStruct) {
-            await maybeLoadViewer(state.job, selectionResis());
-          }
-        } else {
-          var rail = document.querySelector("#structure-body .flow-rail");
-          if (rail) {
-            var box = document.createElement("div");
-            box.innerHTML = runFlowHtml(state.job);
-            if (box.firstChild) rail.replaceWith(box.firstChild);
-          }
+          drawReviewHists();
         }
         updateChrome();
       }
@@ -3047,9 +3243,7 @@
       anyLive() ||
       (state.job &&
         isLive(state.job.status) &&
-        (state.route.page === "workspace" ||
-          state.route.page === "select" ||
-          state.route.page === "structure"));
+        (state.route.page === "workspace" || state.route.page === "review"));
     if (need) pollTimer = setTimeout(pollTick, POLL_MS);
   }
 
@@ -3057,12 +3251,14 @@
     if (!els.form) return;
     els.form.addEventListener("input", function () {
       updateFileLabels();
+      renderIntakeFiles();
       fillModels();
       updateModelMeta();
       updateCli();
     });
     els.form.addEventListener("change", function () {
       updateFileLabels();
+      renderIntakeFiles();
       fillModels();
       updateModelMeta();
       updateCli();
@@ -3076,35 +3272,49 @@
         submitJob(true);
       });
     }
-    var next = $("btn-wiz-next");
-    var back = $("btn-wiz-back");
-    if (next) {
-      next.addEventListener("click", function () {
-        if (wizardCanAdvance()) {
-          showFormError("");
-          showWizard(state.wizardStep + 1);
-        }
+    var cards = $("model-cards");
+    if (cards) {
+      cards.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-model]");
+        if (btn) setModel(btn.getAttribute("data-model"));
       });
     }
-    if (back) {
-      back.addEventListener("click", function () {
-        showFormError("");
-        showWizard(state.wizardStep - 1);
+    var filters = $("board-filters");
+    if (filters) {
+      filters.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-board]");
+        if (!btn) return;
+        state.boardId = btn.getAttribute("data-board");
+        renderLeaderboard();
       });
     }
-    document.querySelectorAll("[data-wiz-tab]").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        var dest = parseInt(tab.getAttribute("data-wiz-tab"), 10);
-        if (dest > state.wizardStep && !wizardCanAdvance()) return;
-        showFormError("");
-        showWizard(dest);
+    var drop = $("intake-box");
+    var bundle = $("file-bundle");
+    if (drop) {
+      drop.addEventListener("dragover", function (ev) {
+        ev.preventDefault();
+        drop.classList.add("is-drag");
       });
-    });
+      drop.addEventListener("dragleave", function () {
+        drop.classList.remove("is-drag");
+      });
+      drop.addEventListener("drop", function (ev) {
+        ev.preventDefault();
+        drop.classList.remove("is-drag");
+        assignDroppedFiles(ev.dataTransfer && ev.dataTransfer.files);
+      });
+    }
+    if (bundle) {
+      bundle.addEventListener("change", function () {
+        assignDroppedFiles(bundle.files);
+        bundle.value = "";
+      });
+    }
     updateFileLabels();
+    renderIntakeFiles();
     updateCli();
     renderLeaderboard();
     updateInputGate();
-    showWizard(state.wizardStep || 1);
   }
 
   function bindSplit() {
@@ -3175,8 +3385,7 @@
     });
     window.addEventListener("hashchange", onRoute);
     window.addEventListener("resize", function () {
-      var canvas = $("hist-canvas");
-      if (canvas && state.histogram) drawHistogram(canvas, state.histogram);
+      drawReviewHists();
       resizeViewerSoon();
     });
   }
@@ -3189,8 +3398,7 @@
     els.appVersion = $("app-version");
     els.tabRuns = $("tab-runs");
     els.tabPredict = $("tab-predict");
-    els.tabSelect = $("tab-select");
-    els.tabStructure = $("tab-structure");
+    els.tabReview = $("tab-review");
     els.form = $("predict-form");
     els.modelSelect = $("model-select");
     els.cli = $("cli-preview");
@@ -3255,7 +3463,13 @@
       runsHost.addEventListener("click", function (ev) {
         if (ev.target.closest("a")) return;
         var tr = ev.target.closest("tr[data-id]");
-        if (tr) go("#/runs/" + encodeURIComponent(tr.getAttribute("data-id")));
+        if (tr) {
+          var rid = tr.getAttribute("data-id");
+          var run = (state.runs || []).filter(function (item) {
+            return item.id === rid;
+          })[0];
+          go((run && run.status === "done" ? "#/review/" : "#/runs/") + encodeURIComponent(rid));
+        }
       });
     }
     updateSelectTab();
