@@ -15,8 +15,8 @@ def doctor_report() -> dict[str, Any]:
 
     extras = [
         ("biopython", "Bio", "core: FASTA + RSA"),
-        ("biotite", "biotite", "cli: PDB I/O  pip install 'rem2[cli]'"),
-        ("fastapi", "fastapi", "dashboard console  pip install 'rem2[dashboard]'"),
+        ("biotite", "biotite", "core: PDB I/O / RSA"),
+        ("fastapi", "fastapi", "core: rem2 dashboard"),
         ("torch-geometric", "torch_geometric", "ProSST / VenusREM2"),
         ("esm", "esm", "ESM-3"),
         ("sequence-models", "sequence_models", "CARP"),
@@ -26,7 +26,7 @@ def doctor_report() -> dict[str, Any]:
     for name, mod, note in extras:
         ok = importlib.util.find_spec(mod) is not None
         extra_rows.append({"name": name, "ok": ok, "note": note})
-        if name == "biopython" and not ok:
+        if name in {"biopython", "biotite", "fastapi"} and not ok:
             problems.append(name)
 
     torch_ver = None
@@ -67,6 +67,8 @@ def list_model_payload() -> list[dict[str, Any]]:
                 "description": spec.description,
                 "default_model_id": spec.default_model_id,
                 "needs_pdb": spec.needs_pdb,
+                "needs_msa": False,
+                "input_kind": "structure" if spec.needs_pdb else "sequence",
                 "extras": spec.extras,
                 "notes": spec.notes,
                 "aliases": list(spec.aliases),
@@ -83,8 +85,10 @@ def list_model_payload() -> list[dict[str, Any]]:
                 "description": "Official ProSST ensemble",
                 "default_model_id": None,
                 "needs_pdb": True,
+                "needs_msa": False,
+                "input_kind": "structure",
                 "extras": "prosst",
-                "notes": "wt only; six official ProSST checkpoints",
+                "notes": "wt only; six official ProSST checkpoints; MSA optional (none → α=0)",
                 "aliases": ["venusrem", "prosst_ensemble"],
                 "supports_mask": False,
                 "supports_tf": False,

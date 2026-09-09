@@ -36,31 +36,33 @@ Python import: `rem2`. Default backbone: ESM-2 650M.
 
 Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `rem2 demo` (ESM-2 8M) can run on CPU.
 
-Two optional install forms — pick one. For everything in one shot, use `[all]`.
+`pip install rem2` is CLI + dashboard. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-
-# complete: CLI + dashboard + all backbones
-pip install "rem2[all] @ git+https://github.com/tyang816/VenusREM2.git"
-
-# CLI only: rem2 / rem2 demo / rem2 doctor
-pip install "rem2[cli] @ git+https://github.com/tyang816/VenusREM2.git"
-
-# Dashboard: local console (includes [cli])
-pip install "rem2[dashboard] @ git+https://github.com/tyang816/VenusREM2.git"
+pip install "rem2 @ git+https://github.com/tyang816/VenusREM2.git"
+rem2 doctor
+rem2 demo
+rem2 dashboard
 ```
 
-Editable: `pip install -e ".[all]"` / `".[cli]"` / `".[dashboard]"`.
+`[cli]`, `[dashboard]`, and `[all]` are aliases of that default. They do **not** pull extra backbones.
+
+```bash
+# when you actually use that model
+pip install "rem2[prosst]"    # VenusREM2 / ProSST
+pip install "rem2[s3f]"       # S3F / S2F (Python <3.11)
+pip install "rem2[carp]"
+pip install "rem2[esm3]"
+```
+
+Editable: `pip install -e .` then add a backbone extra as needed.
 
 | Extra | Use |
 |-------|-----|
-| (core) | ESM-2 and other HF sequence LMs |
-| `[cli]` | biotite (RSA / PDB); terminal scoring |
-| `[dashboard]` | FastAPI console + `[cli]` |
-| `[all]` | CLI + dashboard + ProSST / CARP / ESM-3 / S3F |
-| `[recommended]` | alias of `[cli]` |
-| `[prosst]` | VenusREM2 / ProSST |
+| (core) / `[all]` | ESM-2 scoring, `rem2` CLI, local dashboard |
+| `[cli]` / `[dashboard]` / `[recommended]` | aliases of the default install |
+| `[prosst]` | VenusREM2 / ProSST (install when you use `--model venusrem2`) |
 | `[carp]`, `[esm3]`, `[s3f]` | other backbones (`[s3f]`: Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
 
@@ -116,11 +118,10 @@ Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 w
 ### 3. Open the local dashboard
 
 ```bash
-pip install 'rem2[dashboard]'   # CLI + FastAPI console
 rem2 dashboard
 ```
 
-Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service. Scoring-only installs use `rem2[cli]`.
+Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service. Included in `pip install rem2`.
 
 ## Dashboard
 
@@ -137,7 +138,7 @@ CLI scoring still writes `result/scores/`. Dashboard sessions also keep working 
 rem2 dashboard
 ```
 
-If `rem2 dashboard` is missing, install the dashboard form: `pip install 'rem2[dashboard]'`. For scoring only: `pip install 'rem2[cli]'`.
+`rem2 dashboard` ships with the default install. Extra backbones still need their extras (`[prosst]`, `[s3f]`, …).
 
 ## Data
 
@@ -312,8 +313,8 @@ rem2 --model prosst-2048 --base_dir data/proteingym_v1 \
 ## Development
 
 ```bash
-pip install -e ".[cli,prosst,dev]"          # scoring tests
-pip install -e ".[dashboard,prosst,dev]"    # plus console tests
+pip install -e ".[dev]"
+pip install -e ".[prosst,dev]"    # if you also test VenusREM2
 pytest test/ -v
 ```
 

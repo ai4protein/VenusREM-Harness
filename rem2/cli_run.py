@@ -554,15 +554,16 @@ def run_score(argv=None):
             aa_seq_aln_file = None
             struc_seq_aln_file = None
             if args.logit_mode is not None:
-                if "aa_seq_aln" in args.logit_mode:
-                    if os.path.exists(f"{args.aa_seq_aln_dir}/{protein_name}.a2m"):
-                        aa_seq_aln_file = f"{args.aa_seq_aln_dir}/{protein_name}.a2m"
-                    elif os.path.exists(f"{args.aa_seq_aln_dir}/{protein_name}.a3m"):
-                        aa_seq_aln_file = f"{args.aa_seq_aln_dir}/{protein_name}.a3m"
-                    elif os.path.exists(f"{args.aa_seq_aln_dir}/{protein_name}.fasta"):
-                        aa_seq_aln_file = f"{args.aa_seq_aln_dir}/{protein_name}.fasta"
-                if "struc_seq_aln" in args.logit_mode:
-                    cand = f"{args.struc_seq_aln_dir}/{protein_name}.fasta"
+                aln_dir = getattr(args, "aa_seq_aln_dir", None)
+                if "aa_seq_aln" in args.logit_mode and aln_dir:
+                    for suffix in (".a2m", ".a3m", ".fasta"):
+                        cand = os.path.join(aln_dir, f"{protein_name}{suffix}")
+                        if os.path.exists(cand):
+                            aa_seq_aln_file = cand
+                            break
+                struc_aln_dir = getattr(args, "struc_seq_aln_dir", None)
+                if "struc_seq_aln" in args.logit_mode and struc_aln_dir:
+                    cand = os.path.join(struc_aln_dir, f"{protein_name}.fasta")
                     if os.path.exists(cand):
                         struc_seq_aln_file = cand
 

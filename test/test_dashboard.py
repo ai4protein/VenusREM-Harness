@@ -10,7 +10,7 @@ fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
 from rem2.dashboard.app import create_app
-from rem2.dashboard.jobs import JobRunner, recipe_argv
+from rem2.dashboard.jobs import JobRunner, build_argv, recipe_argv
 from rem2.dashboard.recipes import recipe_public
 from rem2.dashboard.store import RunStore
 
@@ -51,6 +51,21 @@ def test_recipes_match_cli_flags():
     assert ids == {"full", "raw", "msa", "ccd"}
     assert "--alpha" in recipe_argv("raw")
     assert recipe_argv("full") == []
+    by_id = {item["id"]: item for item in recipe_public()}
+    assert by_id["full"]["msa"] == "optional"
+    assert by_id["raw"]["msa"] == "off"
+
+
+def test_venusrem2_full_argv_does_not_require_msa():
+    argv = build_argv(
+        model="venusrem2",
+        recipe="full",
+        out_dir="/tmp/out",
+        fasta="/tmp/q.fasta",
+    )
+    assert "--model" in argv
+    assert "venusrem2" in argv
+    assert "--aa_seq_aln_dir" not in argv
 
 
 def test_health_and_models(client):
@@ -60,6 +75,12 @@ def test_health_and_models(client):
     models = client.get("/api/models").json()["models"]
     names = {row["name"] for row in models}
     assert models[0]["name"] == "venusrem2"
+    assert models[0]["needs_pdb"] is True
+    assert models[0]["needs_msa"] is False
+    assert models[0]["input_kind"] == "structure"
+    assert all(row.get("needs_msa") is False for row in models)
+    esm = next(row for row in models if row["name"] == "esm2")
+    assert esm["input_kind"] == "sequence"
     assert "esm2" in names
     assert "esm2-8m" in names
     recipes = client.get("/api/recipes").json()["recipes"]
@@ -123,6 +144,20 @@ def test_create_run_scores_and_top(client):
     assert "ok" in log.text
 
 
+def test_proteingym_leaderboard(client):
+    from rem2.dashboard.leaderboard import proteingym_board
+
+    board = proteingym_board()
+    assert board["rows"][0]["name"] == "VenusREM2"
+    assert board["rows"][0]["rank"] == 1
+    assert board["rows"][0]["score"] == 0.556
+    assert "pdb" in board["rows"][0]["inputs"]
+    assert "msa" in board["rows"][0]["inputs"]
+    api = client.get("/api/leaderboard").json()
+    assert api["rows"][0]["name"] == "VenusREM2"
+    assert api["n"] == 217
+
+
 def test_create_run_requires_input(client):
     res = client.post("/api/runs", data={"model": "esm2", "recipe": "full"})
     assert res.status_code == 400
@@ -142,12 +177,20 @@ def test_static_index(client):
     assert js.status_code == 200
     assert b"ssPyMol" in js.content
     assert b"protein-bench" in js.content
+    assert b"aa-strip" in js.content
+    assert b"aa-jump" in js.content
     assert b"data-gutter" in js.content
     assert b"no pLDDT" in js.content
-    assert b'sel.value = "venusrem2"' in js.content
+    assert b"preferredModel" in js.content
+    assert b"modelLockReason" in js.content
+    assert b"needs_msa: false" in js.content
+    assert "MSA optional (none → α=0)".encode() in js.content
     assert b"progress-bar" in js.content
     assert b"Start scoring" in res.content
-    assert b"1. Input" in res.content
+    assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" in res.content
+    assert b"leaderboard-body" in res.content
+    assert "skip → α=0".encode() in res.content
+    assert b"1. Inputs" in res.content
     assert b"New job" in res.content
     vendor = client.get("/vendor/3Dmol-min.js")
     assert vendor.status_code == 200

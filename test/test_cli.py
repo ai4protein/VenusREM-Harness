@@ -59,8 +59,7 @@ def test_bare_rem2_prints_getting_started(capsys):
     assert "rem2 doctor" in out
     assert "rem2 demo" in out
     assert "rem2 dashboard" in out
-    assert "rem2[dashboard]" in out
-    assert "rem2[cli]" in out
+    assert "127.0.0.1:8765" in out
     assert "rem2 download" in out
     assert "from rem2 import score" in out
     assert "--model venusrem2" in out
@@ -119,8 +118,8 @@ def test_doctor_cli(capsys):
     assert "torch" in out
     assert "demo" in out.lower()
     assert "download" in out.lower()
-    assert "rem2[cli]" in out
-    assert "rem2[dashboard]" in out
+    assert "core: rem2 dashboard" in out
+    assert "core: PDB I/O" in out
 
 
 def test_optional_cli_and_dashboard_extras():
@@ -134,18 +133,19 @@ def test_optional_cli_and_dashboard_extras():
     data = tomllib.loads(
         (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
     )
+    core = " ".join(data["project"]["dependencies"]).lower()
     extras = data["project"]["optional-dependencies"]
-    assert "cli" in extras
-    assert "dashboard" in extras
+    assert "fastapi" in core
+    assert "biotite" in core
     assert extras["recommended"] == extras["cli"]
-    cli = " ".join(extras["cli"]).lower()
-    dash = " ".join(extras["dashboard"]).lower()
-    assert "biotite" in cli
-    assert "fastapi" not in cli
-    assert "fastapi" in dash
-    assert "uvicorn" in dash
-    assert "python-multipart" in dash
-    assert "biotite" in dash
+    assert extras["all"] == extras["dashboard"]
+    all_extra = " ".join(extras["all"]).lower()
+    assert "fastapi" in all_extra
+    assert "torchdrug" not in all_extra
+    assert "pykeops" not in all_extra
+    assert "sequence-models" not in all_extra
+    assert "torch-scatter" not in all_extra
+    assert "esm>=3" not in all_extra
 
 
 def test_cli_refuses_masked_marginals_on_causal_lm():

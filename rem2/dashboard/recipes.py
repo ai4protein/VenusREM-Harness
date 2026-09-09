@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 RECIPES: list[dict[str, Any]] = [
-    {"id": "full", "label": "Full rem2", "argv": []},
+    {"id": "full", "label": "Full rem2", "argv": [], "msa": "optional"},
     {
         "id": "raw",
         "label": "Raw backbone",
@@ -19,6 +19,7 @@ RECIPES: list[dict[str, Any]] = [
             "--no_rsa_decay",
             "--no_plddt_decay",
         ],
+        "msa": "off",
     },
     {
         "id": "msa",
@@ -33,11 +34,13 @@ RECIPES: list[dict[str, Any]] = [
             "--no_rsa_decay",
             "--no_plddt_decay",
         ],
+        "msa": "optional",
     },
     {
         "id": "ccd",
         "label": "+ MSA + CCD",
         "argv": ["--no_rsa_decay", "--no_plddt_decay"],
+        "msa": "optional",
     },
 ]
 

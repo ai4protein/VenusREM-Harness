@@ -22,11 +22,10 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
-# Core: enough for VenusREM2 scoring on HF MLMs (ESM-2 / ProSST logits path without
-# structure-token *generation*). Install a CUDA-matching PyTorch *before* this
-# package so pip does not pull a CPU-only wheel.
-#
-# Heavy / model-specific stacks live in optional extras (see README).
+# Default install is the product: CLI scoring + local dashboard.
+# Install a CUDA-matching PyTorch *before* this package so pip does not
+# pull a CPU-only wheel. Backbone stacks (ProSST / S3F / CARP / ESM-3)
+# stay opt-in extras and are pulled when that model is used.
 dependencies = [
   "numpy>=1.24",
   "pandas>=2.0",
@@ -39,6 +38,10 @@ dependencies = [
   "safetensors>=0.4",
   "pyyaml>=6.0",
   "biopython>=1.80",
+  "biotite>=0.40",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -85,17 +88,20 @@ esm3 = [
 msa = [
   "biopython>=1.80",
 ]
-# First-class install forms (pick one):
-#   pip install rem2[cli]         terminal scoring
-#   pip install rem2[dashboard]   local web console (includes [cli])
+# Aliases of the default install. [all] is CLI + dashboard only — not every backbone.
 cli = [
   "biotite>=0.40",
 ]
-# Alias of [cli], kept so existing docs / pins keep working.
 recommended = [
   "biotite>=0.40",
 ]
 dashboard = [
+  "biotite>=0.40",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "python-multipart>=0.0.9",
+]
+all = [
   "biotite>=0.40",
   "fastapi>=0.110",
   "uvicorn>=0.27",
@@ -109,25 +115,6 @@ baselines = [
   "biopython>=1.80",
   "sequence-models>=1.7",
   "esm>=3.0",
-]
-# Everything including S3F.
-all = [
-  "torch-geometric>=2.4",
-  "pathos>=0.3",
-  "biotite>=0.40",
-  "biopython>=1.80",
-  "sequence-models>=1.7",
-  "esm>=3.0",
-  "torchdrug>=0.2.1",
-  "torch-scatter>=2.1",
-  "torch-cluster>=1.6",
-  "pykeops>=2.1",
-  "robust-laplacian>=0.2",
-  "scikit-learn>=1.3",
-  "httpx>=0.27",
-  "fastapi>=0.110",
-  "uvicorn>=0.27",
-  "python-multipart>=0.0.9",
 ]
 dev = [
   "pytest>=7.0",

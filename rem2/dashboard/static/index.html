@@ -46,11 +46,24 @@
       <section id="page-predict" class="page" hidden>
         <div class="page-head">
           <h1>New job</h1>
-          <p class="muted">Three steps: input → model → mutants. Then the run page tracks fetch and scoring.</p>
+          <p class="muted">Submit what you have first. The next step only offers models that match those inputs.</p>
+          <p class="job-tip">Full ProteinGym-level scoring needs at least a PDB and an MSA.</p>
+        </div>
+
+        <div class="panel board-panel" id="pg-board">
+          <div class="board-head">
+            <div>
+              <h2>ProteinGym substitutions</h2>
+              <p class="muted">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
+            </div>
+            <span class="board-metric">Higher is better</span>
+          </div>
+          <ol class="board" id="leaderboard-body"></ol>
+          <p class="board-note" id="leaderboard-note"></p>
         </div>
 
         <ol class="flow-rail" id="new-rail" aria-label="New job steps">
-          <li><button type="button" class="flow-dot is-on" data-wiz-tab="1">1. Input</button></li>
+          <li><button type="button" class="flow-dot is-on" data-wiz-tab="1">1. Inputs</button></li>
           <li><button type="button" class="flow-dot" data-wiz-tab="2">2. Model</button></li>
           <li><button type="button" class="flow-dot" data-wiz-tab="3">3. Mutants</button></li>
         </ol>
@@ -65,9 +78,9 @@
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
           <section data-wiz-panel="1">
-            <h2>What to score</h2>
-            <p class="field-hint">Need one of: FASTA, PDB file, PDB id, or UniProt. VenusREM2 needs a structure; we fetch AFDB in the background if you only have an id.</p>
-            <div class="file-grid">
+            <h2>What you have</h2>
+            <p class="field-hint">Need a FASTA or a PDB (file or accession). MSA is optional here; without it, rem2 uses α=0.</p>
+            <div class="file-grid file-grid-3">
               <label class="file-field">
                 <span>FASTA</span>
                 <span class="file-name" data-for="file-fasta">choose a file</span>
@@ -75,12 +88,17 @@
               </label>
               <label class="file-field">
                 <span>PDB file</span>
-                <span class="file-name" data-for="file-pdb">optional</span>
+                <span class="file-name" data-for="file-pdb">optional — unlocks structure models</span>
                 <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+              </label>
+              <label class="file-field">
+                <span>MSA</span>
+                <span class="file-name" data-for="file-msa">optional — skip → α=0</span>
+                <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
               </label>
             </div>
             <fieldset class="field fetch-box">
-              <legend>Or an accession</legend>
+              <legend>Or a structure accession</legend>
               <div class="field-row">
                 <label>PDB id
                   <input type="text" name="pdb_id" id="f-pdb-id" placeholder="2L6Q" autocomplete="off">
@@ -98,10 +116,12 @@
                 </label>
               </div>
             </fieldset>
+            <div id="input-gate" class="input-gate" aria-live="polite"></div>
           </section>
 
           <section data-wiz-panel="2" hidden>
-            <h2>How to score</h2>
+            <h2>Which model</h2>
+            <div id="model-gate" class="input-gate" aria-live="polite"></div>
             <div class="field">
               <label for="model-select">Model</label>
               <select id="model-select" name="model"></select>
@@ -115,12 +135,8 @@
                 <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
                 <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
               </div>
+              <p id="recipe-hint" class="field-hint"></p>
             </fieldset>
-            <label class="file-field">
-              <span>MSA (only if the recipe uses it)</span>
-              <span class="file-name" data-for="file-msa">optional</span>
-              <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-            </label>
           </section>
 
           <section data-wiz-panel="3" hidden>

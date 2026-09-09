@@ -7,6 +7,7 @@ from typing import Optional
 
 from rem2 import __version__
 from rem2.dashboard.inspect import doctor_report, list_model_payload
+from rem2.dashboard.leaderboard import proteingym_board
 from rem2.dashboard.jobs import (
     JobRunner,
     attach_structure_meta,
@@ -79,6 +80,10 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
     @app.get("/api/recipes")
     def recipes():
         return {"recipes": recipe_public()}
+
+    @app.get("/api/leaderboard")
+    def leaderboard():
+        return proteingym_board()
 
     @app.get("/api/runs")
     def list_runs():

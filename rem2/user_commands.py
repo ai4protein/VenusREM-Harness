@@ -13,7 +13,7 @@ rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
   rem2 demo                ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q + ESM-2 8M
-  rem2 dashboard           local console (needs rem2[dashboard]; CLI-only is rem2[cli])
+  rem2 dashboard           local predict / select console (http://127.0.0.1:8765)
   rem2 download                 ProteinGym 217 → data/proteingym_v1
   rem2 download ProteinGym      same
   rem2 download VenusMutHub     or muthub → data/VenusMutHub
@@ -174,8 +174,8 @@ def run_doctor(argv: Optional[list[str]] = None) -> int:
 
     extras = [
         ("Bio", "biopython", "core: FASTA + RSA", True),
-        ("biotite", "biotite", "cli: PDB I/O  pip install 'rem2[cli]'", False),
-        ("fastapi", "fastapi", "dashboard: local console  pip install 'rem2[dashboard]'", False),
+        ("biotite", "biotite", "core: PDB I/O / RSA", True),
+        ("fastapi", "fastapi", "core: rem2 dashboard", True),
         ("torch_geometric", "torch-geometric", "ProSST / VenusREM2  pip install 'rem2[prosst]'", False),
         ("esm", "esm", "ESM-3  pip install 'rem2[esm3]'", False),
         ("sequence_models", "sequence-models", "CARP  pip install 'rem2[carp]'", False),

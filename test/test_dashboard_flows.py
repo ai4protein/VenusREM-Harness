@@ -58,6 +58,8 @@ def test_default_model_and_list_order(store_client):
     )
     assert first.status_code == 200
     assert first.json()["model"] == "venusrem2"
+    assert first.json()["recipe"] == "full"
+    assert "--aa_seq_aln_dir" not in first.json()["argv"]
     time.sleep(0.02)
     second = client.post(
         "/api/runs",

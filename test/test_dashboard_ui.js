@@ -36,11 +36,19 @@ this.csvEscape = csvEscape;
 this.fmtScore = fmtScore;
 this.parseHash = parseHash;
 this.proteinBenchHtml = proteinBenchHtml;
+this.pipelineHtml = pipelineHtml;
+this.aaStripHtml = aaStripHtml;
+this.aaNavHtml = aaNavHtml;
+this.molPanelHtml = molPanelHtml;
 this.nextActionsHtml = nextActionsHtml;
 this.jobSequence = jobSequence;
 this.readSplit = readSplit;
 this.writeSplit = writeSplit;
 this.activeJob = activeJob;
+this.modelUnlocked = modelUnlocked;
+this.modelLockReason = modelLockReason;
+this.preferredModel = preferredModel;
+this.inputGateMessage = inputGateMessage;
 `;
 
 const context = vm.createContext({
@@ -59,6 +67,16 @@ const context = vm.createContext({
     },
     querySelectorAll() {
       return [];
+    },
+    body: {
+      classList: {
+        contains() {
+          return false;
+        },
+        toggle() {},
+        add() {},
+        remove() {},
+      },
     },
   },
   window: { addEventListener() {}, devicePixelRatio: 1 },
@@ -155,6 +173,23 @@ check("parseHash routes", () => {
   assert.strictEqual(context.parseHash().page, "runs");
 });
 
+check("residue bar sits on the structure", () => {
+  context.state.job = { sequence: "ACDEY" };
+  context.state.picked = { resi: 3, resn: "D", chain: "A" };
+  const strip = context.aaStripHtml("ACDEY", [2]);
+  assert.ok(strip.includes('id="aa-strip"'));
+  assert.ok(strip.includes('data-pos="3"'));
+  assert.ok(strip.includes("is-pick"));
+  assert.ok(strip.includes("is-mut"));
+  const nav = context.aaNavHtml("ACDEY");
+  assert.ok(nav.includes('id="aa-jump"'));
+  assert.ok(nav.includes("data-aa=\"prev\""));
+  const panel = context.molPanelHtml("bench");
+  assert.ok(panel.includes('id="aa-strip"'));
+  assert.ok(panel.includes('id="aa-nav"'));
+  assert.ok(panel.indexOf("aa-strip") < panel.indexOf("mol-host"));
+});
+
 check("protein bench markup", () => {
   const html = context.proteinBenchHtml("structure", "<p>side</p>", "<div id='mol-host'></div>");
   assert.ok(html.includes('data-split="structure"'));
@@ -194,6 +229,15 @@ check("activeJob prefers state.job then runs list", () => {
 const html = fs.readFileSync(htmlPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
 
+check("full rem2 treats MSA as optional", () => {
+  const full = context.pipelineHtml("full");
+  assert.ok(full.includes("is-opt"));
+  assert.ok(full.includes("optional; skip → α=0"));
+  const raw = context.pipelineHtml("raw");
+  assert.ok(raw.includes("is-dim"));
+  assert.ok(!raw.includes("is-opt"));
+});
+
 check("html flow chrome", () => {
   assert.ok(html.includes('id="tab-predict"'));
   assert.ok(html.includes('id="tab-structure"'));
@@ -203,6 +247,29 @@ check("html flow chrome", () => {
   assert.ok(html.includes('data-wiz-tab="3"'));
   assert.ok(html.includes('id="btn-submit"') && html.includes("hidden>Start scoring"));
   assert.ok(html.includes('value="auto" selected'));
+  assert.ok(html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
+  assert.ok(html.includes('id="leaderboard-body"'));
+  assert.ok(html.includes("1. Inputs"));
+  assert.ok(html.includes("skip → α=0"));
+});
+
+check("fasta-only unlocks sequence models only", () => {
+  const fasta = { fasta: "a.fa", pdb: "", pdb_id: "", uniprot_id: "", fetch_structure: "auto", msa: "" };
+  assert.strictEqual(context.modelUnlocked({ name: "esm2", needs_pdb: false }, fasta), true);
+  assert.strictEqual(context.modelUnlocked({ name: "venusrem2", needs_pdb: true }, fasta), false);
+  assert.ok(context.modelLockReason({ name: "venusrem2", needs_pdb: true }, fasta).includes("PDB"));
+  assert.strictEqual(context.preferredModel(fasta), "esm2");
+  const msg = context.inputGateMessage(fasta);
+  assert.ok(msg.includes("sequence models"));
+  assert.ok(msg.includes("α=0"));
+});
+
+check("pdb or accession unlocks VenusREM2", () => {
+  const pdb = { fasta: "a.fa", pdb: "x.pdb", pdb_id: "", uniprot_id: "", fetch_structure: "none", msa: "q.a2m" };
+  assert.strictEqual(context.modelUnlocked({ name: "venusrem2", needs_pdb: true }, pdb), true);
+  assert.strictEqual(context.preferredModel(pdb), "venusrem2");
+  const acc = { fasta: "a.fa", pdb: "", pdb_id: "2L6Q", uniprot_id: "", fetch_structure: "auto", msa: "" };
+  assert.strictEqual(context.modelUnlocked({ name: "venusrem2", needs_pdb: true }, acc), true);
 });
 
 check("css protein pane is at least half", () => {
@@ -210,6 +277,10 @@ check("css protein pane is at least half", () => {
   assert.ok(css.includes(".protein-gutter"));
   assert.ok(css.includes("cursor: col-resize"));
   assert.ok(css.includes("flex: 0 0 56%"));
+  assert.ok(css.includes(".aa-strip"));
+  assert.ok(css.includes(".aa-cell"));
+  assert.ok(css.includes(".board-row"));
+  assert.ok(css.includes(".job-tip"));
 });
 
 console.log("dashboard ui logic: ok");

@@ -21,35 +21,53 @@
   };
 
   var FALLBACK_RECIPES = [
-    { id: "full", label: "Full rem2", argv: [] },
+    { id: "full", label: "Full rem2", argv: [], msa: "optional" },
     {
       id: "raw",
       label: "Raw backbone",
       argv: ["--alpha", "0", "--background_weight", "0", "--no_rsa_decay", "--no_plddt_decay"],
+      msa: "off",
     },
     {
       id: "msa",
       label: "+ MSA",
       argv: ["--background_weight", "0", "--no_rsa_decay", "--no_plddt_decay"],
+      msa: "optional",
     },
     {
       id: "ccd",
       label: "+ MSA + CCD",
       argv: ["--no_rsa_decay", "--no_plddt_decay"],
+      msa: "optional",
     },
   ];
 
   var FALLBACK_MODELS = [
-    { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true },
-    { name: "esm2", description: "ESM-2 650M", supports_mask: true, needs_pdb: false, size_hint: "first download ~2.5 GB" },
-    { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, needs_pdb: false, size_hint: "first download ~30 MB" },
-    { name: "saprot", description: "SaProt", supports_mask: true, needs_pdb: true },
-    { name: "proteinmpnn", description: "ProteinMPNN", supports_tf: true, needs_pdb: true },
+    { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
+    { name: "esm2", description: "ESM-2 650M", supports_mask: true, needs_pdb: false, needs_msa: false, input_kind: "sequence", size_hint: "first download ~2.5 GB" },
+    { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, needs_pdb: false, needs_msa: false, input_kind: "sequence", size_hint: "first download ~30 MB" },
+    { name: "saprot", description: "SaProt", supports_mask: true, needs_pdb: true, needs_msa: false, input_kind: "structure" },
+    { name: "proteinmpnn", description: "ProteinMPNN", supports_tf: true, needs_pdb: true, needs_msa: false, input_kind: "structure" },
   ];
+
+  var FALLBACK_BOARD = {
+    id: "proteingym_substitutions",
+    title: "ProteinGym substitutions",
+    metric: "Mean Spearman",
+    n: 217,
+    url: "https://proteingym.org/benchmarks",
+    note: "Published full rem2 numbers used a PDB and an MSA. Sequence-only runs skip structure terms and set α=0.",
+    rows: [
+      { rank: 1, name: "VenusREM2", model: "venusrem2", score: 0.556, inputs: ["pdb", "msa"], highlight: true },
+      { rank: 2, name: "rem2 · ESM-2 650M", model: "esm2", score: 0.468, inputs: ["pdb", "msa"] },
+      { rank: 3, name: "rem2 · ESM-1v", model: "esm1v", score: 0.457, inputs: ["pdb", "msa"] },
+      { rank: 4, name: "rem2 · SaProt", model: "saprot", score: 0.454, inputs: ["pdb", "msa"] },
+    ],
+  };
 
   var PIPELINE = [
     { id: "fwd", label: "Forward", on: ["full", "raw", "msa", "ccd"] },
-    { id: "msa", label: "MSA (α)", on: ["full", "msa", "ccd"] },
+    { id: "msa", label: "MSA (α)", on: ["msa", "ccd"], opt: ["full"] },
     { id: "ccd", label: "CCD (β)", on: ["full", "ccd"] },
     { id: "rsa", label: "RSA", on: ["full"] },
     { id: "plddt", label: "pLDDT", on: ["full"] },
@@ -62,6 +80,7 @@
     connected: false,
     models: FALLBACK_MODELS.slice(),
     recipes: FALLBACK_RECIPES.slice(),
+    board: FALLBACK_BOARD,
     runs: [],
     job: null,
     scores: null,
@@ -344,6 +363,113 @@
     };
   }
 
+  function hasSequenceInput(snap) {
+    snap = snap || formSnapshot();
+    return !!(snap.fasta || snap.pdb);
+  }
+
+  function hasStructureInput(snap) {
+    snap = snap || formSnapshot();
+    return !!(snap.pdb || snap.pdb_id || snap.uniprot_id);
+  }
+
+  function canFetchStructure(snap) {
+    snap = snap || formSnapshot();
+    return snap.fetch_structure !== "none" && !!(snap.pdb_id || snap.uniprot_id);
+  }
+
+  function structureReady(snap) {
+    snap = snap || formSnapshot();
+    return hasStructureInput(snap) || canFetchStructure(snap);
+  }
+
+  function hasMsaInput(snap) {
+    snap = snap || formSnapshot();
+    return !!snap.msa;
+  }
+
+  function modelLockReason(spec, snap) {
+    snap = snap || formSnapshot();
+    if (!spec) return "Unknown model";
+    if (spec.needs_pdb && !structureReady(snap)) {
+      return "needs a PDB file or a PDB / UniProt id";
+    }
+    return "";
+  }
+
+  function modelUnlocked(spec, snap) {
+    return !modelLockReason(spec, snap);
+  }
+
+  function preferredModel(snap) {
+    snap = snap || formSnapshot();
+    var names = ["venusrem2", "esm2", "esm2-8m"];
+    var i;
+    for (i = 0; i < names.length; i++) {
+      var spec = modelByName(names[i]);
+      if (spec && modelUnlocked(spec, snap)) return names[i];
+    }
+    for (i = 0; i < state.models.length; i++) {
+      if (modelUnlocked(state.models[i], snap)) return state.models[i].name;
+    }
+    return "";
+  }
+
+  function inputChip(on, label) {
+    return '<span class="gate-chip' + (on ? " is-on" : " is-off") + '">' + esc(label) + "</span>";
+  }
+
+  function inputGateMessage(snap) {
+    snap = snap || formSnapshot();
+    var bits = [];
+    if (!hasSequenceInput(snap) && !hasStructureInput(snap)) {
+      bits.push("Add a FASTA or a PDB to continue.");
+    } else if (!structureReady(snap)) {
+      bits.push("FASTA only — sequence models are available. VenusREM2 / SaProt / ProteinMPNN stay locked until you add a PDB file or a PDB / UniProt id.");
+    } else {
+      bits.push("Structure in hand — VenusREM2 and other structure models are unlocked.");
+    }
+    if (!hasMsaInput(snap)) {
+      bits.push("No MSA — rem2 will use α=0. The ProteinGym #1 number (0.556) used PDB + MSA.");
+    } else {
+      bits.push("MSA attached — entropy-α can run.");
+    }
+    return bits.join(" ");
+  }
+
+  function updateInputGate() {
+    var snap = formSnapshot();
+    var html =
+      '<div class="gate-chips">' +
+      inputChip(!!snap.fasta, "FASTA") +
+      inputChip(structureReady(snap), "PDB") +
+      inputChip(hasMsaInput(snap), "MSA") +
+      "</div><p class=\"gate-msg\">" +
+      esc(inputGateMessage(snap)) +
+      "</p>";
+    var a = $("input-gate");
+    var b = $("model-gate");
+    if (a) a.innerHTML = html;
+    if (b) b.innerHTML = html;
+    updateRecipeHint();
+  }
+
+  function updateRecipeHint() {
+    var hint = $("recipe-hint");
+    if (!hint) return;
+    var snap = formSnapshot();
+    var rec = snap.recipe || "full";
+    var parts = [];
+    if ((rec === "full" || rec === "msa" || rec === "ccd") && !hasMsaInput(snap)) {
+      parts.push("This recipe can use MSA, but you did not attach one — α=0.");
+    }
+    if (rec === "full" && !structureReady(snap)) {
+      parts.push("No structure — RSA / pLDDT decay will be skipped.");
+    }
+    if (rec === "raw") parts.push("Raw backbone only. No MSA mix, CCD, RSA, or pLDDT.");
+    hint.textContent = parts.join(" ");
+  }
+
   function updateCli() {
     if (!els.cli) return;
     els.cli.textContent = buildCli(formSnapshot());
@@ -357,8 +483,10 @@
       var name = fileName(input);
       if (id === "file-mutants") {
         nodes[i].textContent = name || "empty → saturation";
-      } else if (id === "file-msa" || id === "file-pdb") {
-        nodes[i].textContent = name || "optional";
+      } else if (id === "file-msa") {
+        nodes[i].textContent = name || "optional — skip → α=0";
+      } else if (id === "file-pdb") {
+        nodes[i].textContent = name || "optional — unlocks structure models";
       } else {
         nodes[i].textContent = name || "choose a file";
       }
@@ -384,6 +512,8 @@
     if (spec.description) bits.push(spec.description);
     if (spec.default_model_id) bits.push("id " + spec.default_model_id);
     if (spec.needs_pdb) bits.push("PDB required");
+    if (spec.needs_msa) bits.push("MSA required");
+    else bits.push("MSA optional (none → α=0)");
     if (spec.extras) bits.push("extras: " + spec.extras);
     if (spec.size_hint) bits.push(spec.size_hint);
     if (spec.notes) bits.push(spec.notes);
@@ -574,23 +704,41 @@
   function fillModels() {
     var sel = els.modelSelect;
     if (!sel) return;
-    var prev = sel.value || "venusrem2";
+    var snap = formSnapshot();
+    var prev = sel.value || snap.model || "";
     sel.innerHTML = "";
     var models = state.models.slice().sort(function (a, b) {
+      var ua = modelUnlocked(a, snap) ? 0 : 1;
+      var ub = modelUnlocked(b, snap) ? 0 : 1;
+      if (ua !== ub) return ua - ub;
       if (a.name === "venusrem2") return -1;
       if (b.name === "venusrem2") return 1;
-      return 0;
+      return a.name < b.name ? -1 : 1;
     });
+    var open = document.createElement("optgroup");
+    open.label = "Available for these inputs";
+    var locked = document.createElement("optgroup");
+    locked.label = "Locked — add the missing input";
     for (var i = 0; i < models.length; i++) {
       var m = models[i];
+      var reason = modelLockReason(m, snap);
       var opt = document.createElement("option");
       opt.value = m.name;
-      opt.textContent = m.name;
-      sel.appendChild(opt);
+      if (reason) {
+        opt.disabled = true;
+        opt.textContent = m.name + " — " + reason;
+        locked.appendChild(opt);
+      } else {
+        opt.textContent = m.name + (m.needs_pdb ? "  (structure)" : "  (sequence)");
+        open.appendChild(opt);
+      }
     }
-    if (modelByName(prev)) sel.value = prev;
-    else if (modelByName("venusrem2")) sel.value = "venusrem2";
+    if (open.childNodes.length) sel.appendChild(open);
+    if (locked.childNodes.length) sel.appendChild(locked);
+    if (prev && modelUnlocked(modelByName(prev), snap)) sel.value = prev;
+    else sel.value = preferredModel(snap);
     updateModelMeta();
+    updateInputGate();
     updateCli();
   }
 
@@ -616,7 +764,41 @@
       var first = host.querySelector("input");
       if (first) first.checked = true;
     }
+    updateRecipeHint();
     updateCli();
+  }
+
+  function renderLeaderboard() {
+    var host = $("leaderboard-body");
+    var note = $("leaderboard-note");
+    var board = state.board || FALLBACK_BOARD;
+    if (note) note.textContent = board.note || "";
+    if (!host) return;
+    var rows = board.rows || [];
+    host.innerHTML = rows
+      .map(function (row) {
+        var tags = (row.inputs || [])
+          .map(function (tag) {
+            return '<span class="board-tag">' + esc(String(tag).toUpperCase()) + "</span>";
+          })
+          .join("");
+        var first = row.highlight || row.rank === 1;
+        return (
+          '<li class="board-row' +
+          (first ? " is-first" : "") +
+          '"><span class="board-rank">' +
+          esc(String(row.rank)) +
+          '</span><span class="board-name">' +
+          esc(row.name) +
+          (row.note ? "<small>" + esc(row.note) + "</small>" : "") +
+          '</span><span class="board-tags">' +
+          tags +
+          '</span><span class="board-score">' +
+          Number(row.score).toFixed(3) +
+          "</span></li>"
+        );
+      })
+      .join("");
   }
 
   async function loadCatalog() {
@@ -636,8 +818,17 @@
     } catch (err) {
       /* keep fallback */
     }
+    try {
+      var board = await apiJson("/api/leaderboard");
+      if (board && Array.isArray(board.rows) && board.rows.length) {
+        state.board = board;
+      }
+    } catch (err) {
+      /* keep fallback */
+    }
     fillModels();
     fillRecipes();
+    renderLeaderboard();
   }
 
   function showWizard(step) {
@@ -660,6 +851,8 @@
     if (back) setHidden(back, n <= 1);
     if (next) setHidden(next, n >= 3);
     if (els.btnSubmit) setHidden(els.btnSubmit, n < 3);
+    if (n === 2) fillModels();
+    else updateInputGate();
   }
 
   function wizardCanAdvance() {
@@ -671,8 +864,9 @@
     }
     if (state.wizardStep === 2) {
       var spec = modelByName(snap.model);
-      if (spec && spec.needs_pdb && !snap.pdb && snap.fetch_structure === "none") {
-        showFormError("This model needs a structure. Upload a PDB or set Fetch back to Auto.");
+      var reason = modelLockReason(spec, snap);
+      if (reason) {
+        showFormError((spec && spec.name ? spec.name + " " : "") + reason + ".");
         return false;
       }
     }
@@ -897,10 +1091,21 @@
     );
   }
 
-  function renderSequence(seq, positions) {
-    if (!seq) return '<p class="muted">Sequence not available.</p>';
+  function mutationPosSet(positions) {
     var set = {};
     for (var i = 0; i < (positions || []).length; i++) set[positions[i]] = true;
+    return set;
+  }
+
+  function currentMutPositions() {
+    return parseMutants(mutantField(state.selectedRow)).map(function (m) {
+      return m.pos;
+    });
+  }
+
+  function renderSequence(seq, positions) {
+    if (!seq) return '<p class="muted">Sequence not available.</p>';
+    var set = mutationPosSet(positions);
     var picked = state.picked && state.picked.resi;
     var html = "";
     for (var idx = 0; idx < seq.length; idx++) {
@@ -918,6 +1123,117 @@
       html += '<span class="' + cls + '" data-pos="' + pos + '" title="' + pos + '">' + ch + "</span>";
     }
     return '<pre class="seq">' + html + "</pre>";
+  }
+
+  function aaStripHtml(seq, positions) {
+    if (!seq) {
+      return '<div class="aa-strip" id="aa-strip"><p class="aa-empty">No sequence yet.</p></div>';
+    }
+    var set = mutationPosSet(positions);
+    var picked = state.picked && state.picked.resi;
+    var html = "";
+    for (var i = 0; i < seq.length; i++) {
+      var pos = i + 1;
+      var cls = "aa-cell seq-aa";
+      if (set[pos]) cls += " is-mut";
+      if (picked === pos) cls += " is-pick";
+      var showNum = pos === 1 || pos % 10 === 0 || picked === pos;
+      html +=
+        '<button type="button" class="' +
+        cls +
+        '" data-pos="' +
+        pos +
+        '" title="' +
+        esc(seq.charAt(i)) +
+        pos +
+        '"><span class="aa-num' +
+        (showNum ? " is-on" : "") +
+        '">' +
+        pos +
+        '</span><span class="aa-letter">' +
+        esc(seq.charAt(i)) +
+        "</span></button>";
+    }
+    return (
+      '<div class="aa-strip" id="aa-strip" tabindex="0" role="listbox" aria-label="Select a residue">' +
+      html +
+      "</div>"
+    );
+  }
+
+  function aaNavHtml(seq) {
+    var n = (seq && seq.length) || 0;
+    var p = state.picked;
+    var val = p && p.resi ? String(p.resi) : "";
+    var status = p ? pickHtml() : n ? n + " residues — click a letter or type a position" : "Sequence not loaded";
+    return (
+      '<div class="aa-nav" id="aa-nav">' +
+      '<button type="button" class="btn" data-aa="prev" title="Previous residue">‹</button>' +
+      '<label class="aa-jump-lab">Residue <input id="aa-jump" type="number" min="1"' +
+      (n ? ' max="' + n + '"' : "") +
+      ' value="' +
+      esc(val) +
+      '" placeholder="1"></label>' +
+      '<button type="button" class="btn" data-aa="go">Go</button>' +
+      '<button type="button" class="btn" data-aa="next" title="Next residue">›</button>' +
+      '<span class="aa-status" id="aa-status">' +
+      esc(status) +
+      "</span></div>"
+    );
+  }
+
+  function scrollAaStripTo(pos) {
+    if (!pos) return;
+    var el = document.querySelector('.aa-cell[data-pos="' + pos + '"]');
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    }
+  }
+
+  function refreshAaStripHighlight() {
+    var strip = $("aa-strip");
+    var picked = state.picked && state.picked.resi;
+    if (strip) {
+      var cells = strip.querySelectorAll(".aa-cell");
+      for (var i = 0; i < cells.length; i++) {
+        var pos = parseInt(cells[i].getAttribute("data-pos"), 10);
+        cells[i].classList.toggle("is-pick", pos === picked);
+        var num = cells[i].querySelector(".aa-num");
+        if (num) num.classList.toggle("is-on", pos === 1 || pos % 10 === 0 || pos === picked);
+      }
+      scrollAaStripTo(picked);
+    }
+    var status = $("aa-status");
+    if (status) status.textContent = pickHtml();
+    var jump = $("aa-jump");
+    if (jump && picked) jump.value = String(picked);
+    var host = document.querySelector(".seq-box .seq");
+    if (host) {
+      var letters = host.querySelectorAll(".seq-aa[data-pos]");
+      for (var j = 0; j < letters.length; j++) {
+        letters[j].classList.toggle(
+          "seq-pick",
+          parseInt(letters[j].getAttribute("data-pos"), 10) === picked
+        );
+      }
+    }
+  }
+
+  function stepResidue(delta) {
+    var seq = jobSequence(state.job) || "";
+    var n = seq.length;
+    if (!n) return;
+    var cur = (state.picked && state.picked.resi) || 0;
+    var next = cur ? cur + delta : delta > 0 ? 1 : n;
+    if (next < 1) next = n;
+    if (next > n) next = 1;
+    pickSequencePos(next);
+  }
+
+  function goResidueInput() {
+    var input = $("aa-jump");
+    var n = parseInt(input && input.value, 10);
+    if (n) pickSequencePos(n);
   }
 
   function drawHistogram(canvas, data) {
@@ -1022,7 +1338,12 @@
       if (i) html.push('<span class="chip-arrow">→</span>');
       var step = PIPELINE[i];
       var on = step.on.indexOf(rec) !== -1;
-      html.push('<span class="chip' + (on ? "" : " is-dim") + '">' + esc(step.label) + "</span>");
+      var opt = !on && step.opt && step.opt.indexOf(rec) !== -1;
+      var cls = "chip";
+      if (opt) cls += " is-opt";
+      else if (!on) cls += " is-dim";
+      var title = opt ? ' title="optional; skip → α=0"' : "";
+      html.push('<span class="' + cls + '"' + title + ">" + esc(step.label) + "</span>");
     }
     return '<div class="chips" aria-label="Pipeline">' + html.join("") + "</div>";
   }
@@ -1264,6 +1585,13 @@
         handleMolControl(molEl);
         return;
       }
+      var aaNav = ev.target.closest("[data-aa]");
+      if (aaNav && host.contains(aaNav)) {
+        if (aaNav.getAttribute("data-aa") === "go") goResidueInput();
+        else if (aaNav.getAttribute("data-aa") === "prev") stepResidue(-1);
+        else if (aaNav.getAttribute("data-aa") === "next") stepResidue(1);
+        return;
+      }
       var aa = ev.target.closest(".seq-aa[data-pos]");
       if (aa && host.contains(aa)) {
         pickSequencePos(parseInt(aa.getAttribute("data-pos"), 10));
@@ -1274,6 +1602,21 @@
       if (molEl) handleMolControl(molEl);
     });
     host.addEventListener("keydown", function (ev) {
+      if (ev.target.id === "aa-jump" && ev.key === "Enter") {
+        ev.preventDefault();
+        goResidueInput();
+        return;
+      }
+      if (ev.target.closest && ev.target.closest("#aa-strip")) {
+        if (ev.key === "ArrowLeft") {
+          ev.preventDefault();
+          stepResidue(-1);
+        } else if (ev.key === "ArrowRight") {
+          ev.preventDefault();
+          stepResidue(1);
+        }
+        return;
+      }
       if (ev.key !== "Enter" || ev.target.id !== "score-q") return;
       state.query = ev.target.value.trim();
       state.offset = 0;
@@ -1315,26 +1658,7 @@
 
   function highlightSelection() {
     var job = state.job;
-    var seqHost = document.querySelector(".seq-box");
-    if (seqHost) {
-      var h2 = seqHost.querySelector("h2");
-      seqHost.innerHTML = "";
-      if (h2) seqHost.appendChild(h2);
-      else {
-        var title = document.createElement("h2");
-        title.textContent = "Sequence";
-        seqHost.appendChild(title);
-      }
-      var tmp = document.createElement("div");
-      var muts = parseMutants(mutantField(state.selectedRow));
-      tmp.innerHTML = renderSequence(
-        jobSequence(job),
-        muts.map(function (m) {
-          return m.pos;
-        })
-      );
-      while (tmp.firstChild) seqHost.appendChild(tmp.firstChild);
-    }
+    refreshSequenceHighlight();
     var panel = $("score-table") && $("score-table").closest(".panel");
     if (panel) {
       var next = selectedDetailHtml(job, state.selectedRow);
@@ -1584,6 +1908,7 @@
         "</label>"
       );
     }
+    var seq = jobSequence(state.job);
     var overlay =
       '<div class="mol-overlay">' +
       '<select data-mol="rep" title="Representation">' +
@@ -1624,7 +1949,11 @@
       "</button></div>";
     var canvas =
       '<div class="mol-fs-target" id="mol-fs-box">' +
+      '<div class="mol-top">' +
       overlay +
+      aaNavHtml(seq) +
+      aaStripHtml(seq, currentMutPositions()) +
+      "</div>" +
       '<div id="mol-host" class="viewer-host viewer-host-fill"></div>' +
       '<div class="mol-chrome"><div class="mol-legend" id="mol-legend"></div>' +
       '<div class="mol-pick" id="mol-pick"></div></div></div>';
@@ -1707,7 +2036,10 @@
   function applyView(opts) {
     opts = opts || {};
     var viewer = state.viewer;
-    if (!viewer || !window.$3Dmol) return;
+    if (!viewer || !window.$3Dmol) {
+      refreshAaStripHighlight();
+      return;
+    }
     var mol = window.$3Dmol;
     var style = colorStyle();
     var selPos = selectionResis();
@@ -1781,6 +2113,7 @@
     if (legend) legend.innerHTML = legendHtml();
     var pick = $("mol-pick");
     if (pick) pick.textContent = pickHtml();
+    refreshAaStripHighlight();
   }
 
   function colorViewer(positions) {
@@ -1799,7 +2132,6 @@
           b: atom.b,
         };
         applyView();
-        refreshSequenceHighlight();
       });
       if (viewer.setHoverable) {
         viewer.setHoverable(
@@ -1925,24 +2257,33 @@
       state.picked.resn = aa;
     }
     applyView({ zoom: "sel" });
-    refreshSequenceHighlight();
   }
 
   function refreshSequenceHighlight() {
     var host = document.querySelector(".seq-box");
-    if (!host) return;
-    var h2 = host.querySelector("h2");
-    var muts = parseMutants(mutantField(state.selectedRow));
-    host.innerHTML = "";
-    if (h2) host.appendChild(h2);
-    var tmp = document.createElement("div");
-    tmp.innerHTML = renderSequence(
-      jobSequence(state.job),
-      muts.map(function (m) {
-        return m.pos;
-      })
-    );
-    while (tmp.firstChild) host.appendChild(tmp.firstChild);
+    var muts = currentMutPositions();
+    if (host) {
+      var h2 = host.querySelector("h2");
+      host.innerHTML = "";
+      if (h2) host.appendChild(h2);
+      var tmp = document.createElement("div");
+      tmp.innerHTML = renderSequence(jobSequence(state.job), muts);
+      while (tmp.firstChild) host.appendChild(tmp.firstChild);
+    }
+    var strip = $("aa-strip");
+    var nav = $("aa-nav");
+    var seq = jobSequence(state.job);
+    if (strip) {
+      var wrap = document.createElement("div");
+      wrap.innerHTML = aaStripHtml(seq, muts);
+      strip.replaceWith(wrap.firstChild);
+    }
+    if (nav) {
+      var wrapNav = document.createElement("div");
+      wrapNav.innerHTML = aaNavHtml(seq);
+      nav.replaceWith(wrapNav.firstChild);
+    }
+    refreshAaStripHighlight();
   }
 
   async function loadScores() {
@@ -2294,7 +2635,7 @@
       "</div>" +
       '<div class="panel"><h2>Selection</h2>' +
       selectedDetailHtml(job, state.selectedRow) +
-      '<p class="mol-hint">Click the chain or a letter. Drag the gutter to grow the protein.</p></div>' +
+      '<p class="mol-hint">Use the residue bar above the 3D view, or click the cartoon. Drag the gutter to grow the protein.</p></div>' +
       fetchBarHtml(job);
     var viewer = hasCoord
       ? molPanelHtml("bench")
@@ -2431,6 +2772,13 @@
       var snap = formSnapshot();
       if (!snap.fasta && !snap.pdb && !snap.pdb_id && !snap.uniprot_id) {
         showFormError("Provide a FASTA and/or PDB, a PDB/UniProt id, or use Score demo assay.");
+        return;
+      }
+      var spec = modelByName(snap.model);
+      var reason = modelLockReason(spec, snap);
+      if (reason) {
+        showFormError((spec && spec.name ? spec.name + " " : "") + reason + ".");
+        showWizard(2);
         return;
       }
     }
@@ -2709,11 +3057,13 @@
     if (!els.form) return;
     els.form.addEventListener("input", function () {
       updateFileLabels();
+      fillModels();
       updateModelMeta();
       updateCli();
     });
     els.form.addEventListener("change", function () {
       updateFileLabels();
+      fillModels();
       updateModelMeta();
       updateCli();
     });
@@ -2752,6 +3102,8 @@
     });
     updateFileLabels();
     updateCli();
+    renderLeaderboard();
+    updateInputGate();
     showWizard(state.wizardStep || 1);
   }
 
@@ -2869,12 +3221,33 @@
           handleMolControl(molEl);
           return;
         }
+        var aaNav = ev.target.closest("[data-aa]");
+        if (aaNav) {
+          if (aaNav.getAttribute("data-aa") === "go") goResidueInput();
+          else if (aaNav.getAttribute("data-aa") === "prev") stepResidue(-1);
+          else if (aaNav.getAttribute("data-aa") === "next") stepResidue(1);
+          return;
+        }
         var aa = ev.target.closest(".seq-aa[data-pos]");
         if (aa) pickSequencePos(parseInt(aa.getAttribute("data-pos"), 10));
       });
       structHost.addEventListener("change", function (ev) {
         var molEl = ev.target.closest("[data-mol]");
         if (molEl) handleMolControl(molEl);
+      });
+      structHost.addEventListener("keydown", function (ev) {
+        if (ev.target.id === "aa-jump" && ev.key === "Enter") {
+          ev.preventDefault();
+          goResidueInput();
+        } else if (ev.target.closest && ev.target.closest("#aa-strip")) {
+          if (ev.key === "ArrowLeft") {
+            ev.preventDefault();
+            stepResidue(-1);
+          } else if (ev.key === "ArrowRight") {
+            ev.preventDefault();
+            stepResidue(1);
+          }
+        }
       });
     }
     var runsHost = $("runs-body");
