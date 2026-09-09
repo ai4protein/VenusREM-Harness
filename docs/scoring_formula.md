@@ -15,11 +15,11 @@ Package default (`rem2`, `--alpha entropy`, `--scoring_mode calibrated_margin`).
 | Official ensemble, per K | `VenusREM2__ProSST-{K}` |
 | Official ensemble, combined | `VenusREM2` (z-mean of the six `VenusREM2__*` members) |
 
-`--scoring_strategy` is **not** a column name. `wt-marginals` (default) vs `masked-marginals` only changes how \(\ell_{\mathrm{raw}}\) is obtained. The ProteinGym ablation CSV still labels the full recipe `pg_rem2_entropy`; that is the experiment table, not the CLI column.
+`--scoring_strategy` is **not** a column name. `wt` / `mask` / `tf` only change how \(\ell_{\mathrm{raw}}\) is obtained (`docs/models.md`). The rem2 head below is the same.
 
 ## Notation
 
-- \(\ell_{\mathrm{raw}}\in\mathbb{R}^{L\times|V|}\): backbone log-probs (default: one WT-marginals pass)
+- \(\ell_{\mathrm{raw}}\in\mathbb{R}^{L\times|V|}\): backbone log-probs (default: one `wt` pass; `mask` / `tf` in [`models.md`](models.md))
 - \(C\in\mathbb{R}^{L\times|V|}\): MSA count matrix after row-normalize + \(\log\mathrm{softmax}\)
 - \(\ell\): fused logits used for \(\Delta\)
 - \(L\): sequence length; \(V_{20}=\{\mathrm{A},\mathrm{C},\ldots,\mathrm{Y}\}\)

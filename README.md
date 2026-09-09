@@ -136,7 +136,7 @@ Default recipe (all terms on when the files exist):
 3. **RSA** — down-weight solvent-exposed positions (stability-like assays). `--task_type surface` reverses the sign (binding / surface phenotypes).
 4. **pLDDT** — down-weight low-confidence predicted structure. Skipped on experimental PDBs.
 
-Scoring mode: `calibrated_margin`. Formula: [`docs/scoring_formula.md`](docs/scoring_formula.md).
+Scoring mode: `calibrated_margin`. Formula: [`docs/scoring_formula.md`](docs/scoring_formula.md). Forwards (`wt` / `mask` / `tf`): [`docs/models.md`](docs/models.md).
 
 Raw PLM baseline (no rem2 extras):
 

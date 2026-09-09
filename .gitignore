@@ -144,9 +144,9 @@ lightning_logs/
 
 # Local research utilities / paper drafts (not part of the installable package)
 tools/
-docs/
-docs/0overleaf/
+docs/*
 !docs/scoring_formula.md
+!docs/models.md
 script/iclr/
 
 # Local hyperparameter sweeps / grids / ablations (keep on disk, do not publish)
