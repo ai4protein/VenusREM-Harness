@@ -43,28 +43,19 @@
       </section>
 
       <section id="page-predict" class="page" hidden>
-        <div class="page-head">
-          <h1>New job</h1>
-          <p class="muted">Pick a model, then drop files or enter an accession in one box. Submit opens Runs.</p>
-          <p class="job-tip">Full ProteinGym-level scoring needs at least a PDB and an MSA.</p>
-        </div>
-
-        <div class="panel demo-panel">
+        <div class="page-head page-head-job">
           <div>
-            <h2>Skip the form</h2>
-            <p class="muted">Bundled HCP_LAMBD + ESM-2 8M. Same as <code>rem2 demo</code>.</p>
+            <h1>New job</h1>
+            <p class="muted">Pick a model, then drop files or enter an accession.</p>
           </div>
-          <button type="button" id="btn-demo" class="btn btn-lg">Score demo assay</button>
+          <button type="button" id="btn-demo" class="btn-link demo-panel">Demo assay</button>
         </div>
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
           <section>
             <h2>Model</h2>
-            <div id="model-cards" class="model-cards"></div>
-            <label class="more-models">
-              <span>More models</span>
-              <select id="model-select" name="model"></select>
-            </label>
+            <div id="model-series" class="model-series"></div>
+            <select id="model-select" name="model" hidden></select>
             <p id="model-meta" class="field-hint"></p>
             <details class="advanced">
               <summary>Recipe</summary>
@@ -80,22 +71,30 @@
 
           <section>
             <h2>Inputs</h2>
-            <p class="field-hint">One box: drop FASTA / PDB / MSA / mutants, or type a PDB / UniProt id. MSA is optional — skip → α=0.</p>
-            <div class="intake" id="intake-box">
-              <label class="intake-drop" id="intake-drop">
-                <input type="file" id="file-bundle" multiple accept=".fa,.fasta,.faa,.txt,.fna,.pdb,.ent,.cif,.a2m,.a3m,.sto,.csv,.tsv">
-                <strong>Drop FASTA, PDB, MSA, or mutants CSV</strong>
-                <span>or click to upload</span>
-              </label>
-              <div class="intake-or">or an accession</div>
-              <div class="field-row">
-                <label>PDB id
-                  <input type="text" name="pdb_id" id="f-pdb-id" placeholder="2L6Q" autocomplete="off">
+            <div class="input-slots" id="intake-box">
+              <div class="input-slot" id="slot-sequence" data-slot="fasta">
+                <h3>Sequence</h3>
+                <label class="slot-drop">
+                  <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+                  <strong>Drop FASTA</strong>
+                  <span>or click to upload</span>
                 </label>
-                <label>UniProt
-                  <input type="text" name="uniprot_id" id="f-uniprot" placeholder="P0A6Y8" autocomplete="off">
+                <label class="slot-id">UniProt or PDB id
+                  <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 or 2L6Q" autocomplete="off">
                 </label>
-                <label>Fetch
+                <div class="slot-chips" id="slot-sequence-chips"></div>
+              </div>
+              <div class="input-slot" id="slot-structure" data-slot="pdb">
+                <h3>Structure</h3>
+                <label class="slot-drop">
+                  <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+                  <strong>Drop PDB / CIF</strong>
+                  <span>or click to upload</span>
+                </label>
+                <label class="slot-id">PDB or UniProt id
+                  <input type="text" id="f-struct-id" placeholder="2L6Q or P0A6Y8" autocomplete="off">
+                </label>
+                <label class="slot-id">Fetch
                   <select name="fetch_structure" id="f-fetch">
                     <option value="auto" selected>Auto (RCSB + AFDB)</option>
                     <option value="afdb">AlphaFold DB only</option>
@@ -103,19 +102,28 @@
                     <option value="none">Don't fetch</option>
                   </select>
                 </label>
+                <input type="hidden" name="pdb_id" id="f-pdb-id">
+                <input type="hidden" name="uniprot_id" id="f-uniprot">
+                <div class="slot-chips" id="slot-structure-chips"></div>
               </div>
-              <div id="intake-files" class="intake-files"></div>
-              <div class="intake-hidden">
-                <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
-                <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
-                <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-                <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+              <div class="input-slot" id="slot-msa" data-slot="msa">
+                <h3>MSA</h3>
+                <label class="slot-drop">
+                  <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+                  <strong>Drop MSA</strong>
+                  <span>optional — skip → α=0</span>
+                </label>
+                <div class="slot-chips" id="slot-msa-chips"></div>
               </div>
             </div>
             <div id="input-gate" class="input-gate" aria-live="polite"></div>
             <details class="advanced">
               <summary>Mutants and limits</summary>
-              <p class="field-hint">No CSV means single-site saturation of the whole sequence.</p>
+              <label class="file-field">
+                <span>Mutants CSV</span>
+                <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+                <span class="file-name" data-for="file-mutants"></span>
+              </label>
               <fieldset id="saturation-fields" class="field sat-box">
                 <legend>Saturation limits</legend>
                 <div class="field-row">
@@ -162,11 +170,8 @@
 
         <div class="panel board-panel" id="pg-board">
           <div class="board-head">
-            <div>
-              <h2 id="board-title">ProteinGym substitutions</h2>
-              <p class="muted" id="board-sub">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
-            </div>
-            <span class="board-metric">Higher is better</span>
+            <h2 id="board-title">ProteinGym substitutions</h2>
+            <p class="muted" id="board-sub">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
           </div>
           <div class="board-filters" id="board-filters" role="tablist" aria-label="Leaderboard filters"></div>
           <div class="board-table-wrap">

@@ -75,14 +75,29 @@ def test_health_and_models(client):
     models = client.get("/api/models").json()["models"]
     names = {row["name"] for row in models}
     assert models[0]["name"] == "venusrem2"
+    assert models[0]["series"] == "venusrem2"
+    assert models[0]["label"] == "VenusREM2"
     assert models[0]["needs_pdb"] is True
     assert models[0]["needs_msa"] is False
     assert models[0]["input_kind"] == "structure"
     assert all(row.get("needs_msa") is False for row in models)
     esm = next(row for row in models if row["name"] == "esm2")
     assert esm["input_kind"] == "sequence"
+    assert esm["series"] == "esm"
+    assert esm["label"] == "ESM-2 650M"
     assert "esm2" in names
     assert "esm2-8m" in names
+    by_series = {}
+    for row in models:
+        by_series.setdefault(row["series"], set()).add(row["name"])
+    assert "venusrem2" in by_series["venusrem2"]
+    assert {"esm2", "esm2-8m", "esm1b", "esm_if", "esmc"} <= by_series["esm"]
+    assert {"prosst", "prosst-20", "prosst-4096"} <= by_series["prosst"]
+    assert {"saprot", "saprot-35m-af2"} <= by_series["saprot"]
+    assert {"progen2", "progen2-s", "progen3"} <= by_series["progen"]
+    assert {"protein_mpnn", "protein_mpnn-soluble-v_48_020"} <= by_series["proteinmpnn"]
+    assert {"rita", "rita-s"} <= by_series["rita"]
+    assert {"protssn", "auto"} <= by_series["other"]
     recipes = client.get("/api/recipes").json()["recipes"]
     assert any(item["id"] == "full" for item in recipes)
     doctor = client.get("/api/doctor").json()
@@ -192,6 +207,49 @@ def test_create_run_requires_input(client):
     assert res.status_code == 400
 
 
+def test_create_run_fetches_sequence(client, monkeypatch):
+    def fake_fasta(seq_id, dest, **_kwargs):
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(">P0A6Y8\nACDE\n", encoding="utf-8")
+        assert seq_id == "P0A6Y8"
+        return str(dest)
+
+    monkeypatch.setattr("rem2.data.fetch_sequence.fetch_query_fasta", fake_fasta)
+    res = client.post(
+        "/api/runs",
+        data={"model": "esm2-8m", "recipe": "full", "seq_id": "P0A6Y8"},
+    )
+    assert res.status_code == 200, res.text
+    job = res.json()
+    assert job["seq_id"] == "P0A6Y8"
+    assert job["fetch_mode"] == "none"
+    fasta = client.get(f"/api/runs/{job['id']}/artifact?kind=fasta")
+    assert fasta.status_code == 200
+    assert "ACDE" in fasta.text
+
+
+def test_create_run_seq_id_fetch_fails(client, monkeypatch):
+    def boom(seq_id, dest, **_kwargs):
+        raise OSError("uniprot down")
+
+    monkeypatch.setattr("rem2.data.fetch_sequence.fetch_query_fasta", boom)
+    res = client.post(
+        "/api/runs",
+        data={"model": "esm2-8m", "recipe": "full", "seq_id": "P0A6Y8"},
+    )
+    assert res.status_code == 400
+    assert "P0A6Y8" in res.text
+
+
+def test_create_run_rejects_bad_seq_id(client):
+    res = client.post(
+        "/api/runs",
+        data={"model": "esm2-8m", "recipe": "full", "seq_id": "not-an-id"},
+    )
+    assert res.status_code == 400
+
+
 def test_unknown_run_404(client):
     assert client.get("/api/runs/nope").status_code == 404
 
@@ -216,11 +274,17 @@ def test_static_index(client):
     assert "MSA optional (none → α=0)".encode() in js.content
     assert b"progress-bar" in js.content
     assert b"Start scoring" in res.content
-    assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" in res.content
+    assert b'id="btn-demo"' in res.content
+    assert b"Skip the form" not in res.content
+    assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
     assert b"leaderboard-body" in res.content
     assert "skip → α=0".encode() in res.content
     assert b"board-filters" in res.content
     assert b"intake-box" in res.content
+    assert b"slot-sequence" in res.content
+    assert b"slot-structure" in res.content
+    assert b"slot-msa" in res.content
+    assert b'name="seq_id"' in res.content
     assert b"New job" in res.content
     vendor = client.get("/vendor/3Dmol-min.js")
     assert vendor.status_code == 200

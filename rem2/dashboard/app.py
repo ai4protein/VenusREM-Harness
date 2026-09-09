@@ -246,6 +246,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         msa: Optional[UploadFile] = File(None),
         pdb_id: Optional[str] = Form(None),
         uniprot_id: Optional[str] = Form(None),
+        seq_id: Optional[str] = Form(None),
         fetch_structure: Optional[str] = Form("auto"),
     ):
         run_id = store.new_id()
@@ -256,6 +257,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         has_pdb = False
         pdb_id = _blank(pdb_id)
         uniprot_id = _blank(uniprot_id)
+        seq_id = _blank(seq_id)
         is_demo = _truthy(demo) or mutant_mode == "demo"
         argv_spec: dict = {}
 
@@ -290,6 +292,18 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
 
                 protein, _seq = _read_fasta_sequence(Path(fasta_path))
                 protein = protein or "query"
+            elif seq_id:
+                from rem2.data.fetch_sequence import fetch_query_fasta
+                from rem2.dashboard.jobs import _read_fasta_sequence
+
+                try:
+                    fasta_path = fetch_query_fasta(seq_id, inputs / "query.fasta")
+                except Exception as exc:
+                    raise HTTPException(
+                        400, f"Could not fetch sequence for {seq_id}: {exc}"
+                    ) from exc
+                protein, _seq = _read_fasta_sequence(Path(fasta_path))
+                protein = protein or "query"
             if pdb is not None and pdb.filename:
                 pdb_path = str(_save_upload(pdb, inputs / "query.pdb"))
                 has_pdb = True
@@ -302,7 +316,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
                 msa_path = inputs / "msa" / f"{protein}{suffix}"
                 _save_upload(msa, msa_path)
                 msa_dir = str(msa_path.parent)
-            if not fasta_path and not pdb_path and not pdb_id and not uniprot_id:
+            if not fasta_path and not pdb_path and not pdb_id and not uniprot_id and not seq_id:
                 raise HTTPException(
                     400,
                     "Provide a FASTA and/or PDB, a PDB/UniProt id, or set demo=true",
@@ -351,9 +365,14 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
             "pdb_origin": None,
             "pdb_id": pdb_id,
             "uniprot_id": uniprot_id,
+            "seq_id": seq_id,
             "structure_sources": {},
             "preferred_source": None,
-            "fetch_mode": "none" if is_demo else (_blank(fetch_structure) or "auto"),
+            "fetch_mode": (
+                "none"
+                if is_demo or not (pdb_path or pdb_id or uniprot_id)
+                else (_blank(fetch_structure) or "auto")
+            ),
             "fetch_errors": [],
             "argv_spec": argv_spec,
             "progress": {"pct": 0, "stage": "queued", "message": "Queued"},

@@ -265,7 +265,7 @@ def proteingym_catalog() -> dict[str, Any]:
                 "metric_key": metric,
                 "n": 217,
                 "source": "REM2 paper Table 1; public rows from proteingym.org/benchmarks",
-                "note": "Models from paper Table 1 under the official 217-assay ProteinGym protocol.",
+                "note": "",
                 "rows": _category_rows(metric),
             }
         )
@@ -278,7 +278,7 @@ def proteingym_catalog() -> dict[str, Any]:
             "metric_key": "average",
             "n": 217,
             "source": "REM2 paper staged ProteinGym scores (VenusREM2 row)",
-            "note": "Same 217-assay Average Spearman. Columns add rem2 terms left to right in the paper: raw → mix → CCD → RSA → pLDDT.",
+            "note": "",
             "rows": _rank(
                 [
                     {

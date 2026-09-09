@@ -42,12 +42,124 @@
     },
   ];
 
+  var SERIES_ORDER = ["venusrem2", "esm", "prosst", "saprot", "progen", "proteinmpnn", "rita", "other"];
+  var SERIES_LABELS = {
+    venusrem2: "VenusREM2",
+    esm: "ESM",
+    prosst: "ProSST",
+    saprot: "SaProt",
+    progen: "ProGen",
+    proteinmpnn: "ProteinMPNN",
+    rita: "RITA",
+    other: "Other",
+  };
+  var VARIANT_LABELS = {
+    venusrem2: "VenusREM2",
+    "prosst": "Default (K=2048)",
+    "prosst-20": "K=20",
+    "prosst-128": "K=128",
+    "prosst-512": "K=512",
+    "prosst-1024": "K=1024",
+    "prosst-2048": "K=2048",
+    "prosst-4096": "K=4096",
+    esm2: "ESM-2 650M",
+    "esm2-8m": "ESM-2 8M",
+    "esm2-35m": "ESM-2 35M",
+    "esm2-150m": "ESM-2 150M",
+    "esm2-3b": "ESM-2 3B",
+    esm1b: "ESM-1b",
+    esm1v: "ESM-1v",
+    esm3: "ESM3",
+    esmc: "ESM-C 300M",
+    "esmc-600m": "ESM-C 600M",
+    esm_if: "ESM-IF",
+    saprot: "650M AF2",
+    "saprot-35m-af2": "35M AF2",
+    "saprot-650m-pdb": "650M PDB",
+    progen2: "ProGen2 L",
+    "progen2-s": "ProGen2 S",
+    "progen2-m": "ProGen2 M",
+    "progen2-b": "ProGen2 B",
+    "progen2-xl": "ProGen2 XL",
+    progen3: "ProGen3 1B",
+    "progen3-112m": "ProGen3 112M",
+    "progen3-219m": "ProGen3 219M",
+    "progen3-339m": "ProGen3 339M",
+    "progen3-762m": "ProGen3 762M",
+    "progen3-3b": "ProGen3 3B",
+    protein_mpnn: "v_48_020",
+    "protein_mpnn-v_48_002": "v_48_002",
+    "protein_mpnn-v_48_010": "v_48_010",
+    "protein_mpnn-v_48_030": "v_48_030",
+    "protein_mpnn-soluble-v_48_002": "soluble v_48_002",
+    "protein_mpnn-soluble-v_48_010": "soluble v_48_010",
+    "protein_mpnn-soluble-v_48_020": "soluble v_48_020",
+    "protein_mpnn-soluble-v_48_030": "soluble v_48_030",
+    rita: "RITA XL",
+    "rita-s": "RITA S",
+    "rita-m": "RITA M",
+    "rita-l": "RITA L",
+    protssn: "ProtSSN",
+    carp: "CARP-640M",
+    mifst: "MIF-ST",
+    s2f: "S2F",
+    s3f: "S3F",
+    protgpt2: "ProtGPT2",
+    auto: "HF AutoMLM",
+  };
   var FALLBACK_MODELS = [
     { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
-    { name: "esm2", description: "ESM-2 650M", supports_mask: true, needs_pdb: false, needs_msa: false, input_kind: "sequence", size_hint: "first download ~2.5 GB" },
-    { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, needs_pdb: false, needs_msa: false, input_kind: "sequence", size_hint: "first download ~30 MB" },
-    { name: "saprot", description: "SaProt", supports_mask: true, needs_pdb: true, needs_msa: false, input_kind: "structure" },
-    { name: "proteinmpnn", description: "ProteinMPNN", supports_tf: true, needs_pdb: true, needs_msa: false, input_kind: "structure" },
+    { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, input_kind: "sequence", size_hint: "first download ~30 MB" },
+    { name: "esm2-35m", description: "ESM-2 35M", supports_mask: true, input_kind: "sequence" },
+    { name: "esm2-150m", description: "ESM-2 150M", supports_mask: true, input_kind: "sequence" },
+    { name: "esm2", description: "ESM-2 650M", supports_mask: true, input_kind: "sequence", size_hint: "first download ~2.5 GB" },
+    { name: "esm2-3b", description: "ESM-2 3B", supports_mask: true, input_kind: "sequence" },
+    { name: "esm1b", description: "ESM-1b masked language model", supports_mask: true, input_kind: "sequence" },
+    { name: "esm1v", description: "ESM-1v 5-seed ensemble", supports_mask: true, input_kind: "sequence" },
+    { name: "esmc", description: "ESM-C 300M", supports_mask: true, input_kind: "sequence" },
+    { name: "esmc-600m", description: "ESM-C 600M", supports_mask: true, input_kind: "sequence" },
+    { name: "esm3", description: "ESM3 small open", supports_mask: true, input_kind: "sequence" },
+    { name: "esm_if", description: "ESM-IF1 inverse folding", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst", description: "ProSST structure-aware MLM", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-20", description: "ProSST-K20", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-128", description: "ProSST-K128", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-512", description: "ProSST-K512", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-1024", description: "ProSST-K1024", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-2048", description: "ProSST-K2048", needs_pdb: true, input_kind: "structure" },
+    { name: "prosst-4096", description: "ProSST-K4096", needs_pdb: true, input_kind: "structure" },
+    { name: "saprot", description: "SaProt 650M AF2", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "saprot-35m-af2", description: "SaProt 35M AF2", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "saprot-650m-pdb", description: "SaProt 650M PDB", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "progen2-s", description: "ProGen2-small", input_kind: "sequence" },
+    { name: "progen2-m", description: "ProGen2-medium", input_kind: "sequence" },
+    { name: "progen2-b", description: "ProGen2-base", input_kind: "sequence" },
+    { name: "progen2", description: "ProGen2-L", input_kind: "sequence" },
+    { name: "progen2-xl", description: "ProGen2-xlarge", input_kind: "sequence" },
+    { name: "progen3-112m", description: "progen3-112m", input_kind: "sequence" },
+    { name: "progen3-219m", description: "progen3-219m", input_kind: "sequence" },
+    { name: "progen3-339m", description: "progen3-339m", input_kind: "sequence" },
+    { name: "progen3-762m", description: "progen3-762m", input_kind: "sequence" },
+    { name: "progen3", description: "ProGen3-1B", input_kind: "sequence" },
+    { name: "progen3-3b", description: "progen3-3b", input_kind: "sequence" },
+    { name: "protein_mpnn", description: "ProteinMPNN v_48_020", supports_tf: true, needs_pdb: true, input_kind: "structure", aliases: ["proteinmpnn"] },
+    { name: "protein_mpnn-v_48_002", description: "ProteinMPNN v_48_002", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-v_48_010", description: "ProteinMPNN v_48_010", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-v_48_030", description: "ProteinMPNN v_48_030", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-soluble-v_48_002", description: "ProteinMPNN soluble_v_48_002", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-soluble-v_48_010", description: "ProteinMPNN soluble_v_48_010", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-soluble-v_48_020", description: "ProteinMPNN soluble_v_48_020", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protein_mpnn-soluble-v_48_030", description: "ProteinMPNN soluble_v_48_030", supports_tf: true, needs_pdb: true, input_kind: "structure" },
+    { name: "rita-s", description: "RITA_s", input_kind: "sequence" },
+    { name: "rita-m", description: "RITA_m", input_kind: "sequence" },
+    { name: "rita-l", description: "RITA_l", input_kind: "sequence" },
+    { name: "rita", description: "RITA-XL", input_kind: "sequence" },
+    { name: "protssn", description: "ProtSSN structure GNN ensemble", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "carp", description: "CARP-640M", supports_mask: true, input_kind: "sequence" },
+    { name: "mifst", description: "MIF-ST masked inverse folding", needs_pdb: true, input_kind: "structure" },
+    { name: "s2f", description: "S2F", input_kind: "sequence" },
+    { name: "s3f", description: "S3F structure+sequence", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protgpt2", description: "ProtGPT2 causal LM", input_kind: "sequence" },
+    { name: "auto", description: "Any HuggingFace AutoModelForMaskedLM", supports_mask: true, input_kind: "sequence" },
   ];
 
   var FALLBACK_PAPER = [
@@ -87,18 +199,18 @@
     url: "https://proteingym.org/benchmarks",
     metric: "Mean Spearman",
     boards: [
-      { id: "substitutions", label: "Substitutions", title: "ProteinGym substitutions", n: 217, note: "Official 217-assay ProteinGym protocol from the REM2 paper.", rows: fallbackBoardRows("average") },
-      { id: "stability", label: "Stability", title: "ProteinGym stability", n: 217, note: "Paper Table 1 Stability column.", rows: fallbackBoardRows("stability") },
-      { id: "activity", label: "Activity", title: "ProteinGym activity", n: 217, note: "Paper Table 1 Activity column.", rows: fallbackBoardRows("activity") },
-      { id: "binding", label: "Binding", title: "ProteinGym binding", n: 217, note: "Paper Table 1 Binding column.", rows: fallbackBoardRows("binding") },
-      { id: "expression", label: "Expression", title: "ProteinGym expression", n: 217, note: "Paper Table 1 Expression column.", rows: fallbackBoardRows("expression") },
-      { id: "organismal", label: "Organismal", title: "ProteinGym organismal fitness", n: 217, note: "Paper Table 1 Organismal column.", rows: fallbackBoardRows("organismal") },
+      { id: "substitutions", label: "Substitutions", title: "ProteinGym substitutions", n: 217, note: "", rows: fallbackBoardRows("average") },
+      { id: "stability", label: "Stability", title: "ProteinGym stability", n: 217, note: "", rows: fallbackBoardRows("stability") },
+      { id: "activity", label: "Activity", title: "ProteinGym activity", n: 217, note: "", rows: fallbackBoardRows("activity") },
+      { id: "binding", label: "Binding", title: "ProteinGym binding", n: 217, note: "", rows: fallbackBoardRows("binding") },
+      { id: "expression", label: "Expression", title: "ProteinGym expression", n: 217, note: "", rows: fallbackBoardRows("expression") },
+      { id: "organismal", label: "Organismal", title: "ProteinGym organismal fitness", n: 217, note: "", rows: fallbackBoardRows("organismal") },
       {
         id: "ablations",
         label: "Full rem2",
         title: "VenusREM2 recipe ladder",
         n: 217,
-        note: "VenusREM2 staged scores from the paper: raw 0.524 → full rem2 0.556.",
+        note: "",
         rows: [
           { rank: 1, name: "VenusREM2 · rem2", model: "venusrem2", score: 0.556, inputs: ["seq", "str", "evo"], highlight: true, note: "+ pLDDT (full)" },
           { rank: 2, name: "VenusREM2 · + RSA", model: "venusrem2", score: 0.554, inputs: ["seq", "str", "evo"], note: "gated CCD + RSA" },
@@ -111,7 +223,6 @@
     ],
   };
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
-  var FEATURED_MODELS = ["venusrem2", "esm2", "esm2-8m", "saprot"];
 
   var PIPELINE = [
     { id: "fwd", label: "Forward", on: ["full", "raw", "msa", "ccd"] },
@@ -391,12 +502,39 @@
     return parts.join(" ");
   }
 
+  function classifyAccession(raw) {
+    var v = String(raw || "").trim();
+    if (!v) return { pdb_id: "", uniprot_id: "" };
+    var uni = v.replace(/^AF-/i, "").split("-")[0];
+    if (/^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$/i.test(uni)) {
+      return { pdb_id: "", uniprot_id: uni.toUpperCase() };
+    }
+    if (/^[0-9][A-Za-z0-9]{3}$/.test(v) && !/^20[0-2][0-9]$/.test(v)) {
+      return { pdb_id: v.toUpperCase(), uniprot_id: "" };
+    }
+    if (v.length >= 6) return { pdb_id: "", uniprot_id: v.toUpperCase() };
+    return { pdb_id: v.toUpperCase(), uniprot_id: "" };
+  }
+
+  function syncStructAccession() {
+    var el = $("f-struct-id");
+    if (!el) return;
+    var acc = classifyAccession(el.value);
+    var pdb = $("f-pdb-id");
+    var uni = $("f-uniprot");
+    if (pdb) pdb.value = acc.pdb_id;
+    if (uni) uni.value = acc.uniprot_id;
+  }
+
   function formSnapshot() {
     var form = els.form;
     if (!form) {
       return { model: "venusrem2", recipe: "full", mutant_sites: "1", scoring_strategy: "wt" };
     }
+    syncStructAccession();
     var data = new FormData(form);
+    var structEl = $("f-struct-id");
+    var classified = classifyAccession(structEl ? structEl.value : "");
     return {
       model: data.get("model") || "venusrem2",
       recipe: data.get("recipe") || "full",
@@ -409,15 +547,16 @@
       residue_range: (data.get("residue_range") || "").toString().trim(),
       scoring_strategy: data.get("scoring_strategy") || "wt",
       max_mutants: (data.get("max_mutants") || "").toString().trim(),
-      pdb_id: (data.get("pdb_id") || "").toString().trim(),
-      uniprot_id: (data.get("uniprot_id") || "").toString().trim(),
+      seq_id: (data.get("seq_id") || "").toString().trim(),
+      pdb_id: classified.pdb_id || (data.get("pdb_id") || "").toString().trim(),
+      uniprot_id: classified.uniprot_id || (data.get("uniprot_id") || "").toString().trim(),
       fetch_structure: (data.get("fetch_structure") || "auto").toString().trim(),
     };
   }
 
   function hasSequenceInput(snap) {
     snap = snap || formSnapshot();
-    return !!(snap.fasta || snap.pdb);
+    return !!(snap.fasta || snap.pdb || snap.seq_id);
   }
 
   function hasStructureInput(snap) {
@@ -475,16 +614,16 @@
     snap = snap || formSnapshot();
     var bits = [];
     if (!hasSequenceInput(snap) && !hasStructureInput(snap)) {
-      bits.push("Add a FASTA or a PDB to continue.");
+      bits.push("Add a sequence or structure.");
     } else if (!structureReady(snap)) {
-      bits.push("FASTA only — sequence models are available. VenusREM2 / SaProt / ProteinMPNN stay locked until you add a PDB file or a PDB / UniProt id.");
+      bits.push("FASTA only — sequence models unlocked.");
     } else {
-      bits.push("Structure in hand — VenusREM2 and other structure models are unlocked.");
+      bits.push("Structure ready.");
     }
     if (!hasMsaInput(snap)) {
-      bits.push("No MSA — rem2 will use α=0. The ProteinGym #1 number (0.556) used PDB + MSA.");
+      bits.push("No MSA — α=0.");
     } else {
-      bits.push("MSA attached — entropy-α can run.");
+      bits.push("MSA attached.");
     }
     return bits.join(" ");
   }
@@ -493,7 +632,7 @@
     var snap = formSnapshot();
     var html =
       '<div class="gate-chips">' +
-      inputChip(!!snap.fasta, "FASTA") +
+      inputChip(!!(snap.fasta || snap.seq_id), "FASTA") +
       inputChip(structureReady(snap), "PDB") +
       inputChip(hasMsaInput(snap), "MSA") +
       "</div><p class=\"gate-msg\">" +
@@ -745,6 +884,115 @@
     return state.runs;
   }
 
+  var openModelSeries = "";
+  var modelSeriesBound = false;
+
+  function inferModelSeries(name) {
+    var raw = String(name || "").toLowerCase();
+    if (raw === "venusrem2" || raw === "venusrem") return "venusrem2";
+    if (raw.indexOf("prosst") === 0) return "prosst";
+    if (raw.indexOf("saprot") === 0) return "saprot";
+    if (raw.indexOf("progen") === 0) return "progen";
+    if (raw.indexOf("protein_mpnn") === 0 || raw.indexOf("proteinmpnn") === 0) return "proteinmpnn";
+    if (raw.indexOf("rita") === 0) return "rita";
+    if (raw.indexOf("esm") === 0) return "esm";
+    return "other";
+  }
+
+  function modelSeriesOf(spec) {
+    if (!spec) return "other";
+    if (spec.series) return spec.series;
+    return inferModelSeries(spec.name);
+  }
+
+  function modelVariantLabel(spec) {
+    if (!spec) return "";
+    if (spec.label) return spec.label;
+    if (VARIANT_LABELS[spec.name]) return VARIANT_LABELS[spec.name];
+    return spec.description || spec.name;
+  }
+
+  function seriesLabelOf(seriesId, variants) {
+    if (variants && variants[0] && variants[0].series_label) return variants[0].series_label;
+    return SERIES_LABELS[seriesId] || seriesId;
+  }
+
+  function groupModelSeries() {
+    var groups = {};
+    var i;
+    for (i = 0; i < state.models.length; i++) {
+      var spec = state.models[i];
+      var sid = modelSeriesOf(spec);
+      if (!groups[sid]) groups[sid] = [];
+      groups[sid].push(spec);
+    }
+    Object.keys(groups).forEach(function (sid) {
+      groups[sid].sort(function (a, b) {
+        var ao = a.variant_order;
+        var bo = b.variant_order;
+        if (ao == null) ao = 1000;
+        if (bo == null) bo = 1000;
+        if (ao !== bo) return ao - bo;
+        return String(a.name) < String(b.name) ? -1 : 1;
+      });
+    });
+    var out = [];
+    var seen = {};
+    for (i = 0; i < SERIES_ORDER.length; i++) {
+      var id = SERIES_ORDER[i];
+      if (groups[id] && groups[id].length) {
+        out.push({ id: id, label: seriesLabelOf(id, groups[id]), variants: groups[id] });
+        seen[id] = true;
+      }
+    }
+    Object.keys(groups).forEach(function (sid) {
+      if (!seen[sid] && groups[sid].length) {
+        out.push({ id: sid, label: seriesLabelOf(sid, groups[sid]), variants: groups[sid] });
+      }
+    });
+    return out;
+  }
+
+  function bindModelSeriesHost(host) {
+    if (modelSeriesBound || !host) return;
+    modelSeriesBound = true;
+    host.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      var variant = ev.target.closest("[data-model]");
+      if (variant) {
+        setModel(variant.getAttribute("data-model"));
+        return;
+      }
+      var seriesBtn = ev.target.closest("[data-series]");
+      if (seriesBtn) toggleModelSeries(seriesBtn.getAttribute("data-series"));
+    });
+    document.addEventListener("click", function (ev) {
+      if (!openModelSeries) return;
+      if (host.contains(ev.target)) return;
+      openModelSeries = "";
+      renderModelSeries();
+    });
+  }
+
+  function toggleModelSeries(seriesId) {
+    var groups = groupModelSeries();
+    var group = null;
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].id === seriesId) {
+        group = groups[i];
+        break;
+      }
+    }
+    if (!group) return;
+    if (group.variants.length === 1) {
+      openModelSeries = "";
+      setModel(group.variants[0].name);
+      return;
+    }
+    openModelSeries = openModelSeries === seriesId ? "" : seriesId;
+    renderModelSeries();
+  }
+
   function fillModels() {
     var sel = els.modelSelect;
     if (!sel) return;
@@ -754,50 +1002,96 @@
     var models = state.models.slice().sort(function (a, b) {
       if (a.name === "venusrem2") return -1;
       if (b.name === "venusrem2") return 1;
+      var ao = a.variant_order;
+      var bo = b.variant_order;
+      if (ao == null) ao = 1000;
+      if (bo == null) bo = 1000;
+      if (ao !== bo) return ao - bo;
       return a.name < b.name ? -1 : 1;
     });
     for (var i = 0; i < models.length; i++) {
       var m = models[i];
       var opt = document.createElement("option");
       opt.value = m.name;
-      opt.textContent = m.name + (m.needs_pdb ? "  (structure)" : "  (sequence)");
+      opt.textContent = (m.label || VARIANT_LABELS[m.name] || m.name) + (m.needs_pdb ? "  (structure)" : "  (sequence)");
       sel.appendChild(opt);
     }
     if (prev && modelByName(prev)) sel.value = prev;
     else sel.value = "venusrem2";
-    renderModelCards();
+    renderModelSeries();
     updateModelMeta();
     updateInputGate();
     updateCli();
   }
 
-  function renderModelCards() {
-    var host = $("model-cards");
+  function renderModelSeries() {
+    var host = $("model-series");
     if (!host) return;
+    bindModelSeriesHost(host);
     var current = (els.modelSelect && els.modelSelect.value) || "venusrem2";
-    var names = FEATURED_MODELS.slice();
+    var currentSpec = modelByName(current);
+    var currentSeries = modelSeriesOf(currentSpec) || inferModelSeries(current);
+    var groups = groupModelSeries();
     var html = "";
-    for (var i = 0; i < names.length; i++) {
-      var spec = modelByName(names[i]);
-      if (!spec) continue;
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      var selected = currentSeries === group.id;
+      var open = openModelSeries === group.id && group.variants.length > 1;
+      var picked = null;
+      var v;
+      for (v = 0; v < group.variants.length; v++) {
+        if (group.variants[v].name === current) {
+          picked = group.variants[v];
+          break;
+        }
+      }
+      var sub = selected && picked ? modelVariantLabel(picked) : group.variants.length === 1 ? "" : group.variants.length + " variants";
+      html += '<div class="model-series-item">';
       html +=
-        '<button type="button" class="model-card' +
-        (spec.name === current ? " is-on" : "") +
-        '" data-model="' +
-        esc(spec.name) +
+        '<button type="button" class="model-series-btn' +
+        (selected ? " is-on" : "") +
+        (open ? " is-open" : "") +
+        '" data-series="' +
+        esc(group.id) +
+        '"' +
+        (group.variants.length === 1 ? ' data-model="' + esc(group.variants[0].name) + '"' : "") +
+        ' aria-expanded="' +
+        (open ? "true" : "false") +
         '">' +
-        esc(spec.name) +
-        "<small>" +
-        esc(spec.description || (spec.needs_pdb ? "structure" : "sequence")) +
-        "</small></button>";
+        esc(group.label) +
+        (sub ? "<small>" + esc(sub) + "</small>" : "") +
+        "</button>";
+      if (open) {
+        html += '<div class="model-variant-panel" role="listbox">';
+        for (v = 0; v < group.variants.length; v++) {
+          var spec = group.variants[v];
+          html +=
+            '<button type="button" class="model-variant' +
+            (spec.name === current ? " is-on" : "") +
+            '" data-model="' +
+            esc(spec.name) +
+            '" role="option" aria-selected="' +
+            (spec.name === current ? "true" : "false") +
+            '">' +
+            esc(modelVariantLabel(spec)) +
+            "</button>";
+        }
+        html += "</div>";
+      }
+      html += "</div>";
     }
     host.innerHTML = html;
+  }
+
+  function renderModelCards() {
+    renderModelSeries();
   }
 
   function setModel(name) {
     if (!name || !els.modelSelect) return;
     if (modelByName(name)) els.modelSelect.value = name;
-    renderModelCards();
+    openModelSeries = "";
+    renderModelSeries();
     updateModelMeta();
     updateInputGate();
     updateCli();
@@ -848,7 +1142,10 @@
     var sub = $("board-sub");
     var filters = $("board-filters");
     var host = $("leaderboard-body");
-    if (note) note.textContent = board.note || "";
+    if (note) {
+      note.textContent = board.note || "";
+      note.hidden = !board.note;
+    }
     if (title) title.textContent = board.title || "ProteinGym substitutions";
     if (sub) {
       sub.innerHTML =
@@ -882,6 +1179,8 @@
           })
           .join("");
         var first = row.highlight || row.rank === 1;
+        var score = Number(row.score);
+        var barPct = (Math.max(0, Math.min(1, isFinite(score) ? score : 0)) * 100).toFixed(1);
         return (
           '<tr class="' +
           (first ? "is-first" : "") +
@@ -892,14 +1191,17 @@
           (row.note ? "<small>" + esc(row.note) + "</small>" : "") +
           '</span></td><td class="board-tags">' +
           tags +
-          '</td><td class="num board-score">' +
-          Number(row.score).toFixed(3) +
-          "</td></tr>"
+          '</td><td class="board-score">' +
+          '<span class="board-score-num">' +
+          (isFinite(score) ? score.toFixed(3) : "") +
+          '</span><span class="board-score-track" aria-hidden="true"><span class="board-score-bar" style="width:' +
+          barPct +
+          '%"></span></span></td></tr>'
         );
       })
       .join("");
     host.innerHTML =
-      "<thead><tr><th>Rank</th><th>Model</th><th>Inputs</th><th class=\"num\">Mean Spearman</th></tr></thead><tbody>" +
+      "<thead><tr><th>Rank</th><th>Model</th><th>Inputs</th><th class=\"num\">Score</th></tr></thead><tbody>" +
       body +
       "</tbody>";
   }
@@ -958,11 +1260,17 @@
     }
   }
 
-  function assignDroppedFiles(fileList) {
+  function assignDroppedFiles(fileList, slot) {
     var files = fileList || [];
     for (var i = 0; i < files.length; i++) {
       var kind = classifyIntakeFile(files[i]);
-      if (kind === "fasta") setInputFile($("file-fasta"), files[i]);
+      if (slot === "fasta") {
+        if (kind === "fasta") setInputFile($("file-fasta"), files[i]);
+      } else if (slot === "pdb") {
+        if (kind === "pdb") setInputFile($("file-pdb"), files[i]);
+      } else if (slot === "msa") {
+        if (kind === "msa" || kind === "fasta") setInputFile($("file-msa"), files[i]);
+      } else if (kind === "fasta") setInputFile($("file-fasta"), files[i]);
       else if (kind === "pdb") setInputFile($("file-pdb"), files[i]);
       else if (kind === "msa") setInputFile($("file-msa"), files[i]);
       else if (kind === "mutants") setInputFile($("file-mutants"), files[i]);
@@ -973,16 +1281,29 @@
     updateCli();
   }
 
-  function renderIntakeFiles() {
-    var host = $("intake-files");
+  function renderSlotChips(id, items) {
+    var host = $(id);
     if (!host) return;
+    host.innerHTML = items
+      .filter(Boolean)
+      .map(function (text) {
+        return '<span class="slot-chip">' + esc(text) + "</span>";
+      })
+      .join("");
+  }
+
+  function renderIntakeFiles() {
     var snap = formSnapshot();
-    var bits = [];
-    if (snap.fasta) bits.push('<span class="intake-chip">FASTA · ' + esc(snap.fasta) + "</span>");
-    if (snap.pdb) bits.push('<span class="intake-chip">PDB · ' + esc(snap.pdb) + "</span>");
-    if (snap.msa) bits.push('<span class="intake-chip">MSA · ' + esc(snap.msa) + "</span>");
-    if (snap.mutants) bits.push('<span class="intake-chip">Mutants · ' + esc(snap.mutants) + "</span>");
-    host.innerHTML = bits.join("");
+    renderSlotChips("slot-sequence-chips", [
+      snap.fasta ? "FASTA · " + snap.fasta : "",
+      snap.seq_id || "",
+    ]);
+    renderSlotChips("slot-structure-chips", [
+      snap.pdb ? "PDB · " + snap.pdb : "",
+      snap.pdb_id || "",
+      snap.uniprot_id || "",
+    ]);
+    renderSlotChips("slot-msa-chips", [snap.msa ? "MSA · " + snap.msa : ""]);
   }
 
   function runPhase(job) {
@@ -2982,6 +3303,7 @@
     }
     if (snap.scoring_strategy) fd.append("scoring_strategy", snap.scoring_strategy);
     if (snap.max_mutants) fd.append("max_mutants", snap.max_mutants);
+    if (snap.seq_id) fd.append("seq_id", snap.seq_id);
     if (snap.pdb_id) fd.append("pdb_id", snap.pdb_id);
     if (snap.uniprot_id) fd.append("uniprot_id", snap.uniprot_id);
     if (snap.fetch_structure) fd.append("fetch_structure", snap.fetch_structure);
@@ -2993,8 +3315,8 @@
     showFormError("");
     if (!demo) {
       var snap = formSnapshot();
-      if (!snap.fasta && !snap.pdb && !snap.pdb_id && !snap.uniprot_id) {
-        showFormError("Provide a FASTA and/or PDB, a PDB/UniProt id, or use Score demo assay.");
+      if (!snap.fasta && !snap.pdb && !snap.pdb_id && !snap.uniprot_id && !snap.seq_id) {
+        showFormError("Provide a FASTA, PDB, or an accession.");
         return;
       }
       var spec = modelByName(snap.model);
@@ -3272,13 +3594,8 @@
         submitJob(true);
       });
     }
-    var cards = $("model-cards");
-    if (cards) {
-      cards.addEventListener("click", function (ev) {
-        var btn = ev.target.closest("[data-model]");
-        if (btn) setModel(btn.getAttribute("data-model"));
-      });
-    }
+    var seriesHost = $("model-series");
+    if (seriesHost) bindModelSeriesHost(seriesHost);
     var filters = $("board-filters");
     if (filters) {
       filters.addEventListener("click", function (ev) {
@@ -3288,28 +3605,25 @@
         renderLeaderboard();
       });
     }
-    var drop = $("intake-box");
-    var bundle = $("file-bundle");
-    if (drop) {
-      drop.addEventListener("dragover", function (ev) {
+    function bindSlotDrop(id, slot) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener("dragover", function (ev) {
         ev.preventDefault();
-        drop.classList.add("is-drag");
+        el.classList.add("is-drag");
       });
-      drop.addEventListener("dragleave", function () {
-        drop.classList.remove("is-drag");
+      el.addEventListener("dragleave", function () {
+        el.classList.remove("is-drag");
       });
-      drop.addEventListener("drop", function (ev) {
+      el.addEventListener("drop", function (ev) {
         ev.preventDefault();
-        drop.classList.remove("is-drag");
-        assignDroppedFiles(ev.dataTransfer && ev.dataTransfer.files);
+        el.classList.remove("is-drag");
+        assignDroppedFiles(ev.dataTransfer && ev.dataTransfer.files, slot);
       });
     }
-    if (bundle) {
-      bundle.addEventListener("change", function () {
-        assignDroppedFiles(bundle.files);
-        bundle.value = "";
-      });
-    }
+    bindSlotDrop("slot-sequence", "fasta");
+    bindSlotDrop("slot-structure", "pdb");
+    bindSlotDrop("slot-msa", "msa");
     updateFileLabels();
     renderIntakeFiles();
     updateCli();

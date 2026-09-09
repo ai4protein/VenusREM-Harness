@@ -48,6 +48,8 @@ this.activeJob = activeJob;
 this.modelUnlocked = modelUnlocked;
 this.modelLockReason = modelLockReason;
 this.preferredModel = preferredModel;
+this.inferModelSeries = inferModelSeries;
+this.groupModelSeries = groupModelSeries;
 this.inputGateMessage = inputGateMessage;
 this.highlightPositions = highlightPositions;
 this.classifyIntakeFile = classifyIntakeFile;
@@ -251,10 +253,18 @@ check("html flow chrome", () => {
   assert.ok(!html.includes("1. Inputs"));
   assert.ok(html.includes('id="btn-submit"') && html.includes("Start scoring"));
   assert.ok(html.includes('id="intake-box"'));
-  assert.ok(html.includes('id="model-cards"'));
+  assert.ok(html.includes('id="slot-sequence"'));
+  assert.ok(html.includes('id="slot-structure"'));
+  assert.ok(html.includes('id="slot-msa"'));
+  assert.ok(html.includes('name="seq_id"'));
+  assert.ok(!html.includes('id="file-bundle"'));
+  assert.ok(html.includes('id="model-series"'));
+  assert.ok(html.includes('id="model-select"') && html.includes('name="model"'));
   assert.ok(html.includes('id="board-filters"'));
   assert.ok(html.includes('value="auto" selected'));
-  assert.ok(html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
+  assert.ok(html.includes('id="btn-demo"'));
+  assert.ok(!html.includes("Skip the form"));
+  assert.ok(!html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
   assert.ok(html.includes('id="leaderboard-body"'));
   assert.ok(html.includes("skip → α=0"));
 });
@@ -295,6 +305,23 @@ check("leaderboard catalog has filter boards", () => {
   assert.strictEqual(context.currentBoard().rows[0].score, 0.556);
 });
 
+check("model picker groups by series", () => {
+  assert.strictEqual(context.inferModelSeries("esm2-8m"), "esm");
+  assert.strictEqual(context.inferModelSeries("prosst-2048"), "prosst");
+  assert.strictEqual(context.inferModelSeries("progen3-1b") || context.inferModelSeries("progen3"), "progen");
+  assert.strictEqual(context.inferModelSeries("protein_mpnn-soluble-v_48_020"), "proteinmpnn");
+  assert.strictEqual(context.inferModelSeries("rita-s"), "rita");
+  assert.strictEqual(context.inferModelSeries("venusrem2"), "venusrem2");
+  const groups = context.groupModelSeries();
+  const ids = groups.map((g) => g.id);
+  assert.ok(ids.includes("venusrem2"));
+  assert.ok(ids.includes("esm"));
+  assert.ok(ids.includes("prosst"));
+  const esm = groups.find((g) => g.id === "esm");
+  assert.ok(esm.variants.some((v) => v.name === "esm2-8m"));
+  assert.ok(esm.variants.some((v) => v.name === "esm_if"));
+});
+
 check("pdb or accession unlocks VenusREM2", () => {
   const pdb = { fasta: "a.fa", pdb: "x.pdb", pdb_id: "", uniprot_id: "", fetch_structure: "none", msa: "q.a2m" };
   assert.strictEqual(context.modelUnlocked({ name: "venusrem2", needs_pdb: true }, pdb), true);
@@ -312,9 +339,12 @@ check("css protein pane is at least half", () => {
   assert.ok(css.includes(".aa-cell"));
   assert.ok(css.includes(".board-table"));
   assert.ok(css.includes(".board-filter"));
+  assert.ok(css.includes(".model-series"));
+  assert.ok(css.includes(".model-variant"));
   assert.ok(css.includes(".intake"));
+  assert.ok(css.includes(".input-slot"));
   assert.ok(css.includes(".review-seq"));
-  assert.ok(css.includes(".job-tip"));
+  assert.ok(css.includes(".board-score-bar"));
 });
 
 console.log("dashboard ui logic: ok");
