@@ -349,16 +349,10 @@ def list_downloadable_models() -> list[str]:
     return out
 
 
-def _hf_token() -> Optional[str]:
-    from rem2.data.mirrors import hf_token
+def _hf_headers_for(url: str) -> dict[str, str]:
+    from rem2.data.mirrors import hf_headers_for
 
-    return hf_token()
-
-
-def _hf_headers() -> dict[str, str]:
-    from rem2.data.mirrors import hf_headers
-
-    return hf_headers()
+    return hf_headers_for(url)
 
 
 def _prefetch_hf_repo(repo_id: str, desc: str, force: bool) -> str:
@@ -370,12 +364,15 @@ def _prefetch_hf_repo(repo_id: str, desc: str, force: bool) -> str:
     from rem2.data.mirrors import call_with_hf_retry
 
     def _once(endpoint: str) -> str:
+        from rem2.data.mirrors import hf_hub_token
+
         snapshot_download(
             repo_id=repo_id,
             allow_patterns=list(HF_ALLOW),
             ignore_patterns=list(HF_IGNORE),
             force_download=force,
             endpoint=endpoint,
+            token=hf_hub_token(endpoint),
         )
         return "ok"
 
@@ -394,12 +391,15 @@ def _prefetch_hf_file(repo: str, filename: str, dest: Path, desc: str, force: bo
     def _once(endpoint: str) -> str:
         disable_hf_bars()
         try:
+            from rem2.data.mirrors import hf_hub_token
+
             path = hf_hub_download(
                 repo_id=repo,
                 filename=filename,
                 local_dir=str(dest.parent),
                 force_download=force,
                 endpoint=endpoint,
+                token=hf_hub_token(endpoint),
             )
         finally:
             enable_hf_bars()
@@ -455,7 +455,7 @@ def _prefetch_artifact(art: Artifact, cache: str, force: bool, log: Callable) ->
                 endpoint,
             )
             download_url_with_progress(
-                url, dest, desc=art.label, headers=_hf_headers(), force=force
+                url, dest, desc=art.label, headers=_hf_headers_for(url), force=force
             )
             return "ok"
 

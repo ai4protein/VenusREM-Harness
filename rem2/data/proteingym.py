@@ -16,6 +16,8 @@ import argparse
 import csv
 import os
 import shutil
+import stat
+import sys
 import tarfile
 import urllib.error
 import urllib.request
@@ -128,27 +130,61 @@ def _iter_files(root: Path, suffixes: tuple[str, ...]) -> list[Path]:
 
 def safe_extract_tar(archive: Path, dest: Path) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
+    dest = dest.resolve()
     with tarfile.open(archive, "r:*") as handle:
         for member in handle.getmembers():
             _assert_safe_member(dest, member.name)
-        handle.extractall(dest)
+            if member.issym() or member.islnk():
+                raise ValueError(f"Refusing archive symlink: {member.name}")
+        kwargs = {"filter": "data"} if sys.version_info >= (3, 12) else {}
+        handle.extractall(dest, **kwargs)
+    _reject_escaping_symlinks(dest)
     return dest
 
 
 def safe_extract_zip(archive: Path, dest: Path) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
+    dest = dest.resolve()
     with zipfile.ZipFile(archive) as handle:
-        for name in handle.namelist():
-            _assert_safe_member(dest, name)
+        for info in handle.infolist():
+            _assert_safe_member(dest, info.filename)
+            if _zip_is_symlink(info):
+                raise ValueError(f"Refusing archive symlink: {info.filename}")
         handle.extractall(dest)
+    _reject_escaping_symlinks(dest)
     return dest
 
 
 def _assert_safe_member(dest: Path, name: str) -> None:
     dest = dest.resolve()
-    target = (dest / name).resolve()
+    raw = str(name).replace("\\", "/")
+    if not raw or raw.startswith("/") or raw.startswith("\\"):
+        raise ValueError(f"Refusing archive member outside dest: {name}")
+    if len(raw) >= 2 and raw[1] == ":":
+        raise ValueError(f"Refusing archive member outside dest: {name}")
+    target = Path(os.path.normpath(dest / raw))
     if dest != target and dest not in target.parents:
         raise ValueError(f"Refusing archive member outside dest: {name}")
+
+
+def _zip_is_symlink(info: zipfile.ZipInfo) -> bool:
+    mode = info.external_attr >> 16
+    return bool(mode and stat.S_ISLNK(mode))
+
+
+def _reject_escaping_symlinks(dest: Path) -> None:
+    dest = dest.resolve()
+    for dirpath, dirnames, filenames in os.walk(dest, followlinks=False):
+        for name in dirnames + filenames:
+            path = Path(dirpath) / name
+            if not path.is_symlink():
+                continue
+            try:
+                resolved = path.resolve()
+            except OSError as exc:
+                raise ValueError(f"Refusing broken archive symlink: {path}") from exc
+            if dest != resolved and dest not in resolved.parents:
+                raise ValueError(f"Refusing archive symlink outside dest: {path}")
 
 
 def download_url(url: str, dest: Path, force: bool = False, *, desc: Optional[str] = None) -> Path:

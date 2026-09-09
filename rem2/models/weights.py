@@ -250,11 +250,14 @@ def _hf_download(
     from rem2.data.mirrors import call_with_hf_retry
 
     def _once(endpoint: str) -> str:
+        from rem2.data.mirrors import hf_hub_token
+
         return hf_hub_download(
             repo_id=repo_id,
             filename=filename,
             local_dir=local_dir,
             endpoint=endpoint,
+            token=hf_hub_token(endpoint),
         )
 
     log = getattr(logger, "info", None) if logger is not None else None
@@ -411,11 +414,10 @@ def ensure_fair_esm_source(cache_dir: Optional[str] = None, logger=None) -> str:
         logger=logger,
     )
     if not os.path.isfile(os.path.join(extract_root, "esm", "pretrained.py")):
-        import zipfile
+        from rem2.data.proteingym import safe_extract_zip
 
         ensure_dir(extract_root)
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(os.path.dirname(extract_root))
+        safe_extract_zip(Path(zip_path), Path(os.path.dirname(extract_root)))
         # github archive extracts to esm-main/
         extracted = os.path.join(os.path.dirname(extract_root), "esm-main")
         if os.path.isdir(extracted) and not os.path.isdir(extract_root):

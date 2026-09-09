@@ -60,6 +60,21 @@ def test_invalid_alpha_exits():
         _parse("--model", "esm2", "--fasta", "prot.fasta", "--alpha", "hotdog")
 
 
+def test_trust_remote_code_defaults_off():
+    args = _parse("--model", "auto", "--model_id", "some/repo", "--fasta", "prot.fasta")
+    assert args.trust_remote_code is False
+    args = _parse(
+        "--model",
+        "auto",
+        "--model_id",
+        "some/repo",
+        "--fasta",
+        "prot.fasta",
+        "--trust_remote_code",
+    )
+    assert args.trust_remote_code is True
+
+
 def test_out_scores_dir_defaults_to_result():
     args = _parse("--model", "esm2", "--base_dir", "data/foo")
     assert args.out_scores_dir == "result"

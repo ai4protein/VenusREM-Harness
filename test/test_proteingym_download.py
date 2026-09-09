@@ -54,6 +54,43 @@ def test_copy_named_files(tmp_path):
     assert (tmp_path / "substitutions" / "P.csv").is_file()
 
 
+def test_safe_extract_tar_rejects_dotdot(tmp_path):
+    import tarfile
+
+    archive = tmp_path / "evil.tar.gz"
+    with tarfile.open(archive, "w:gz") as handle:
+        info = tarfile.TarInfo(name="../escape.txt")
+        payload = b"nope"
+        info.size = len(payload)
+        handle.addfile(info, fileobj=__import__("io").BytesIO(payload))
+    dest = tmp_path / "out"
+    dest.mkdir()
+    try:
+        safe_extract_tar(archive, dest)
+        raise AssertionError("expected path traversal to be refused")
+    except ValueError as exc:
+        assert "outside dest" in str(exc)
+    assert not (tmp_path / "escape.txt").exists()
+
+
+def test_safe_extract_tar_rejects_symlink(tmp_path):
+    import tarfile
+
+    archive = tmp_path / "link.tar.gz"
+    with tarfile.open(archive, "w:gz") as handle:
+        info = tarfile.TarInfo(name="outside")
+        info.type = tarfile.SYMTYPE
+        info.linkname = "/tmp/rem2-should-not-write"
+        handle.addfile(info)
+    dest = tmp_path / "out"
+    dest.mkdir()
+    try:
+        safe_extract_tar(archive, dest)
+        raise AssertionError("expected symlink to be refused")
+    except ValueError as exc:
+        assert "symlink" in str(exc).lower()
+
+
 def test_safe_extract_tar(tmp_path):
     import tarfile
 

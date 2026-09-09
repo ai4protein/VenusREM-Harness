@@ -3,6 +3,9 @@
 Dataset repos: try ``AI4Protein/VenusREM2`` first, then ``tyang816/VenusREM2``.
 Hub endpoints: ``huggingface.co`` first, then ``hf-mirror.com`` (or ``HF_MIRROR`` /
 ``HF_ENDPOINT``) for up to three network retries. Private repos need ``HF_TOKEN``.
+
+Tokens are sent only to ``huggingface.co``. Third-party mirrors (including the
+default ``hf-mirror.com``) never receive ``Authorization``.
 """
 
 from __future__ import annotations
@@ -12,13 +15,16 @@ import shutil
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
+from urllib.parse import urlparse
 
 VENUSREM2_REPOS = ("AI4Protein/VenusREM2", "tyang816/VenusREM2")
 LEGACY_PROTEINGYM_REPO = "AI4Protein/VenusREM"
 HF_OFFICIAL_ENDPOINT = "https://huggingface.co"
 HF_DEFAULT_MIRROR = "https://hf-mirror.com"
 HF_DOWNLOAD_ATTEMPTS = 3
+HF_OFFICIAL_HOSTS = frozenset({"huggingface.co", "www.huggingface.co"})
+HF_PUBLIC_MIRROR_HOSTS = frozenset({"hf-mirror.com", "www.hf-mirror.com"})
 
 
 def hf_token_paths() -> tuple[Path, ...]:
@@ -54,11 +60,43 @@ def hf_token() -> Optional[str]:
     return None
 
 
+def hf_host(url_or_endpoint: str) -> str:
+    raw = (url_or_endpoint or "").strip()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "https://" + raw
+    return (urlparse(raw).hostname or "").lower()
+
+
+def hf_endpoint_trusted(url_or_endpoint: str) -> bool:
+    """True only for huggingface.co. Public mirrors never get the token."""
+    host = hf_host(url_or_endpoint)
+    if not host or host in HF_PUBLIC_MIRROR_HOSTS:
+        return False
+    return host in HF_OFFICIAL_HOSTS
+
+
 def hf_headers() -> dict[str, str]:
+    """Authorization for the official Hub only. Prefer ``hf_headers_for``."""
     token = hf_token()
     if not token:
         return {}
     return {"Authorization": f"Bearer {token}"}
+
+
+def hf_headers_for(url_or_endpoint: str) -> dict[str, str]:
+    if not hf_endpoint_trusted(url_or_endpoint):
+        return {}
+    return hf_headers()
+
+
+def hf_hub_token(endpoint: Optional[str] = None) -> Union[str, bool]:
+    """``huggingface_hub`` auth. ``False`` disables the env token on mirrors."""
+    target = endpoint or HF_OFFICIAL_ENDPOINT
+    if not hf_endpoint_trusted(target):
+        return False
+    return hf_token() or False
 
 
 def hf_endpoints() -> tuple[str, ...]:
@@ -167,7 +205,7 @@ def hf_file_available(repo: str, filename: str, timeout: float = 20) -> bool:
         req = urllib.request.Request(
             hf_resolve_url(repo, filename, endpoint=endpoint),
             method="HEAD",
-            headers=hf_headers(),
+            headers=hf_headers_for(endpoint),
         )
         try:
             with urllib.request.urlopen(req, timeout=timeout) as response:
@@ -211,7 +249,7 @@ def download_hf_file(
 
             try:
                 return download_url_with_progress(
-                    url, dest, desc=label, headers=hf_headers(), force=force
+                    url, dest, desc=label, headers=hf_headers_for(url), force=force
                 )
             except Exception as exc:
                 if not is_hf_network_error(exc):
@@ -227,6 +265,7 @@ def download_hf_file(
             local_dir=str(dest.parent),
             force_download=force,
             endpoint=endpoint,
+            token=hf_hub_token(endpoint),
         )
         downloaded = Path(path)
         if downloaded.resolve() != dest.resolve():
@@ -243,7 +282,9 @@ def _download_url(url: str, dest: Path, force: bool = False) -> Path:
         return dest
     from rem2.download.progress import download_url_with_progress
 
-    return download_url_with_progress(url, dest, desc=dest.name, headers=hf_headers(), force=force)
+    return download_url_with_progress(
+        url, dest, desc=dest.name, headers=hf_headers_for(url), force=force
+    )
 
 
 def first_venusrem2_repo(

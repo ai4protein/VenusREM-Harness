@@ -44,7 +44,7 @@ def _load_native_cache(cache_path, mutant_df):
     if not cache_path or not os.path.exists(cache_path):
         return None
     try:
-        payload = torch.load(cache_path, map_location="cpu")
+        payload = torch.load(cache_path, map_location="cpu", weights_only=True)
         cached_mutants = payload.get("mutants", [])
         current_mutants = mutant_df["mutant"].tolist()
         if cached_mutants == current_mutants:
@@ -173,7 +173,7 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
 
     if logits is None and precomputed_path and os.path.exists(precomputed_path):
         try:
-            payload = torch.load(precomputed_path, map_location="cpu")
+            payload = torch.load(precomputed_path, map_location="cpu", weights_only=True)
             cached_seq = payload.get("sequence", "")
             if cached_seq == sequence:
                 logits = payload["logits"].to(device)
@@ -318,7 +318,7 @@ def score_protein(model, tokenizer, residue_fasta, structure_fasta, mutant_df,
             raw_path = os.path.join(precomputed_logits_dir, f"{protein_name}.pt")
             if os.path.exists(raw_path):
                 try:
-                    raw_payload = torch.load(raw_path, map_location="cpu")
+                    raw_payload = torch.load(raw_path, map_location="cpu", weights_only=True)
                     if raw_payload.get("sequence", "") == sequence:
                         raw_for_calib = raw_payload["logits"].to(device)
                         log_local("Loaded raw backbone logits for calibration from precomputed dir")

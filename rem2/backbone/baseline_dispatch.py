@@ -294,8 +294,11 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         )
 
     else:
-        # auto: standard HuggingFace model
-        model = AutoModelForMaskedLM.from_pretrained(model_name, trust_remote_code=True)
+        # auto: standard HuggingFace model. Custom repo code is opt-in.
+        trust_remote_code = bool(getattr(args, "trust_remote_code", False))
+        model = AutoModelForMaskedLM.from_pretrained(
+            model_name, trust_remote_code=trust_remote_code
+        )
         oe = model.get_output_embeddings()
         ie = model.get_input_embeddings()
         if oe is not None and ie is not None and oe.weight.data_ptr() != ie.weight.data_ptr():
@@ -303,7 +306,9 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
         model = model.to(device)
         model.eval()
         state.model = model
-        state.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        state.tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=trust_remote_code
+        )
         if "prosst" in model_name.lower():
             force_config_max_residue_len(model, residue_len=4096)
         state.model_max_residue_len = args.max_residue_len

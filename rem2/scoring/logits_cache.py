@@ -18,7 +18,9 @@ def load_cached_logits(
 
     if logits_cache_path and reuse_logits_cache and os.path.exists(logits_cache_path):
         try:
-            cached_payload = torch.load(logits_cache_path, map_location="cpu")
+            cached_payload = torch.load(
+                logits_cache_path, map_location="cpu", weights_only=True
+            )
             cached_logits = cached_payload.get("logits")
             cached_sequence = cached_payload.get("sequence")
             cached_stage = cached_payload.get("cache_stage", "raw")

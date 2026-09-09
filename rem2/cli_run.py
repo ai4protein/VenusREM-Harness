@@ -492,7 +492,9 @@ def run_score(argv=None):
         )
         if precomputed_only:
             tokenizer_path = os.environ.get("ESM2_TOKENIZER_PATH", DEFAULT_ESM2_TOKENIZER)
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
+            tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_path, trust_remote_code=False
+            )
             state = BaselineState(
                 model=None,
                 tokenizer=tokenizer,

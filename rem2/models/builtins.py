@@ -96,7 +96,7 @@ _make_adapter(
     "auto",
     description="Any HuggingFace AutoModelForMaskedLM (pass --model_id)",
     default_model_id=None,
-    notes="Generic HF MLM path; refuses masked-marginals if the tokenizer has no mask token",
+    notes="Generic HF MLM; --trust_remote_code required for custom modeling code",
     supports_mask=True,
 )
 _make_adapter(

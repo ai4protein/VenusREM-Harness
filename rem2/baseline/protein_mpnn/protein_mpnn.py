@@ -183,7 +183,7 @@ def load_protein_mpnn_model(checkpoint_path, device, cache_dir=None, logger=None
 
         log_cache_hit("ProteinMPNN", checkpoint_path, logger)
 
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
 
     model = ProteinMPNNModel(
         ca_only=False,

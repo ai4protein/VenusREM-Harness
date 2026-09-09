@@ -82,6 +82,12 @@ def create_parser() -> ArgumentParser:
         help="override weights: HF repo, local path, or checkpoint id",
     )
     common.add_argument(
+        "--trust_remote_code",
+        action="store_true",
+        default=False,
+        help="allow --model auto to run custom modeling code from a Hugging Face repo (off by default)",
+    )
+    common.add_argument(
         "--list-models",
         action="store_true",
         help="print backbones and allowed forwards (wt / mask / tf) and exit",

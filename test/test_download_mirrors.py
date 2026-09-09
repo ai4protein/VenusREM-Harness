@@ -10,7 +10,10 @@ from rem2.data.mirrors import (
     call_with_hf_retry,
     download_from_venusrem2,
     first_venusrem2_repo,
+    hf_endpoint_trusted,
     hf_endpoints,
+    hf_headers_for,
+    hf_hub_token,
     hf_token,
     hf_token_paths,
     is_hf_network_error,
@@ -74,6 +77,27 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
     assert got == dest
     assert calls == ["tyang816/VenusREM2"]
     assert dest.read_text() == "ok"
+
+
+def test_hf_headers_only_on_official_hub(monkeypatch):
+    monkeypatch.setenv("HF_TOKEN", "hf_secret_token")
+    official = "https://huggingface.co/datasets/x/resolve/main/a.txt"
+    mirror = "https://hf-mirror.com/datasets/x/resolve/main/a.txt"
+    assert hf_endpoint_trusted(official)
+    assert not hf_endpoint_trusted(mirror)
+    assert not hf_endpoint_trusted("https://hf-mirror.com")
+    assert hf_headers_for(official)["Authorization"] == "Bearer hf_secret_token"
+    assert hf_headers_for(mirror) == {}
+    assert hf_headers_for("https://hf-mirror.com") == {}
+    assert hf_hub_token("https://huggingface.co") == "hf_secret_token"
+    assert hf_hub_token("https://hf-mirror.com") is False
+
+
+def test_hf_token_not_sent_if_endpoint_is_public_mirror(monkeypatch):
+    monkeypatch.setenv("HF_TOKEN", "hf_secret_token")
+    monkeypatch.setenv("HF_ENDPOINT", "https://hf-mirror.com")
+    assert not hf_endpoint_trusted("https://hf-mirror.com")
+    assert hf_hub_token("https://hf-mirror.com") is False
 
 
 def test_hf_endpoints_official_then_mirror(monkeypatch):

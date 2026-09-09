@@ -78,6 +78,11 @@ as the explicit name). `mask` is refused.
 | ProteinMPNN (`proteinmpnn-020`, …) | yes (= tf) | no | yes |
 | ESM-IF, MIF-ST, ProGen2 / 3, ProtGPT2, RITA, S2F | yes | no | no |
 
+`--model auto --model_id <repo>` loads a generic Hugging Face MLM. Custom
+`modeling_*.py` from that repo is **not** executed unless you also pass
+`--trust_remote_code`. Built-in keys (`esm2`, `progen3`, `rita`, …) keep
+the code their adapters already need.
+
 ## `--scoring_mode` (the rem2 head)
 
 After \(\ell_{\mathrm{raw}}\) is built, rem2 is the same for every strategy.
