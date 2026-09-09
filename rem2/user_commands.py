@@ -13,6 +13,7 @@ rem2 — calibrate a protein language model for variant effect prediction
 
   rem2 doctor              check install (torch, extras, cache)
   rem2 demo                ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q + ESM-2 8M
+  rem2 dashboard            local predict / select console (http://127.0.0.1:8765)
   rem2 download                 ProteinGym 217 → data/proteingym_v1
   rem2 download ProteinGym      same
   rem2 download VenusMutHub     or muthub → data/VenusMutHub
@@ -189,6 +190,7 @@ def run_doctor(argv: Optional[list[str]] = None) -> int:
     print(f"demo dataset  {demo_dataset_dir()}")
     print()
     print("Next: rem2 demo")
+    print("      rem2 dashboard")
     print("      rem2 download")
     print("      rem2 download benchmark-all")
     print("      rem2 download model-all")

@@ -1,8 +1,17 @@
 # VenusREM2
 
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
+[![License](https://img.shields.io/badge/license-Academic-green)](LICENSE)
+[![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM2-black)](https://github.com/tyang816/VenusREM2)
+![Status](https://img.shields.io/badge/dashboard-preview-orange)
+
 From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction
 
 **rem2** is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
+
+- Calibrate any frozen PLM (ESM-2, SaProt, ProSST, ProteinMPNN, …).
+- Score substitution mutants from FASTA, PDB, or a dataset directory.
+- Select top-ranked variants in a local dashboard preview.
 
 | Name | Description |
 |------|-------------|
@@ -11,19 +20,13 @@ From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readou
 
 Python import: `rem2`. Default backbone: ESM-2 650M.
 
-```bash
-rem2 --help
-rem2 doctor
-rem2 demo
-rem2 download
-rem2 download benchmark-all   # ProteinGym + VenusMutHub + VenusViroHub
-rem2 --fasta prot.fasta
-rem2 --model saprot --pdb prot.pdb
-rem2 --model venusrem2 --base_dir data/proteingym_v1
-```
+> [!NOTE]
+> rem2 scores are for ranking, not ΔΔG. Experimental validation is required
+> before any wet-lab decision. The dashboard is a local preview and may change.
 
 ## News
 
+- **2026.09** Local dashboard preview (`rem2 dashboard`) at http://127.0.0.1:8765.
 - **2026.09** Package and CLI released as `rem2`.
 - **2026.07** VenusREM frozen on `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
@@ -46,11 +49,23 @@ Editable: `pip install -e ".[recommended]"`.
 |-------|-----|
 | (core) | ESM-2 and other HF sequence LMs |
 | `[recommended]` | biotite (RSA / PDB) |
+| `[dashboard]` | FastAPI console |
 | `[prosst]` | VenusREM2 / ProSST |
 | `[carp]`, `[esm3]`, `[s3f]` | other backbones (`[s3f]`: Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
 
 ## Quick start
+
+### 1. Check the install, then run the demo
+
+```bash
+rem2 doctor
+rem2 demo
+```
+
+`rem2 doctor` reports torch, extras, and cache. `rem2 demo` scores a bundled ProteinGym assay with ESM-2 8M.
+
+### 2. Score mutants from the CLI or Python
 
 ```bash
 # single protein
@@ -88,6 +103,32 @@ result/run_meta.json
 
 Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 writes per-K columns plus a z-mean `VenusREM2`. Higher = more preferred by the calibrated model. Use for ranking; this is not a ΔΔG.
 
+### 3. Open the local dashboard
+
+```bash
+pip install 'rem2[dashboard]'   # if the console extra is not installed
+rem2 dashboard
+```
+
+Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service.
+
+## Dashboard
+
+Local predict / select console (preview). Typical loop:
+
+1. **Predict mutants** — submit a FASTA (and optional PDB / mutant CSV), or a PDB / UniProt id to fetch RCSB + AlphaFold DB.
+2. **Inspect the table** — ranked scores from the current run.
+3. **Structure** — PyMOL-style 3D view (cartoon / sticks / surface). Crystal PDBs have no pLDDT (B-factor is a temperature factor); fetch an AFDB model to color by confidence.
+4. **Select top-K** — export the chosen variants.
+
+CLI scoring still writes `result/scores/`. Dashboard sessions also keep working files under `~/.cache/rem2/dashboard`.
+
+```bash
+rem2 dashboard
+```
+
+If `rem2 dashboard` is missing, install the extra: `pip install 'rem2[dashboard]'`.
+
 ## Data
 
 **Single protein.** Mutants CSV needs a `mutant` column (`A42G`; multi-site `A42G:L10M`). Optional `DMS_score` is only for Spearman. SaProt / ProSST / VenusREM2 can take `--pdb` without `--fasta`.
@@ -118,14 +159,12 @@ rem2 download model-all
 
 **Structures.** RSA from any PDB. pLDDT uses the B-factor on predicted models only (AlphaFold / ColabFold / ESMFold).
 
-**Combinatorial libraries.** Double/triple mutants require an explicit site list:
+**Combinatorial libraries.** Double/triple mutants need an explicit site list. Libraries larger than `--max_mutants` (default 1e6) are refused.
 
 ```bash
 rem2 --fasta prot.fasta --pdb prot.pdb \
     --mutant_sites 1,2,3 --positions 10,11,12,13,14
 ```
-
-Libraries larger than `--max_mutants` (default 1e6) are refused.
 
 ## Method
 
@@ -267,6 +306,8 @@ pip install -e ".[prosst,dev]"
 pytest test/ -v
 ```
 
+Dashboard tests live in `test/test_dashboard.py`.
+
 **Publish to PyPI.** First upload creates the `rem2` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
 
 1. On [pypi.org](https://pypi.org) → Publishing → add a pending publisher: project `rem2`, owner `tyang816`, repo `VenusREM2`, workflow `publish-pypi.yml`, environment `pypi`.
@@ -312,3 +353,5 @@ Related: [VenusFactory2](https://github.com/ai4protein/VenusFactory2), [web serv
 ## License
 
 Academic, non-profit, and government research: free under the [VenusREM2 Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact [tanyang.august@sjtu.edu.cn](mailto:tanyang.august@sjtu.edu.cn).
+
+Computational scores are for ranking only and are not a substitute for wet-lab validation. Experimental confirmation is required before any laboratory or clinical use.

@@ -41,6 +41,13 @@ def main(argv: Optional[Iterable[str]] = None):
         if code:
             raise SystemExit(code)
         return
+    if head == "dashboard":
+        from rem2.dashboard.server import run_dashboard
+
+        code = run_dashboard(argv[1:])
+        if code:
+            raise SystemExit(code)
+        return
     if head in {"download", "download-proteingym"}:
         from rem2.data.download import run_download
 

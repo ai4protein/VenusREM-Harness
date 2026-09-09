@@ -58,6 +58,7 @@ def test_bare_rem2_prints_getting_started(capsys):
     out = capsys.readouterr().out
     assert "rem2 doctor" in out
     assert "rem2 demo" in out
+    assert "rem2 dashboard" in out
     assert "rem2 download" in out
     assert "from rem2 import score" in out
     assert "--model venusrem2" in out
@@ -92,6 +93,21 @@ def test_unknown_model_is_systemexit():
 def test_auto_without_model_id_is_systemexit():
     with pytest.raises(SystemExit, match="--model auto requires --model_id"):
         main(["--model", "auto", "--base_dir", "/tmp/rem2_nope"])
+
+
+def test_dashboard_help_does_not_import_torch():
+    script = (
+        "import sys\n"
+        "from rem2.cli import main\n"
+        "try:\n"
+        "    main(['dashboard', '--help'])\n"
+        "except SystemExit:\n"
+        "    pass\n"
+        "assert 'torch' not in sys.modules\n"
+        "assert 'transformers' not in sys.modules\n"
+        "assert 'rem2.cli_run' not in sys.modules\n"
+    )
+    subprocess.check_call([sys.executable, "-c", script])
 
 
 def test_doctor_cli(capsys):

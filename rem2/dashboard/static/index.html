@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rem2 Console</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="app">
+    <header class="shell-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">r2</span>
+        <a href="#/runs" class="brand-title">rem2 Console</a>
+        <span id="app-version" class="brand-ver" hidden></span>
+      </div>
+      <nav class="tabs" aria-label="Console sections">
+        <a href="#/runs" id="tab-runs" class="tab is-active">Runs</a>
+        <a href="#/predict" id="tab-predict" class="tab">Predict</a>
+        <a href="#/structure" id="tab-structure" class="tab is-disabled" aria-disabled="true" title="Choose a run first">Structure</a>
+        <a href="#/select" id="tab-select" class="tab is-disabled" aria-disabled="true" title="Choose a run first">Select</a>
+      </nav>
+      <div class="header-right">
+        <span id="conn-status" class="status-pill is-off" title="API health">Offline</span>
+        <span id="job-status" class="status-pill is-run" hidden>Job running</span>
+        <span id="last-poll" class="poll-time" title="Last successful poll">poll --:--:--</span>
+        <button type="button" id="btn-doctor" class="btn btn-ghost">Doctor</button>
+      </div>
+    </header>
+
+    <div class="banner" role="note">
+      Scores rank variants. This is not ΔΔG. Validate experimentally.
+    </div>
+
+    <div id="flash" class="flash" hidden></div>
+
+    <main id="main">
+      <section id="page-runs" class="page" hidden>
+        <div class="page-head">
+          <h1>Runs</h1>
+          <p class="muted">Queued and running jobs refresh every 4s.</p>
+        </div>
+        <div id="runs-body" class="panel">Loading runs…</div>
+      </section>
+
+      <section id="page-predict" class="page" hidden>
+        <div class="page-head">
+          <h1>Predict</h1>
+          <p class="muted">Score a sequence from FASTA, a local PDB, or an RCSB / AlphaFold DB id.</p>
+        </div>
+
+        <div class="panel demo-panel">
+          <div>
+            <h2>Try the bundled assay</h2>
+            <p class="muted">HCP_LAMBD from ProteinGym, ESM-2 8M. Same as <code>rem2 demo</code>.</p>
+          </div>
+          <button type="button" id="btn-demo" class="btn btn-primary btn-lg">Score demo assay</button>
+        </div>
+
+        <form id="predict-form" class="panel form-panel" autocomplete="off">
+          <div class="form-grid">
+            <div>
+              <h2>Job</h2>
+              <div class="field">
+                <label for="model-select">Model</label>
+                <select id="model-select" name="model"></select>
+                <p id="model-meta" class="field-hint"></p>
+              </div>
+              <fieldset class="field">
+                <legend>Recipe</legend>
+                <div id="recipe-radios" class="seg">
+                  <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full rem2</label>
+                  <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
+                  <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
+                  <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div>
+              <h2>Inputs</h2>
+              <div class="file-grid">
+                <label class="file-field">
+                  <span>FASTA</span>
+                  <span class="file-name" data-for="file-fasta">choose a file</span>
+                  <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+                </label>
+                <label class="file-field">
+                  <span>PDB</span>
+                  <span class="file-name" data-for="file-pdb">optional</span>
+                  <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+                </label>
+                <label class="file-field">
+                  <span>Mutants CSV</span>
+                  <span class="file-name" data-for="file-mutants">empty → saturation</span>
+                  <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+                </label>
+                <label class="file-field">
+                  <span>MSA</span>
+                  <span class="file-name" data-for="file-msa">optional</span>
+                  <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+                </label>
+              </div>
+            </div>
+
+            <fieldset class="field fetch-box form-span">
+              <legend>Fetch from RCSB / AlphaFold DB</legend>
+              <p class="field-hint">Crystals have no pLDDT. Auto also pulls an AFDB model and prefers it for scoring.</p>
+              <div class="field-row">
+                <label>PDB id
+                  <input type="text" name="pdb_id" id="f-pdb-id" placeholder="2L6Q" autocomplete="off">
+                </label>
+                <label>UniProt
+                  <input type="text" name="uniprot_id" id="f-uniprot" placeholder="P0A6Y8" autocomplete="off">
+                </label>
+                <label>Source
+                  <select name="fetch_structure" id="f-fetch">
+                    <option value="auto" selected>Auto (RCSB + AFDB)</option>
+                    <option value="both">Both</option>
+                    <option value="afdb">AlphaFold DB only</option>
+                    <option value="rcsb">RCSB only</option>
+                    <option value="none">Don't fetch</option>
+                  </select>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset id="saturation-fields" class="field sat-box form-span">
+              <legend>Saturation (when there is no mutants CSV)</legend>
+              <div class="field-row">
+                <label>mutant_sites
+                  <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
+                </label>
+                <label>positions
+                  <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
+                </label>
+                <label>residue_range
+                  <input type="text" name="residue_range" id="f-range" placeholder="10-20">
+                </label>
+              </div>
+            </fieldset>
+
+            <details class="advanced form-span">
+              <summary>Advanced</summary>
+              <div class="field-row">
+                <label>scoring_strategy
+                  <select name="scoring_strategy" id="f-strategy">
+                    <option value="wt" selected>wt</option>
+                    <option value="mask">mask</option>
+                    <option value="tf">tf</option>
+                  </select>
+                </label>
+                <label>max_mutants
+                  <input type="number" name="max_mutants" id="f-max" min="1" step="1" placeholder="1000000">
+                </label>
+              </div>
+              <p id="strategy-hint" class="field-hint"></p>
+            </details>
+
+            <div class="cli-block form-span">
+              <div class="cli-label">Equivalent CLI</div>
+              <pre id="cli-preview" class="cli"></pre>
+            </div>
+
+            <div class="form-span">
+              <p id="form-error" class="form-error" hidden></p>
+              <div class="form-actions">
+                <button type="submit" id="btn-submit" class="btn btn-primary">Submit job</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section id="page-workspace" class="page" hidden>
+        <div id="workspace-body">Loading run…</div>
+      </section>
+
+      <section id="page-structure" class="page" hidden>
+        <div id="structure-body">Loading structure…</div>
+      </section>
+
+      <section id="page-select" class="page" hidden>
+        <div class="banner banner-inline" role="note">
+          Scores rank variants. This is not ΔΔG. Validate experimentally.
+        </div>
+        <div id="select-body">Loading selection…</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="drawer-root" hidden>
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <aside id="doctor-drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="doctor-title">
+      <div class="drawer-head">
+        <h2 id="doctor-title">Doctor</h2>
+        <button type="button" id="btn-doctor-close" class="btn btn-ghost">Close</button>
+      </div>
+      <div id="doctor-body" class="drawer-body">Checking install…</div>
+    </aside>
+  </div>
+
+  <noscript>
+    <p class="noscript">rem2 Console needs JavaScript enabled.</p>
+  </noscript>
+  <script src="app.js"></script>
+</body>
+</html>

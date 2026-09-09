@@ -6,6 +6,7 @@ examples:
   rem2
   rem2 demo
   rem2 doctor
+  rem2 dashboard
   rem2 download
   rem2 download example
   rem2 download muthub
@@ -55,6 +56,7 @@ def create_parser() -> ArgumentParser:
             "%(prog)s [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE) [options]\n"
             "       %(prog)s demo\n"
             "       %(prog)s doctor\n"
+            "       %(prog)s dashboard\n"
             "       %(prog)s download\n"
             "       %(prog)s --list-models"
         ),
