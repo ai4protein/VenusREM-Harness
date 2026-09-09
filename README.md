@@ -311,4 +311,4 @@ Related: [VenusFactory2](https://github.com/ai4protein/VenusFactory2), [web serv
 
 ## License
 
-Academic, non-profit, and government research: free under the [VenusREM2 Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact [tanyang.august@sjtu.edu](mailto:tanyang.august@sjtu.edu).
+Academic, non-profit, and government research: free under the [VenusREM2 Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact [tanyang.august@sjtu.edu.cn](mailto:tanyang.august@sjtu.edu.cn).
