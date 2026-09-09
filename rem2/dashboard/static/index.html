@@ -11,13 +11,14 @@
     <header class="shell-header">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">r2</span>
-        <a href="#/runs" class="brand-title">REM2 Dashboard</a>
+        <a href="#/runs" class="brand-title">REM2</a>
         <span id="app-version" class="brand-ver" hidden></span>
       </div>
       <nav class="tabs" aria-label="Dashboard sections">
-        <a href="#/predict" id="tab-predict" class="tab">New</a>
-        <a href="#/runs" id="tab-runs" class="tab is-active">Runs</a>
+        <a href="#/runs" id="tab-runs" class="tab is-active">Projects</a>
+        <a href="#/predict" id="tab-predict" class="tab">New prediction</a>
         <a href="#/review" id="tab-review" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Review</a>
+        <a href="#/benchmarks" id="tab-benchmarks" class="tab">Benchmarks</a>
       </nav>
       <div class="header-right">
         <span id="conn-status" class="status-pill is-off" title="API health">Offline</span>
@@ -45,14 +46,18 @@
       <section id="page-predict" class="page" hidden>
         <div class="page-head page-head-job">
           <div>
-            <h1>New job</h1>
-            <p class="muted">Pick a model, then drop files or enter an accession.</p>
+            <h1>New prediction</h1>
+            <p class="muted">Define the target, choose evidence, then score candidates for review.</p>
           </div>
           <button type="button" id="btn-demo" class="btn-link demo-panel">Demo assay</button>
         </div>
 
+        <div class="workflow-rail" aria-label="Prediction workflow">
+          <span class="is-current"><b>1</b> Target</span><span><b>2</b> Evidence</span><span><b>3</b> Model</span><span><b>4</b> Review</span><span><b>5</b> Experiment</span>
+        </div>
+
         <form id="predict-form" class="panel form-panel" autocomplete="off">
-          <section>
+          <section class="form-model-step">
             <h2>Model</h2>
             <div id="model-series" class="model-series"></div>
             <select id="model-select" name="model" hidden></select>
@@ -69,8 +74,10 @@
             </details>
           </section>
 
-          <section>
-            <h2>Inputs</h2>
+          <section class="form-input-step">
+            <div class="section-kicker">Target &amp; evidence</div>
+            <h2>What do you know about this protein?</h2>
+            <p class="field-hint">A sequence is enough to start. Structure and MSA improve model coverage when available.</p>
             <div class="input-slots" id="intake-box">
               <div class="input-slot" id="slot-sequence" data-slot="fasta">
                 <h3>Sequence</h3>
@@ -168,6 +175,14 @@
           </div>
         </form>
 
+      </section>
+
+      <section id="page-benchmarks" class="page" hidden>
+        <div class="benchmark-page-head">
+          <p class="section-kicker">Model evidence</p>
+          <h1>Protein fitness benchmarks</h1>
+          <p>Compare zero-shot variant-effect models across ProteinGym assay groups. Scores are mean Spearman correlation; higher is better.</p>
+        </div>
         <div class="panel board-panel" id="pg-board">
           <div class="board-head">
             <h2 id="board-title">ProteinGym substitutions</h2>

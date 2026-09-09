@@ -164,6 +164,8 @@ check("parseHash routes", () => {
   assert.strictEqual(context.parseHash().page, "runs");
   context.location.hash = "#/predict";
   assert.strictEqual(context.parseHash().page, "predict");
+  context.location.hash = "#/benchmarks";
+  assert.strictEqual(context.parseHash().page, "benchmarks");
   context.location.hash = "#/runs/abc12";
   const run = context.parseHash();
   assert.strictEqual(run.page, "workspace");
@@ -249,6 +251,7 @@ check("full rem2 treats MSA as optional", () => {
 
 check("html flow chrome", () => {
   assert.ok(html.includes('id="tab-predict"'));
+  assert.ok(html.includes('id="tab-benchmarks"'));
   assert.ok(html.includes('id="tab-review"') && html.includes("is-disabled"));
   assert.ok(!html.includes("1. Inputs"));
   assert.ok(html.includes('id="btn-submit"') && html.includes("Start scoring"));

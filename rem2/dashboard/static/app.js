@@ -249,6 +249,9 @@
     histogram: null,
     top: null,
     selectedRow: null,
+    experimentRows: {},
+    experimentReady: false,
+    evidenceMode: "evidence",
     activeRunId: sessionStorage.getItem(STORE_RUN) || "",
     lastPoll: null,
     sort: "-score",
@@ -264,13 +267,13 @@
     picked: null,
     view: {
       rep: "cartoon",
-      color: "spectrum",
+      color: "slate",
       sidechains: "selection",
       surface: false,
       labels: true,
       hetero: true,
       water: false,
-      bg: "dark",
+      bg: "white",
     },
     logText: null,
     logMissing: "",
@@ -401,14 +404,14 @@
     if (job.sequence) return String(job.sequence);
     var proteins = job.proteins;
     if (Array.isArray(proteins) && proteins[0]) {
-      return String(proteins[0].sequence || proteins[0].aa_seq || proteins[0].seq || "");
+      return String(proteins[0].sequence || proteins[0].aa_seq || proteins[0].seq || state.fastaSeq || "");
     }
     if (proteins && typeof proteins === "object") {
       var keys = Object.keys(proteins);
       if (keys.length) {
         var p = proteins[keys[0]];
         if (typeof p === "string") return p;
-        if (p) return String(p.sequence || p.aa_seq || "");
+        if (p) return String(p.sequence || p.aa_seq || state.fastaSeq || "");
       }
     }
     return state.fastaSeq || "";
@@ -801,11 +804,12 @@
       runs: els.tabRuns,
       workspace: els.tabRuns,
       predict: els.tabPredict,
+      benchmarks: els.tabBenchmarks,
       review: els.tabReview,
       select: els.tabReview,
       structure: els.tabReview,
     };
-    var tabs = [els.tabRuns, els.tabPredict, els.tabReview];
+    var tabs = [els.tabRuns, els.tabPredict, els.tabReview, els.tabBenchmarks];
     for (var i = 0; i < tabs.length; i++) {
       if (tabs[i]) tabs[i].classList.remove("is-active");
     }
@@ -813,7 +817,7 @@
   }
 
   function showPage(id) {
-    var pages = ["page-runs", "page-predict", "page-workspace", "page-select", "page-structure"];
+    var pages = ["page-runs", "page-predict", "page-benchmarks", "page-workspace", "page-select", "page-structure"];
     for (var i = 0; i < pages.length; i++) {
       setHidden($(pages[i]), pages[i] !== id);
     }
@@ -824,6 +828,7 @@
     if (!raw || raw === "/") return { page: "runs" };
     var parts = raw.split("/").filter(Boolean);
     if (parts[0] === "predict") return { page: "predict" };
+    if (parts[0] === "benchmarks") return { page: "benchmarks" };
     if (parts[0] === "review" || parts[0] === "select" || parts[0] === "structure") {
       if (parts[1]) return { page: "review", id: decodeURIComponent(parts[1]) };
       return { page: "review" };
@@ -1818,47 +1823,64 @@
     var total = (payload && payload.total) || rows.length;
     var offset = (payload && payload.offset) != null ? payload.offset : state.offset;
     var primary = primaryScore(job, payload);
-    var dms = showDms(job, rows);
     var selMut = mutantField(state.selectedRow);
     var head =
       "<tr>" +
-      thSort("mutant", "mutant") +
-      thSort("score", "rem2 score") +
-      (dms ? thSort("DMS_score", "DMS_score") : "") +
-      thSort("rank", "rank") +
+      '<th class="experiment-check"><span class="sr-only">Experiment</span></th>' +
+      thSort("rank", "Rank") +
+      thSort("mutant", "Mutation") +
+      thSort("score", "Ranking score") +
+      '<th>Rank percentile</th>' +
+      '<th>Status</th>' +
       "</tr>";
     var body = rows
       .map(function (row, i) {
         var mut = mutantField(row);
         var rank = row.rank != null ? row.rank : offset + i + 1;
         var sel = mut && mut === selMut ? " is-sel" : "";
+        var checked = !!state.experimentRows[mut];
+        var percentile = total ? Math.max(0, Math.min(100, 100 - ((rank - 1) / total) * 100)) : 0;
+        var score = rowScore(row, primary);
         return (
           '<tr class="' +
           sel +
           '" data-i="' +
           i +
           '">' +
-          '<td class="mono">' +
+          '<td class="experiment-check"><input type="checkbox" data-experiment-mutant="' +
+          esc(mut) +
+          '" aria-label="Add ' +
+          esc(mut) +
+          ' to experiment"' +
+          (checked ? " checked" : "") +
+          '></td><td class="num rank-cell">' +
+          esc(rank) +
+          '</td><td class="mono mutation-cell">' +
           esc(mut || "—") +
           "</td>" +
-          '<td class="num">' +
-          fmtScore(rowScore(row, primary)) +
-          "</td>" +
-          (dms ? '<td class="num">' + fmtScore(rowDms(row)) + "</td>" : "") +
-          '<td class="num">' +
-          esc(rank) +
+          '<td class="num score-cell"><strong>' +
+          fmtScore(score) +
+          '</strong><span class="score-mark' +
+          (Number(score) < 0 ? " is-negative" : "") +
+          '"><i style="width:' +
+          Math.max(4, Math.min(100, percentile)).toFixed(1) +
+          '%"></i></span></td>' +
+          '<td class="percentile-cell"><span class="confidence-dot"></span>' +
+          percentile.toFixed(1) +
+          '%</td><td class="status-cell">' +
+          (checked ? '<span class="selected-status">Selected</span>' : '<span class="muted">Candidate</span>') +
           "</td>" +
           "</tr>"
         );
       })
       .join("");
     if (!body) {
-      body = '<tr><td colspan="' + (dms ? 4 : 3) + '"><div class="empty">No rows.</div></td></tr>';
+      body = '<tr><td colspan="6"><div class="empty">No candidates match these filters.</div></td></tr>';
     }
     var from = total ? offset + 1 : 0;
     var to = Math.min(offset + rows.length, total);
     return (
-      '<div class="table-scroll"><table class="data" id="score-table"><thead>' +
+      '<div class="table-scroll candidate-table-scroll"><table class="data candidate-table" id="score-table"><thead>' +
       head +
       "</thead><tbody>" +
       body +
@@ -1870,7 +1892,7 @@
       to +
       " of " +
       total +
-      (primary && primary !== "score" ? " · " + esc(primary) : "") +
+      " · ranking score, not ΔΔG" +
       "</span>" +
       '<span class="btn-row">' +
       '<button type="button" class="btn" id="btn-prev"' +
@@ -1901,6 +1923,161 @@
       (bits ? "<br>" + esc(bits) : "") +
       "</div>"
     );
+  }
+
+  function experimentRows() {
+    return Object.keys(state.experimentRows || {}).map(function (key) {
+      return state.experimentRows[key];
+    });
+  }
+
+  function toggleExperimentRow(row, checked) {
+    var mut = mutantField(row);
+    if (!mut) return;
+    if (checked) state.experimentRows[mut] = row;
+    else delete state.experimentRows[mut];
+    state.experimentReady = false;
+  }
+
+  function featureAt(name, pos) {
+    var values = (state.features && state.features[name]) || [];
+    var value = pos ? Number(values[pos - 1]) : NaN;
+    return isFinite(value) ? value : null;
+  }
+
+  function percentileFor(row) {
+    var total = (state.scores && state.scores.total) || 0;
+    var rank = row && row.rank != null ? Number(row.rank) : 0;
+    if (!total || !rank) return 0;
+    return Math.max(0, Math.min(100, 100 - ((rank - 1) / total) * 100));
+  }
+
+  function normalizedScore(row) {
+    var value = Number(rowScore(row, primaryScore(state.job, state.scores)));
+    var lo = Number(state.histogram && state.histogram.min);
+    var hi = Number(state.histogram && state.histogram.max);
+    if (!isFinite(value)) return 0;
+    if (!isFinite(lo) || !isFinite(hi) || hi === lo) return Math.max(0, Math.min(100, 50 + value * 10));
+    return Math.max(0, Math.min(100, ((value - lo) / (hi - lo)) * 100));
+  }
+
+  function reviewModeTabsHtml() {
+    return (
+      '<div class="evidence-tabs" role="tablist" aria-label="Evidence view">' +
+      '<button type="button" role="tab" data-evidence-mode="evidence" class="' +
+      (state.evidenceMode === "evidence" ? "is-on" : "") +
+      '" aria-selected="' +
+      (state.evidenceMode === "evidence") +
+      '">Single candidate</button>' +
+      '<button type="button" role="tab" data-evidence-mode="compare" class="' +
+      (state.evidenceMode === "compare" ? "is-on" : "") +
+      '" aria-selected="' +
+      (state.evidenceMode === "compare") +
+      '">Compare selected</button></div>'
+    );
+  }
+
+  function singleEvidenceHtml(row) {
+    if (!row) return '<div class="review-empty">Select a candidate to inspect its evidence.</div>';
+    var mut = mutantField(row);
+    var parsed = parseMutants(mut);
+    var m = parsed[0] || {};
+    var plddt = featureAt("plddt", m.pos);
+    var rsa = featureAt("rsa", m.pos);
+    return (
+      '<div class="single-evidence">' +
+      '<div class="evidence-chart"><canvas id="hist-canvas" class="hist-canvas"></canvas>' +
+      '<div class="hist-meta"><span id="hist-canvas-tip">Score distribution</span><span>' +
+      esc(mut) +
+      " " +
+      fmtScore(rowScore(row, primaryScore(state.job, state.scores))) +
+      '</span></div></div>' +
+      '<dl class="evidence-facts">' +
+      '<div><dt>Position</dt><dd>' + esc(m.pos || "—") + '</dd></div>' +
+      '<div><dt>Substitution</dt><dd>' + esc(m.wt && m.mut ? m.wt + " → " + m.mut : mut) + '</dd></div>' +
+      '<div><dt>Rank percentile</dt><dd class="positive">' + percentileFor(row).toFixed(1) + '%</dd></div>' +
+      '<div><dt>pLDDT</dt><dd>' + (plddt == null ? "n/a" : plddt.toFixed(1)) + '</dd></div>' +
+      '<div><dt>RSA</dt><dd>' + (rsa == null ? "n/a" : rsa.toFixed(3)) + '</dd></div>' +
+      '</dl></div>'
+    );
+  }
+
+  function compareEvidenceHtml() {
+    var rows = experimentRows();
+    if (!rows.length && state.selectedRow) rows = [state.selectedRow];
+    rows = rows.slice(0, 6);
+    if (!rows.length) return '<div class="review-empty">Select candidates in the table to compare them here.</div>';
+    var body = rows.map(function (row, index) {
+      var mut = mutantField(row);
+      var m = parseMutants(mut)[0] || {};
+      var plddt = featureAt("plddt", m.pos);
+      var rsa = featureAt("rsa", m.pos);
+      var plddtPct = plddt == null ? 0 : Math.max(0, Math.min(100, plddt));
+      var rsaPct = rsa == null ? 0 : Math.max(0, Math.min(100, rsa * 100));
+      return (
+        '<div class="comparison-row"><strong><i style="--series:' + index + '"></i>' + esc(mut) + '</strong>' +
+        '<span class="metric"><b style="width:' + normalizedScore(row).toFixed(1) + '%"></b><em>' + fmtScore(rowScore(row, primaryScore(state.job, state.scores))) + '</em></span>' +
+        '<span class="metric"><b style="width:' + percentileFor(row).toFixed(1) + '%"></b><em>' + percentileFor(row).toFixed(0) + '%</em></span>' +
+        '<span class="metric"><b style="width:' + plddtPct.toFixed(1) + '%"></b><em>' + (plddt == null ? "n/a" : plddt.toFixed(0)) + '</em></span>' +
+        '<span class="metric"><b style="width:' + rsaPct.toFixed(1) + '%"></b><em>' + (rsa == null ? "n/a" : rsa.toFixed(2)) + '</em></span></div>'
+      );
+    }).join("");
+    return (
+      '<div class="comparison-grid"><div class="comparison-head"><span>Mutation</span><span>Score</span><span>Percentile</span><span>pLDDT</span><span>RSA</span></div>' +
+      body +
+      (experimentRows().length > 6 ? '<p class="comparison-note">Showing the first 6 selected candidates.</p>' : "") +
+      '</div>'
+    );
+  }
+
+  function reviewEvidenceHtml() {
+    var row = state.selectedRow;
+    var mut = mutantField(row) || "Candidate";
+    return (
+      '<section class="review-evidence" aria-live="polite"><div class="review-section-head"><div><span class="section-kicker">Decision support</span><h2>' +
+      (state.evidenceMode === "compare" ? "Candidate comparison" : "Evidence for " + esc(mut)) +
+      '</h2></div><div class="evidence-head-actions"><span class="score-disclaimer">Ranking score · not ΔΔG</span>' +
+      reviewModeTabsHtml() +
+      '</div></div>' +
+      (state.evidenceMode === "compare" ? compareEvidenceHtml() : singleEvidenceHtml(row)) +
+      '</section>'
+    );
+  }
+
+  function experimentTrayHtml() {
+    var rows = experimentRows();
+    var chips = rows.slice(0, 6).map(function (row) {
+      var mut = mutantField(row);
+      return '<button type="button" class="experiment-chip" data-remove-experiment="' + esc(mut) + '" title="Remove ' + esc(mut) + '">' + esc(mut) + '<span>Remove</span></button>';
+    }).join("");
+    if (rows.length > 6) chips += '<span class="more-selected">+' + (rows.length - 6) + ' more</span>';
+    return (
+      '<footer class="experiment-tray"><div class="experiment-count"><strong>' + rows.length + ' / 24 selected</strong><span>' +
+      (state.experimentReady ? "Experiment batch ready" : "Choose variants for experimental validation") +
+      '</span></div><div class="experiment-chips">' + (chips || '<span class="tray-empty">No candidates selected yet</span>') +
+      '</div><div class="experiment-actions"><button type="button" class="btn" id="btn-export-experiment"' +
+      (!rows.length ? " disabled" : "") +
+      '>Export CSV</button><button type="button" class="btn btn-primary" id="btn-add-experiment"' +
+      (!rows.length ? " disabled" : "") +
+      '>' + (state.experimentReady ? "Experiment ready" : "Add to experiment") + '</button></div></footer>'
+    );
+  }
+
+  function downloadExperimentCsv() {
+    var rows = experimentRows();
+    if (!rows.length) return;
+    var primary = primaryScore(state.job, state.scores);
+    var lines = ["mutant," + csvEscape(primary || "score") + ",rank"];
+    rows.forEach(function (row, i) {
+      lines.push([csvEscape(mutantField(row)), csvEscape(rowScore(row, primary)), csvEscape(row.rank != null ? row.rank : i + 1)].join(","));
+    });
+    var blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "rem2-" + (state.route.id || "run") + "-experiment.csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
   function renderWorkspace() {
@@ -1954,44 +2131,66 @@
         "</pre></div>";
       return;
     }
+    if (!state.selectedRow && state.scores && state.scores.rows && state.scores.rows.length) {
+      state.selectedRow = state.scores.rows[0];
+    }
     var hasCoord = !!(job.has_pdb || currentSourceKey(job));
-    var side =
-      '<div class="bench-head">' +
-      '<div><h1 class="mono">' +
+    var seq = jobSequence(job);
+    var total = (state.scores && state.scores.total) || nMut || 0;
+    var selectedMut = mutantField(state.selectedRow) || "—";
+    var header =
+      '<header class="review-context"><div><div class="review-title-row"><h1>' +
       esc(job.protein || job.id) +
-      "</h1><p class=\"muted\">Top 30 highlighted on the sequence. Drag letters to select. Scores, pLDDT, and RSA on the left.</p></div>" +
-      runFlowHtml(job) +
-      "</div>" +
-      err +
-      nextActionsHtml(job, { hideReview: true }) +
-      '<div class="hist-grid">' +
-      histPanelHtml("hist-canvas", "Score distribution", primary) +
-      histPanelHtml("plddt-canvas", "pLDDT distribution", "") +
-      histPanelHtml("rsa-canvas", "RSA distribution", "") +
-      "</div>" +
-      '<div class="panel">' +
-      '<div class="toolbar">' +
-      '<input type="search" id="score-q" placeholder="Search mutants" title="Press Enter" value="' +
+      '</h1><span class="badge badge-done">Complete</span></div><p>' +
+      esc(job.description || "Candidate review for experimental validation") +
+      '</p></div><dl><div><dt>Variants</dt><dd>' +
+      esc(total) +
+      '</dd></div><div><dt>Model</dt><dd>' +
+      esc(job.model || "—") +
+      '</dd></div><div><dt>Recipe</dt><dd>' +
+      esc(job.recipe || "—") +
+      '</dd></div></dl></header>';
+    var candidates =
+      '<section class="candidate-pane"><div class="candidate-head"><div><span class="section-kicker">Ranked output</span><h2>Candidates <small>(' +
+      esc(total) +
+      ')</small></h2></div><button type="button" class="btn btn-ghost" id="btn-copy-selected">Copy row</button></div>' +
+      '<div class="candidate-filters"><input type="search" id="score-q" placeholder="Search mutations, e.g. M55K" title="Press Enter" value="' +
       esc(state.query) +
-      '">' +
-      '<button type="button" class="btn" id="btn-copy-mutant">Copy mutant</button>' +
-      '<button type="button" class="btn" id="btn-copy-selected">Copy selected</button>' +
-      cancel +
-      "</div>" +
+      '"><span class="filter-chip is-on">All positions</span><span class="filter-chip">Single substitutions</span></div>' +
       scoreTableHtml(job, state.scores) +
-      selectedDetailHtml(job, state.selectedRow) +
-      "</div>" +
-      (state.logText
-        ? '<details class="advanced"><summary>Full log</summary><pre class="log-pre">' +
-          esc(state.logText) +
-          "</pre></details>"
-        : "");
-    var viewer = hasCoord
-      ? molPanelHtml("bench")
-      : '<div class="viewer-empty"><h2>No coordinates</h2><p>The protein pane stays here. Fetch RCSB / AlphaFold when you have an id.</p></div>';
-    host.innerHTML = proteinBenchHtml("review", side, viewer);
-    mountBench("review");
+      '</section>';
+    var structure =
+      '<section class="structure-pane"><div class="review-section-head structure-head"><div><span class="section-kicker">Molecular context</span><h2>Structure <small>' +
+      esc(selectedMut) +
+      '</small></h2></div></div>' +
+      (hasCoord
+        ? molPanelHtml("bench")
+        : '<div class="viewer-empty"><h2>No coordinates</h2><p>Add or fetch a PDB structure to link candidates to their molecular context.</p></div>') +
+      '<div class="sequence-panel"><div class="sequence-label"><strong>Amino acid sequence</strong><span>' +
+      esc((seq && seq.length) || 0) +
+      ' residues</span></div>' +
+      aaStripHtml(seq, currentMutPositions()) +
+      '</div></section>';
+    host.innerHTML =
+      '<div class="review-workbench">' +
+      header +
+      err +
+      '<div class="review-grid">' +
+      candidates +
+      '<div class="review-right">' +
+      structure +
+      reviewEvidenceHtml() +
+      '</div></div>' +
+      experimentTrayHtml() +
+      '</div>';
+    setBenchMode(true);
     drawReviewHists();
+  }
+
+  function rerenderReview() {
+    teardownViewer();
+    renderWorkspace();
+    if ($("mol-host")) maybeLoadViewer(state.job, []);
   }
 
   function histPanelHtml(id, title, extra) {
@@ -2053,6 +2252,27 @@
     var host = $("workspace-body");
     if (!host) return;
     host.addEventListener("click", function (ev) {
+      var experimentInput = ev.target.closest("[data-experiment-mutant]");
+      if (experimentInput && host.contains(experimentInput)) {
+        var experimentIndex = parseInt(experimentInput.closest("tr").getAttribute("data-i"), 10);
+        var experimentRow = ((state.scores && state.scores.rows) || [])[experimentIndex];
+        toggleExperimentRow(experimentRow, experimentInput.checked);
+        rerenderReview();
+        return;
+      }
+      var mode = ev.target.closest("[data-evidence-mode]");
+      if (mode && host.contains(mode)) {
+        state.evidenceMode = mode.getAttribute("data-evidence-mode") === "compare" ? "compare" : "evidence";
+        rerenderReview();
+        return;
+      }
+      var remove = ev.target.closest("[data-remove-experiment]");
+      if (remove && host.contains(remove)) {
+        delete state.experimentRows[remove.getAttribute("data-remove-experiment")];
+        state.experimentReady = false;
+        rerenderReview();
+        return;
+      }
       var th = ev.target.closest("th[data-sort]");
       if (th && host.contains(th)) {
         toggleSort(th.getAttribute("data-sort"));
@@ -2063,7 +2283,7 @@
         var i = parseInt(tr.getAttribute("data-i"), 10);
         var rows = (state.scores && state.scores.rows) || [];
         state.selectedRow = rows[i] || null;
-        highlightSelection();
+        rerenderReview();
         return;
       }
       var id = ev.target.id;
@@ -2077,6 +2297,14 @@
         copyMutant();
       } else if (id === "btn-copy-selected") {
         copySelected();
+      } else if (id === "btn-export-experiment") {
+        downloadExperimentCsv();
+      } else if (id === "btn-add-experiment") {
+        if (experimentRows().length) {
+          state.experimentReady = true;
+          flash(experimentRows().length + " candidates prepared for experimental validation.");
+          rerenderReview();
+        }
       } else if (id === "btn-cancel") {
         cancelJob(state.job && state.job.id);
       }
@@ -2172,6 +2400,10 @@
   }
 
   function patchScores() {
+    if (state.route.page === "review") {
+      rerenderReview();
+      return;
+    }
     var table = $("score-table");
     if (!table) {
       renderWorkspace();
@@ -2328,7 +2560,7 @@
   }
 
   function bgColor() {
-    if (state.view.bg === "white") return "#f3efe6";
+    if (state.view.bg === "white") return "#f7f8f6";
     if (state.view.bg === "black") return "#000000";
     return "#11140f";
   }
@@ -2398,6 +2630,7 @@
 
   function colorStyle() {
     var mode = state.view.color;
+    if (mode === "slate") return { color: "#7f9fc4" };
     if (mode === "spectrum") return { color: "spectrum" };
     if (mode === "chain") return { color: "chainHetatm" };
     if (mode === "ss") return { color: "ssPyMol" };
@@ -2457,6 +2690,7 @@
       "</select>" +
       '<select data-mol="color" title="Color">' +
       opt("color", "spectrum", "Spectrum") +
+      opt("color", "slate", "Slate") +
       opt("color", "chain", "Chain") +
       opt("color", "ss", "Secondary structure") +
       opt("color", "plddt", sourceHasPlddt(state.job) ? "pLDDT" : "pLDDT (n/a)") +
@@ -2610,12 +2844,12 @@
           { stick: { radius: 0.14, colorscheme: "amino" } }
         );
       } else if (side === "selection" && selPos.length) {
-        viewer.addStyle({ resi: selPos }, { stick: { radius: 0.16, color: "#d9a441" } });
+        viewer.addStyle({ resi: selPos }, { stick: { radius: 0.16, color: "#8769e8" } });
       }
       if (selPos.length) {
         viewer.addStyle(
           { resi: selPos },
-          { cartoon: { color: "#d9a441", thickness: 0.5 } }
+          { cartoon: { color: "#8769e8", thickness: 0.5 } }
         );
       }
       if (state.view.hetero) {
@@ -2725,6 +2959,10 @@
       state.viewer = viewer;
       bindViewerClicks(viewer);
       applyView({ zoom: positions && positions.length ? "sel" : "all" });
+      if (!positions || !positions.length) {
+        viewer.zoom(1.3);
+        viewer.render();
+      }
       setTimeout(function () {
         try {
           viewer.resize();
@@ -2902,6 +3140,9 @@
     }
     if (state.job && state.job.id !== id) {
       teardownViewer();
+      state.experimentRows = {};
+      state.experimentReady = false;
+      state.evidenceMode = "evidence";
       state.pdbText = null;
       state.structureSource = "";
       state.fastaSeq = null;
@@ -2927,7 +3168,7 @@
     await Promise.all([loadScores(), loadHistogram(id), loadLog(id), loadTop(id), loadFeatures(id)]);
     renderWorkspace();
     if ($("mol-host")) {
-      await maybeLoadViewer(state.job, selectionResis());
+      await maybeLoadViewer(state.job, []);
     }
   }
 
@@ -3455,6 +3696,8 @@
       showPage("page-predict");
       fillModels();
       updateCli();
+    } else if (route.page === "benchmarks") {
+      showPage("page-benchmarks");
       renderLeaderboard();
     } else if (route.page === "workspace" || route.page === "review") {
       showPage("page-workspace");
@@ -3713,6 +3956,7 @@
     els.tabRuns = $("tab-runs");
     els.tabPredict = $("tab-predict");
     els.tabReview = $("tab-review");
+    els.tabBenchmarks = $("tab-benchmarks");
     els.form = $("predict-form");
     els.modelSelect = $("model-select");
     els.cli = $("cli-preview");

@@ -171,13 +171,19 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
             raise HTTPException(404, "run not found")
         inputs = store.inputs_dir(run_id)
         result = Path(job.get("out_dir") or store.result_dir(run_id))
+        base_value = str((job.get("argv_spec") or {}).get("base_dir") or "").strip()
+        base_dir = Path(base_value).expanduser() if base_value else None
         if kind == "pdb":
             path = resolve_pdb_artifact(inputs, result / "_inputs" / "pdbs", source)
+            if path is None and base_dir is not None:
+                path = _find_suffix(base_dir / "pdbs", (".pdb", ".ent", ".cif"))
             media = "chemical/x-pdb"
         elif kind == "fasta":
             path = _find_suffix(inputs, (".fasta", ".fa", ".faa")) or _find_suffix(
                 result / "_inputs" / "aa_seq", (".fasta", ".fa", ".faa")
             )
+            if path is None and base_dir is not None:
+                path = _find_suffix(base_dir / "aa_seq", (".fasta", ".fa", ".faa"))
             media = "text/plain"
         else:
             raise HTTPException(400, "kind must be pdb or fasta")

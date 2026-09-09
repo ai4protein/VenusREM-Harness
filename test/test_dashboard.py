@@ -164,6 +164,33 @@ def test_create_run_scores_and_top(client):
     assert "ok" in log.text
 
 
+def test_artifacts_fall_back_to_base_dir(tmp_path):
+    base = tmp_path / "dataset"
+    (base / "aa_seq").mkdir(parents=True)
+    (base / "pdbs").mkdir()
+    (base / "aa_seq" / "protein.fasta").write_text(">protein\nACDE\n", encoding="utf-8")
+    (base / "pdbs" / "protein.pdb").write_text("MODEL        1\nENDMDL\n", encoding="utf-8")
+
+    store = RunStore(tmp_path / "dashboard")
+    store.write_job(
+        {
+            "id": "base-dir-run",
+            "status": "done",
+            "out_dir": str(store.result_dir("base-dir-run")),
+            "argv_spec": {"base_dir": str(base)},
+        }
+    )
+    app = create_app(tmp_path / "dashboard", runner=JobRunner(store, execute=_fake_execute))
+    with TestClient(app) as test_client:
+        fasta = test_client.get("/api/runs/base-dir-run/artifact?kind=fasta")
+        pdb = test_client.get("/api/runs/base-dir-run/artifact?kind=pdb")
+
+    assert fasta.status_code == 200
+    assert "ACDE" in fasta.text
+    assert pdb.status_code == 200
+    assert "MODEL" in pdb.text
+
+
 def test_proteingym_leaderboard(client):
     from rem2.dashboard.leaderboard import proteingym_board
 
@@ -285,7 +312,7 @@ def test_static_index(client):
     assert b"slot-structure" in res.content
     assert b"slot-msa" in res.content
     assert b'name="seq_id"' in res.content
-    assert b"New job" in res.content
+    assert b"New prediction" in res.content
     vendor = client.get("/vendor/3Dmol-min.js")
     assert vendor.status_code == 200
     assert len(vendor.content) > 10000
