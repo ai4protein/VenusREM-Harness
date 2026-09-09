@@ -1,0 +1,215 @@
+"use strict";
+
+const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+
+const appPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "app.js");
+const htmlPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "index.html");
+const cssPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "app.css");
+
+const storage = Object.create(null);
+const localStorage = {
+  getItem(key) {
+    return Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null;
+  },
+  setItem(key, value) {
+    storage[key] = String(value);
+  },
+  removeItem(key) {
+    delete storage[key];
+  },
+};
+
+let src = fs.readFileSync(appPath, "utf8");
+src = src.replace(/^\(function \(\) \{/, "");
+src = src.replace(/\n  if \(document\.readyState === "loading"\) \{[\s\S]*$/, "");
+src += `
+this.runPhase = runPhase;
+this.clampSplit = clampSplit;
+this.clampK = clampK;
+this.isLive = isLive;
+this.parseMutants = parseMutants;
+this.mutantField = mutantField;
+this.csvEscape = csvEscape;
+this.fmtScore = fmtScore;
+this.parseHash = parseHash;
+this.proteinBenchHtml = proteinBenchHtml;
+this.nextActionsHtml = nextActionsHtml;
+this.jobSequence = jobSequence;
+this.readSplit = readSplit;
+this.writeSplit = writeSplit;
+this.activeJob = activeJob;
+`;
+
+const context = vm.createContext({
+  console,
+  sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+  localStorage,
+  location: { hash: "#/runs" },
+  document: {
+    readyState: "loading",
+    addEventListener() {},
+    getElementById() {
+      return null;
+    },
+    querySelector() {
+      return null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+  },
+  window: { addEventListener() {}, devicePixelRatio: 1 },
+  navigator: {},
+  setTimeout,
+  clearTimeout,
+  setInterval,
+  clearInterval,
+});
+
+vm.runInContext(src, context);
+
+function check(name, fn) {
+  try {
+    fn();
+  } catch (err) {
+    err.message = name + ": " + err.message;
+    throw err;
+  }
+}
+
+check("runPhase stages", () => {
+  assert.strictEqual(context.runPhase(null), "queue");
+  assert.strictEqual(context.runPhase({ status: "queued" }), "queue");
+  assert.strictEqual(context.runPhase({ status: "running", progress: { stage: "fetch" } }), "fetch");
+  assert.strictEqual(context.runPhase({ status: "running", progress: { stage: "score" } }), "score");
+  assert.strictEqual(context.runPhase({ status: "running" }), "score");
+  assert.strictEqual(context.runPhase({ status: "done" }), "review");
+  assert.strictEqual(context.runPhase({ status: "failed", progress: { stage: "fetch" } }), "fetch");
+  assert.strictEqual(context.runPhase({ status: "failed", progress: { stage: "score" } }), "score");
+  assert.strictEqual(context.runPhase({ status: "cancelled" }), "score");
+});
+
+check("clampSplit keeps protein >= 50%", () => {
+  assert.strictEqual(context.clampSplit(10), 50);
+  assert.strictEqual(context.clampSplit(50), 50);
+  assert.strictEqual(context.clampSplit(64), 64);
+  assert.strictEqual(context.clampSplit(99), 82);
+});
+
+check("clampK", () => {
+  assert.strictEqual(context.clampK("2"), 5);
+  assert.strictEqual(context.clampK(20), 20);
+  assert.strictEqual(context.clampK(999), 100);
+  assert.strictEqual(context.clampK("nope"), 20);
+});
+
+check("isLive", () => {
+  assert.strictEqual(context.isLive("queued"), true);
+  assert.strictEqual(context.isLive("running"), true);
+  assert.strictEqual(context.isLive("done"), false);
+  assert.strictEqual(context.isLive("failed"), false);
+});
+
+check("parseMutants", () => {
+  const one = context.parseMutants("A1C");
+  assert.strictEqual(one.length, 1);
+  assert.strictEqual(one[0].wt, "A");
+  assert.strictEqual(one[0].pos, 1);
+  assert.strictEqual(one[0].mut, "C");
+  const multi = context.parseMutants("A10Y:B12D");
+  assert.strictEqual(multi.length, 2);
+  assert.strictEqual(multi[1].pos, 12);
+  assert.strictEqual(context.parseMutants("").length, 0);
+  assert.strictEqual(context.parseMutants("not-a-mut").length, 0);
+});
+
+check("mutantField / jobSequence / fmtScore / csvEscape", () => {
+  assert.strictEqual(context.mutantField({ mutant: "A1C" }), "A1C");
+  assert.strictEqual(context.mutantField({ aa_mut: "V20A" }), "V20A");
+  assert.strictEqual(context.jobSequence({ sequence: "ACDE" }), "ACDE");
+  assert.strictEqual(context.jobSequence({ proteins: [{ sequence: "WW" }] }), "WW");
+  assert.strictEqual(context.fmtScore(1.23456), "1.2346");
+  assert.strictEqual(context.fmtScore(null), "—");
+  assert.strictEqual(context.csvEscape("a,b"), '"a,b"');
+});
+
+check("parseHash routes", () => {
+  context.location.hash = "#/";
+  assert.strictEqual(context.parseHash().page, "runs");
+  context.location.hash = "#/predict";
+  assert.strictEqual(context.parseHash().page, "predict");
+  context.location.hash = "#/runs/abc12";
+  const run = context.parseHash();
+  assert.strictEqual(run.page, "workspace");
+  assert.strictEqual(run.id, "abc12");
+  context.location.hash = "#/structure/abc12";
+  assert.strictEqual(context.parseHash().page, "structure");
+  context.location.hash = "#/select/abc12";
+  assert.strictEqual(context.parseHash().page, "select");
+  context.location.hash = "#/select";
+  assert.strictEqual(context.parseHash().page, "select");
+  context.location.hash = "#/nope";
+  assert.strictEqual(context.parseHash().page, "runs");
+});
+
+check("protein bench markup", () => {
+  const html = context.proteinBenchHtml("structure", "<p>side</p>", "<div id='mol-host'></div>");
+  assert.ok(html.includes('data-split="structure"'));
+  assert.ok(html.includes("data-gutter"));
+  assert.ok(html.includes("protein-viewer-pane"));
+  assert.ok(html.includes("protein-side-pane"));
+});
+
+check("nextActions hide structure when already on bench", () => {
+  const job = { id: "r1", status: "done", has_pdb: true };
+  const full = context.nextActionsHtml(job);
+  assert.ok(full.includes("#/structure/r1"));
+  const slim = context.nextActionsHtml(job, { hideStructure: true });
+  assert.ok(!slim.includes("#/structure/r1"));
+  assert.ok(slim.includes("#/select/r1"));
+  assert.strictEqual(context.nextActionsHtml({ id: "r1", status: "running" }), "");
+});
+
+check("split persistence clamps on read path via write/read", () => {
+  context.writeSplit("review", 70);
+  assert.strictEqual(context.readSplit("review", 56), 70);
+  assert.strictEqual(context.readSplit("missing", 64), 64);
+});
+
+check("activeJob prefers state.job then runs list", () => {
+  context.state.activeRunId = "a";
+  context.state.job = { id: "a", status: "running" };
+  assert.strictEqual(context.activeJob().status, "running");
+  context.state.job = { id: "other", status: "done" };
+  context.state.runs = [{ id: "a", status: "queued" }];
+  assert.strictEqual(context.activeJob().status, "queued");
+  context.state.activeRunId = "";
+  context.state.job = null;
+  assert.strictEqual(context.activeJob(), null);
+});
+
+const html = fs.readFileSync(htmlPath, "utf8");
+const css = fs.readFileSync(cssPath, "utf8");
+
+check("html flow chrome", () => {
+  assert.ok(html.includes('id="tab-predict"'));
+  assert.ok(html.includes('id="tab-structure"'));
+  assert.ok(html.includes('id="tab-select"') && html.includes("is-disabled"));
+  assert.ok(html.includes('data-wiz-tab="1"'));
+  assert.ok(html.includes('data-wiz-tab="2"'));
+  assert.ok(html.includes('data-wiz-tab="3"'));
+  assert.ok(html.includes('id="btn-submit"') && html.includes("hidden>Start scoring"));
+  assert.ok(html.includes('value="auto" selected'));
+});
+
+check("css protein pane is at least half", () => {
+  assert.ok(css.includes("min-width: 50%"));
+  assert.ok(css.includes(".protein-gutter"));
+  assert.ok(css.includes("cursor: col-resize"));
+  assert.ok(css.includes("flex: 0 0 56%"));
+});
+
+console.log("dashboard ui logic: ok");

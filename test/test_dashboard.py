@@ -59,6 +59,7 @@ def test_health_and_models(client):
     assert "version" in health
     models = client.get("/api/models").json()["models"]
     names = {row["name"] for row in models}
+    assert models[0]["name"] == "venusrem2"
     assert "esm2" in names
     assert "esm2-8m" in names
     recipes = client.get("/api/recipes").json()["recipes"]
@@ -134,13 +135,20 @@ def test_unknown_run_404(client):
 def test_static_index(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert b"rem2 Console" in res.content
+    assert b"REM2 Dashboard" in res.content
     assert b"Structure" in res.content
     assert b"AlphaFold DB" in res.content
     js = client.get("/app.js")
     assert js.status_code == 200
     assert b"ssPyMol" in js.content
+    assert b"protein-bench" in js.content
+    assert b"data-gutter" in js.content
     assert b"no pLDDT" in js.content
+    assert b'sel.value = "venusrem2"' in js.content
+    assert b"progress-bar" in js.content
+    assert b"Start scoring" in res.content
+    assert b"1. Input" in res.content
+    assert b"New job" in res.content
     vendor = client.get("/vendor/3Dmol-min.js")
     assert vendor.status_code == 200
     assert len(vendor.content) > 10000
@@ -169,7 +177,7 @@ def test_create_run_fetches_structure(client, monkeypatch):
             "preferred": {"kind": "afdb", "has_plddt": True},
         }
 
-    monkeypatch.setattr("rem2.dashboard.app.maybe_fetch_structures", fake_fetch)
+    monkeypatch.setattr("rem2.dashboard.jobs.maybe_fetch_structures", fake_fetch)
     res = client.post(
         "/api/runs",
         data={
@@ -182,6 +190,18 @@ def test_create_run_fetches_structure(client, monkeypatch):
     )
     assert res.status_code == 200, res.text
     job = res.json()
+    run_id = job["id"]
+    assert job["status"] == "queued"
+    assert job["progress"]["stage"] == "queued"
+
+    for _ in range(80):
+        job = client.get(f"/api/runs/{run_id}").json()
+        if job["status"] in {"done", "failed"}:
+            break
+        import time
+
+        time.sleep(0.05)
+    assert job["status"] == "done", job
     assert job["has_pdb"] is True
     assert job["has_plddt"] is True
     assert job["pdb_id"] == "2L6Q"
@@ -189,6 +209,7 @@ def test_create_run_fetches_structure(client, monkeypatch):
     assert job["structure_sources"]["afdb"]["has_plddt"] is True
     assert job["structure_sources"]["rcsb"]["has_plddt"] is False
     assert "--pdb" in job["argv"]
+    assert job["progress"]["pct"] == 100
 
     af = client.get(f"/api/runs/{job['id']}/artifact?kind=pdb&source=afdb")
     assert af.status_code == 200
@@ -209,6 +230,15 @@ def test_fetch_structure_on_existing_run(client, monkeypatch):
     run_id = res.json()["id"]
     assert res.json()["has_pdb"] is False
 
+    for _ in range(80):
+        job = client.get(f"/api/runs/{run_id}").json()
+        if job["status"] in {"done", "failed"}:
+            break
+        import time
+
+        time.sleep(0.05)
+    assert job["status"] == "done", job
+
     def fake_fetch(**kwargs):
         dest = Path(kwargs["inputs"])
         (dest / "afdb.pdb").write_text(_AF)
@@ -226,3 +256,26 @@ def test_fetch_structure_on_existing_run(client, monkeypatch):
     assert job["has_pdb"] is True
     assert job["has_plddt"] is True
     assert job["uniprot_id"] == "P0A6Y8"
+
+
+def test_log_tee_isatty(tmp_path):
+    from rem2.dashboard.jobs import LogTee
+    from rem2.dashboard.store import RunStore
+
+    store = RunStore(tmp_path)
+    job = {"id": "abc123", "progress": {"pct": 0}}
+    store.write_job({**job, "id": "abc123", "status": "running"})
+    tee = LogTee("abc123", store, job)
+    assert tee.isatty() is False
+    assert tee.write("loading 40%\n") == len("loading 40%\n")
+    tee.flush()
+    assert "40%" in store.log_path("abc123").read_text(encoding="utf-8")
+    from rem2.scoring.run_utils import should_use_color
+    import sys
+
+    old = sys.stdout
+    sys.stdout = tee
+    try:
+        assert should_use_color() is False
+    finally:
+        sys.stdout = old

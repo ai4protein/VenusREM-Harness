@@ -59,6 +59,8 @@ def test_bare_rem2_prints_getting_started(capsys):
     assert "rem2 doctor" in out
     assert "rem2 demo" in out
     assert "rem2 dashboard" in out
+    assert "rem2[dashboard]" in out
+    assert "rem2[cli]" in out
     assert "rem2 download" in out
     assert "from rem2 import score" in out
     assert "--model venusrem2" in out
@@ -117,6 +119,33 @@ def test_doctor_cli(capsys):
     assert "torch" in out
     assert "demo" in out.lower()
     assert "download" in out.lower()
+    assert "rem2[cli]" in out
+    assert "rem2[dashboard]" in out
+
+
+def test_optional_cli_and_dashboard_extras():
+    from pathlib import Path
+
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # pragma: no cover
+        import tomli as tomllib  # type: ignore[no-redef]
+
+    data = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    )
+    extras = data["project"]["optional-dependencies"]
+    assert "cli" in extras
+    assert "dashboard" in extras
+    assert extras["recommended"] == extras["cli"]
+    cli = " ".join(extras["cli"]).lower()
+    dash = " ".join(extras["dashboard"]).lower()
+    assert "biotite" in cli
+    assert "fastapi" not in cli
+    assert "fastapi" in dash
+    assert "uvicorn" in dash
+    assert "python-multipart" in dash
+    assert "biotite" in dash
 
 
 def test_cli_refuses_masked_marginals_on_causal_lm():

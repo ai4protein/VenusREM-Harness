@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import io
 import math
+import os
 import queue
+import re
 import threading
-from io import StringIO
+import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -134,6 +137,31 @@ def attach_structure_meta(job: dict[str, Any], store: RunStore) -> dict[str, Any
     job["structure_sources"] = info["structure_sources"]
     job["preferred_source"] = info["preferred_source"] or job.get("preferred_source")
     return job
+
+
+def existing_fasta(inputs: Path) -> Optional[str]:
+    for name in ("query.fasta", "query.fa", "query.faa"):
+        path = inputs / name
+        if path.is_file():
+            return str(path)
+    return None
+
+
+def existing_query_pdb(inputs: Path) -> Optional[str]:
+    path = inputs / "query.pdb"
+    return str(path) if path.is_file() else None
+
+
+def set_progress(job: dict[str, Any], store: RunStore, pct: int, stage: str, message: str) -> dict[str, Any]:
+    latest = store.load_job(job["id"]) or job
+    latest["progress"] = {
+        "pct": max(0, min(100, int(pct))),
+        "stage": stage,
+        "message": message,
+    }
+    store.write_job(latest)
+    job.update(latest)
+    return latest
 
 
 def maybe_fetch_structures(
@@ -305,30 +333,175 @@ def histogram(frame: pd.DataFrame, primary: Optional[str], bins: int = 24) -> di
     return {"bins": hist, "min": lo, "max": hi, "primary_score": primary}
 
 
+_PCT_RE = re.compile(r"(?<!\d)(\d{1,3})\s*%")
+
+
+class LogTee:
+    """File-like stdout/stderr that tqdm and rem2 status can write to."""
+
+    encoding = "utf-8"
+    errors = "replace"
+    closed = False
+    name = "<rem2-dashboard>"
+    mode = "w"
+
+    def __init__(self, run_id: str, store: RunStore, job: dict[str, Any]):
+        self.run_id = run_id
+        self.store = store
+        self.job = job
+        self._chunks: list[str] = []
+        self._lock = threading.Lock()
+        self._last_flush = 0.0
+        self._last_progress = 0.0
+
+    def isatty(self) -> bool:
+        return False
+
+    def readable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return True
+
+    def seekable(self) -> bool:
+        return False
+
+    def fileno(self) -> int:
+        raise io.UnsupportedOperation("LogTee has no fileno")
+
+    @property
+    def buffer(self) -> "LogTee":
+        return self
+
+    def write(self, text) -> int:
+        if text is None:
+            return 0
+        if isinstance(text, bytes):
+            text = text.decode(self.encoding, self.errors)
+        text = str(text).replace("\r", "\n")
+        if not text:
+            return 0
+        with self._lock:
+            self._chunks.append(text)
+            now = time.monotonic()
+            if now - self._last_flush >= 0.2 or sum(len(c) for c in self._chunks) >= 4096:
+                self._flush_unlocked()
+            if now - self._last_progress >= 0.6:
+                self._maybe_progress_unlocked(text)
+                self._last_progress = now
+        return len(text)
+
+    def flush(self) -> None:
+        with self._lock:
+            self._flush_unlocked()
+
+    def _flush_unlocked(self) -> None:
+        if not self._chunks:
+            return
+        blob = "".join(self._chunks)
+        self._chunks.clear()
+        self._last_flush = time.monotonic()
+        self.store.append_log(self.run_id, blob)
+
+    def _maybe_progress_unlocked(self, text: str) -> None:
+        match = _PCT_RE.search(text)
+        if not match:
+            return
+        pct = int(match.group(1))
+        if pct > 100:
+            return
+        mapped = 20 + int(pct * 0.7)
+        latest = self.store.load_job(self.run_id) or self.job
+        prev = (latest.get("progress") or {}).get("pct") or 0
+        if mapped <= prev:
+            return
+        latest["progress"] = {
+            "pct": mapped,
+            "stage": "score",
+            "message": text.strip().split("\n")[-1][:160],
+        }
+        self.store.write_job(latest)
+
+
+def prepare_run(job: dict[str, Any], store: RunStore) -> dict[str, Any]:
+    """Fetch structures and rebuild argv before scoring. Must stay off the request thread."""
+    spec = dict(job.get("argv_spec") or {})
+    if spec.get("base_dir") or job.get("mutant_mode") == "demo":
+        set_progress(job, store, 12, "score", "Starting…")
+        return store.load_job(job["id"]) or job
+    inputs = store.inputs_dir(job["id"])
+    uploaded = spec.get("pdb")
+    fetch_mode = (job.get("fetch_mode") or "auto").strip().lower() or "auto"
+    skip_fetch = fetch_mode in {"none", "off", "0", "false"}
+    fetched = None
+    if not skip_fetch:
+        set_progress(job, store, 6, "fetch", "Looking up RCSB / AlphaFold…")
+        try:
+            fetched = maybe_fetch_structures(
+                inputs=inputs,
+                fasta_path=spec.get("fasta"),
+                pdb_path=uploaded,
+                protein=job.get("protein"),
+                pdb_id=job.get("pdb_id"),
+                uniprot_id=job.get("uniprot_id"),
+                fetch_mode=fetch_mode,
+                as_query=not uploaded,
+            )
+        except Exception as exc:
+            fetched = {"errors": [f"{type(exc).__name__}: {exc}"]}
+            if not spec.get("fasta") and not uploaded:
+                raise
+    job = store.load_job(job["id"]) or job
+    if fetched:
+        job["pdb_id"] = fetched.get("pdb_id") or job.get("pdb_id")
+        job["uniprot_id"] = fetched.get("uniprot_id") or job.get("uniprot_id")
+        job["fetch_errors"] = fetched.get("errors") or []
+    attach_structure_meta(job, store)
+    query = uploaded or existing_query_pdb(inputs)
+    fasta = spec.get("fasta") or existing_fasta(inputs)
+    if not fasta and not query and not spec.get("base_dir"):
+        raise FileNotFoundError("No FASTA or PDB to score. Fetch failed or no id was provided.")
+    job["argv"] = build_argv(
+        model=job.get("model") or "venusrem2",
+        recipe=job.get("recipe") or "full",
+        out_dir=job.get("out_dir") or str(store.result_dir(job["id"])),
+        fasta=fasta,
+        pdb=query,
+        mutants=spec.get("mutants"),
+        msa_dir=spec.get("msa_dir"),
+        base_dir=spec.get("base_dir"),
+        mutant_sites=spec.get("mutant_sites"),
+        positions=spec.get("positions"),
+        residue_range=spec.get("residue_range"),
+        max_mutants=spec.get("max_mutants"),
+        scoring_strategy=spec.get("scoring_strategy"),
+    )
+    store.write_job(job)
+    set_progress(job, store, 18, "score", "Scoring…")
+    return store.load_job(job["id"]) or job
+
+
 def default_execute(job: dict[str, Any], store: RunStore) -> None:
     from rem2.cli import main
 
     argv = list(job.get("argv") or [])
-    buf = StringIO()
-
-    class _Tee:
-        def write(self, text):
-            buf.write(text)
-            store.append_log(job["id"], text)
-            return len(text)
-
-        def flush(self):
-            pass
-
+    if not argv:
+        raise RuntimeError("Job has no command line; structure fetch may have failed.")
+    os.environ.setdefault("REM2_NO_SPINNER", "1")
     import sys
 
+    tee = LogTee(job["id"], store, job)
     old_out, old_err = sys.stdout, sys.stderr
-    tee = _Tee()
     try:
         sys.stdout = tee  # type: ignore[assignment]
         sys.stderr = tee  # type: ignore[assignment]
         main(argv)
+        tee.flush()
     finally:
+        try:
+            tee.flush()
+        except Exception:
+            pass
         sys.stdout, sys.stderr = old_out, old_err
 
 
@@ -375,23 +548,46 @@ class JobRunner:
                 job["status"] = "running"
                 self.store.write_job(job)
             try:
+                job = prepare_run(job, self.store)
                 self.execute(job, self.store)
                 latest = self.store.load_job(run_id) or job
-                if latest.get("status") == "cancelled":
+                with self._lock:
+                    was_cancel = run_id in self._cancel or latest.get("status") == "cancelled"
+                    self._cancel.discard(run_id)
+                if was_cancel:
+                    latest["status"] = "cancelled"
+                    latest["error"] = latest.get("error") or "cancelled"
+                    latest["progress"] = {
+                        "pct": (latest.get("progress") or {}).get("pct") or 0,
+                        "stage": "failed",
+                        "message": "Cancelled",
+                    }
+                    self.store.write_job(latest)
                     continue
                 latest["status"] = "done"
                 latest["error"] = None
+                latest["progress"] = {"pct": 100, "stage": "done", "message": "Done"}
                 enrich_job(latest, self.store)
                 self.store.write_job(latest)
             except SystemExit as exc:
                 latest = self.store.load_job(run_id) or job
                 latest["status"] = "failed"
                 latest["error"] = str(exc) or "rem2 exited"
+                latest["progress"] = {
+                    "pct": (latest.get("progress") or {}).get("pct") or 0,
+                    "stage": "failed",
+                    "message": latest["error"],
+                }
                 self.store.write_job(latest)
             except Exception as exc:
                 latest = self.store.load_job(run_id) or job
                 latest["status"] = "failed"
                 latest["error"] = f"{type(exc).__name__}: {exc}"
+                latest["progress"] = {
+                    "pct": (latest.get("progress") or {}).get("pct") or 0,
+                    "stage": "failed",
+                    "message": latest["error"],
+                }
                 self.store.write_job(latest)
 
 
@@ -414,7 +610,7 @@ def build_argv(
     from rem2.api import build_score_argv
 
     extra: list[str] = list(recipe_argv(recipe))
-    extra += ["--auto_download"]
+    extra += ["--auto_download", "--disable_tqdm"]
     if scoring_strategy:
         extra += ["--scoring_strategy", scoring_strategy]
     if mutant_sites and not mutants and not base_dir:

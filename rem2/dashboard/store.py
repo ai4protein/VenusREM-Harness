@@ -59,12 +59,20 @@ class RunStore:
 
     def write_job(self, job: dict[str, Any]) -> dict[str, Any]:
         run_id = job["id"]
-        self.run_dir(run_id).mkdir(parents=True, exist_ok=True)
+        folder = self.run_dir(run_id)
+        folder.mkdir(parents=True, exist_ok=True)
         job["updated_at"] = utc_now()
         path = self.job_path(run_id)
-        tmp = path.with_suffix(".json.tmp")
+        tmp = folder / f".job.{uuid.uuid4().hex}.tmp"
         tmp.write_text(json.dumps(job, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        tmp.replace(path)
+        try:
+            tmp.replace(path)
+        except FileNotFoundError:
+            folder.mkdir(parents=True, exist_ok=True)
+            if tmp.is_file():
+                tmp.replace(path)
+            else:
+                path.write_text(json.dumps(job, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         return job
 
     def load_job(self, run_id: str) -> Optional[dict[str, Any]]:
@@ -90,8 +98,8 @@ class RunStore:
         return jobs
 
     def append_log(self, run_id: str, text: str) -> None:
+        if not text:
+            return
         path = self.log_path(run_id)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(text)
-            if text and not text.endswith("\n"):
-                handle.write("\n")

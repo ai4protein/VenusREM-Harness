@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>rem2 Console</title>
+  <title>REM2 Dashboard</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -11,19 +11,19 @@
     <header class="shell-header">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">r2</span>
-        <a href="#/runs" class="brand-title">rem2 Console</a>
+        <a href="#/runs" class="brand-title">REM2 Dashboard</a>
         <span id="app-version" class="brand-ver" hidden></span>
       </div>
-      <nav class="tabs" aria-label="Console sections">
+      <nav class="tabs" aria-label="Dashboard sections">
+        <a href="#/predict" id="tab-predict" class="tab">New</a>
         <a href="#/runs" id="tab-runs" class="tab is-active">Runs</a>
-        <a href="#/predict" id="tab-predict" class="tab">Predict</a>
-        <a href="#/structure" id="tab-structure" class="tab is-disabled" aria-disabled="true" title="Choose a run first">Structure</a>
-        <a href="#/select" id="tab-select" class="tab is-disabled" aria-disabled="true" title="Choose a run first">Select</a>
+        <a href="#/structure" id="tab-structure" class="tab is-disabled" aria-disabled="true" title="Open a run first">Structure</a>
+        <a href="#/select" id="tab-select" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Select</a>
       </nav>
       <div class="header-right">
         <span id="conn-status" class="status-pill is-off" title="API health">Offline</span>
         <span id="job-status" class="status-pill is-run" hidden>Job running</span>
-        <span id="last-poll" class="poll-time" title="Last successful poll">poll --:--:--</span>
+        <span id="last-poll" class="poll-time" hidden>poll --:--:--</span>
         <button type="button" id="btn-doctor" class="btn btn-ghost">Doctor</button>
       </div>
     </header>
@@ -38,74 +38,49 @@
       <section id="page-runs" class="page" hidden>
         <div class="page-head">
           <h1>Runs</h1>
-          <p class="muted">Queued and running jobs refresh every 4s.</p>
+          <p class="muted">Open a run to watch scoring. Structure and top-K unlock after it finishes.</p>
         </div>
         <div id="runs-body" class="panel">Loading runs…</div>
       </section>
 
       <section id="page-predict" class="page" hidden>
         <div class="page-head">
-          <h1>Predict</h1>
-          <p class="muted">Score a sequence from FASTA, a local PDB, or an RCSB / AlphaFold DB id.</p>
+          <h1>New job</h1>
+          <p class="muted">Three steps: input → model → mutants. Then the run page tracks fetch and scoring.</p>
         </div>
 
-        <div class="panel demo-panel">
+        <ol class="flow-rail" id="new-rail" aria-label="New job steps">
+          <li><button type="button" class="flow-dot is-on" data-wiz-tab="1">1. Input</button></li>
+          <li><button type="button" class="flow-dot" data-wiz-tab="2">2. Model</button></li>
+          <li><button type="button" class="flow-dot" data-wiz-tab="3">3. Mutants</button></li>
+        </ol>
+
+        <div class="panel demo-panel" data-wiz-panel="1">
           <div>
-            <h2>Try the bundled assay</h2>
-            <p class="muted">HCP_LAMBD from ProteinGym, ESM-2 8M. Same as <code>rem2 demo</code>.</p>
+            <h2>Skip the form</h2>
+            <p class="muted">Bundled HCP_LAMBD + ESM-2 8M. Same as <code>rem2 demo</code>.</p>
           </div>
-          <button type="button" id="btn-demo" class="btn btn-primary btn-lg">Score demo assay</button>
+          <button type="button" id="btn-demo" class="btn btn-lg">Score demo assay</button>
         </div>
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
-          <div class="form-grid">
-            <div>
-              <h2>Job</h2>
-              <div class="field">
-                <label for="model-select">Model</label>
-                <select id="model-select" name="model"></select>
-                <p id="model-meta" class="field-hint"></p>
-              </div>
-              <fieldset class="field">
-                <legend>Recipe</legend>
-                <div id="recipe-radios" class="seg">
-                  <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full rem2</label>
-                  <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
-                  <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
-                  <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
-                </div>
-              </fieldset>
+          <section data-wiz-panel="1">
+            <h2>What to score</h2>
+            <p class="field-hint">Need one of: FASTA, PDB file, PDB id, or UniProt. VenusREM2 needs a structure; we fetch AFDB in the background if you only have an id.</p>
+            <div class="file-grid">
+              <label class="file-field">
+                <span>FASTA</span>
+                <span class="file-name" data-for="file-fasta">choose a file</span>
+                <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+              </label>
+              <label class="file-field">
+                <span>PDB file</span>
+                <span class="file-name" data-for="file-pdb">optional</span>
+                <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+              </label>
             </div>
-
-            <div>
-              <h2>Inputs</h2>
-              <div class="file-grid">
-                <label class="file-field">
-                  <span>FASTA</span>
-                  <span class="file-name" data-for="file-fasta">choose a file</span>
-                  <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
-                </label>
-                <label class="file-field">
-                  <span>PDB</span>
-                  <span class="file-name" data-for="file-pdb">optional</span>
-                  <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
-                </label>
-                <label class="file-field">
-                  <span>Mutants CSV</span>
-                  <span class="file-name" data-for="file-mutants">empty → saturation</span>
-                  <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
-                </label>
-                <label class="file-field">
-                  <span>MSA</span>
-                  <span class="file-name" data-for="file-msa">optional</span>
-                  <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-                </label>
-              </div>
-            </div>
-
-            <fieldset class="field fetch-box form-span">
-              <legend>Fetch from RCSB / AlphaFold DB</legend>
-              <p class="field-hint">Crystals have no pLDDT. Auto also pulls an AFDB model and prefers it for scoring.</p>
+            <fieldset class="field fetch-box">
+              <legend>Or an accession</legend>
               <div class="field-row">
                 <label>PDB id
                   <input type="text" name="pdb_id" id="f-pdb-id" placeholder="2L6Q" autocomplete="off">
@@ -113,10 +88,9 @@
                 <label>UniProt
                   <input type="text" name="uniprot_id" id="f-uniprot" placeholder="P0A6Y8" autocomplete="off">
                 </label>
-                <label>Source
+                <label>Fetch
                   <select name="fetch_structure" id="f-fetch">
                     <option value="auto" selected>Auto (RCSB + AFDB)</option>
-                    <option value="both">Both</option>
                     <option value="afdb">AlphaFold DB only</option>
                     <option value="rcsb">RCSB only</option>
                     <option value="none">Don't fetch</option>
@@ -124,9 +98,41 @@
                 </label>
               </div>
             </fieldset>
+          </section>
 
-            <fieldset id="saturation-fields" class="field sat-box form-span">
-              <legend>Saturation (when there is no mutants CSV)</legend>
+          <section data-wiz-panel="2" hidden>
+            <h2>How to score</h2>
+            <div class="field">
+              <label for="model-select">Model</label>
+              <select id="model-select" name="model"></select>
+              <p id="model-meta" class="field-hint"></p>
+            </div>
+            <fieldset class="field">
+              <legend>Recipe</legend>
+              <div id="recipe-radios" class="seg">
+                <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full rem2</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
+              </div>
+            </fieldset>
+            <label class="file-field">
+              <span>MSA (only if the recipe uses it)</span>
+              <span class="file-name" data-for="file-msa">optional</span>
+              <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+            </label>
+          </section>
+
+          <section data-wiz-panel="3" hidden>
+            <h2>Which mutants</h2>
+            <p class="field-hint">No CSV means single-site saturation of the whole sequence.</p>
+            <label class="file-field">
+              <span>Mutants CSV</span>
+              <span class="file-name" data-for="file-mutants">empty → saturation</span>
+              <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+            </label>
+            <fieldset id="saturation-fields" class="field sat-box">
+              <legend>Saturation limits</legend>
               <div class="field-row">
                 <label>mutant_sites
                   <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
@@ -139,8 +145,7 @@
                 </label>
               </div>
             </fieldset>
-
-            <details class="advanced form-span">
+            <details class="advanced">
               <summary>Advanced</summary>
               <div class="field-row">
                 <label>scoring_strategy
@@ -155,19 +160,18 @@
                 </label>
               </div>
               <p id="strategy-hint" class="field-hint"></p>
-            </details>
-
-            <div class="cli-block form-span">
-              <div class="cli-label">Equivalent CLI</div>
-              <pre id="cli-preview" class="cli"></pre>
-            </div>
-
-            <div class="form-span">
-              <p id="form-error" class="form-error" hidden></p>
-              <div class="form-actions">
-                <button type="submit" id="btn-submit" class="btn btn-primary">Submit job</button>
+              <div class="cli-block">
+                <div class="cli-label">Equivalent CLI</div>
+                <pre id="cli-preview" class="cli"></pre>
               </div>
-            </div>
+            </details>
+          </section>
+
+          <p id="form-error" class="form-error" hidden></p>
+          <div class="wiz-nav">
+            <button type="button" class="btn" id="btn-wiz-back" hidden>Back</button>
+            <button type="button" class="btn btn-primary" id="btn-wiz-next">Next</button>
+            <button type="submit" id="btn-submit" class="btn btn-primary" hidden>Start scoring</button>
           </div>
         </form>
       </section>
@@ -181,9 +185,6 @@
       </section>
 
       <section id="page-select" class="page" hidden>
-        <div class="banner banner-inline" role="note">
-          Scores rank variants. This is not ΔΔG. Validate experimentally.
-        </div>
         <div id="select-body">Loading selection…</div>
       </section>
     </main>
@@ -201,7 +202,7 @@
   </div>
 
   <noscript>
-    <p class="noscript">rem2 Console needs JavaScript enabled.</p>
+    <p class="noscript">REM2 Dashboard needs JavaScript enabled.</p>
   </noscript>
   <script src="app.js"></script>
 </body>

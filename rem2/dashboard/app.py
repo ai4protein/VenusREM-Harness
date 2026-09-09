@@ -12,6 +12,8 @@ from rem2.dashboard.jobs import (
     attach_structure_meta,
     build_argv,
     enrich_job,
+    existing_fasta,
+    existing_query_pdb,
     histogram,
     load_score_frame,
     maybe_fetch_structures,
@@ -42,19 +44,6 @@ def _blank(value: Optional[str]) -> Optional[str]:
     return text or None
 
 
-def _existing_fasta(inputs: Path) -> Optional[str]:
-    for name in ("query.fasta", "query.fa", "query.faa"):
-        path = inputs / name
-        if path.is_file():
-            return str(path)
-    return None
-
-
-def _existing_query_pdb(inputs: Path) -> Optional[str]:
-    path = inputs / "query.pdb"
-    return str(path) if path.is_file() else None
-
-
 def _save_upload(upload, dest: Path) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     with dest.open("wb") as handle:
@@ -71,7 +60,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
     store = RunStore(root)
     worker = runner or JobRunner(store)
 
-    app = FastAPI(title="rem2 Console", version=__version__, docs_url=None, redoc_url=None)
+    app = FastAPI(title="REM2 Dashboard", version=__version__, docs_url=None, redoc_url=None)
     app.state.store = store
     app.state.runner = worker
 
@@ -196,13 +185,13 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         try:
             fetched = maybe_fetch_structures(
                 inputs=inputs,
-                fasta_path=_existing_fasta(inputs),
-                pdb_path=_existing_query_pdb(inputs),
+                fasta_path=existing_fasta(inputs),
+                pdb_path=existing_query_pdb(inputs),
                 protein=job.get("protein"),
                 pdb_id=_blank(pdb_id) or job.get("pdb_id"),
                 uniprot_id=_blank(uniprot_id) or job.get("uniprot_id"),
                 fetch_mode=_blank(source) or "auto",
-                as_query=not _existing_query_pdb(inputs),
+                as_query=not existing_query_pdb(inputs),
             )
         except FileNotFoundError as exc:
             raise HTTPException(400, str(exc)) from exc
@@ -228,7 +217,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
 
     @app.post("/api/runs")
     async def create_run(
-        model: str = Form("esm2"),
+        model: str = Form("venusrem2"),
         recipe: str = Form("full"),
         mutant_mode: str = Form("saturation"),
         demo: Optional[str] = Form(None),
@@ -251,10 +240,10 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         fasta_path = pdb_path = mutants_path = msa_dir = base_dir = None
         protein = "protein"
         has_pdb = False
-        fetched = None
         pdb_id = _blank(pdb_id)
         uniprot_id = _blank(uniprot_id)
         is_demo = _truthy(demo) or mutant_mode == "demo"
+        argv_spec: dict = {}
 
         if is_demo:
             from rem2.download.example import bundled_example_dir, ensure_demo_dataset
@@ -279,6 +268,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
                 out_dir=out_dir,
                 base_dir=base_dir,
             )
+            argv_spec = {"base_dir": base_dir}
         else:
             if fasta is not None and fasta.filename:
                 fasta_path = str(_save_upload(fasta, inputs / "query.fasta"))
@@ -298,43 +288,22 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
                 msa_path = inputs / "msa" / f"{protein}{suffix}"
                 _save_upload(msa, msa_path)
                 msa_dir = str(msa_path.parent)
-            uploaded_pdb = pdb_path
-            try:
-                fetched = maybe_fetch_structures(
-                    inputs=inputs,
-                    fasta_path=fasta_path,
-                    pdb_path=pdb_path,
-                    protein=protein,
-                    pdb_id=pdb_id,
-                    uniprot_id=uniprot_id,
-                    fetch_mode=_blank(fetch_structure) or "auto",
-                    as_query=not uploaded_pdb,
-                )
-            except FileNotFoundError as exc:
-                if fasta_path or uploaded_pdb:
-                    fetched = {"errors": [str(exc)], "pdb_id": pdb_id, "uniprot_id": uniprot_id}
-                else:
-                    raise HTTPException(400, str(exc)) from exc
-            except Exception as exc:
-                if fasta_path or uploaded_pdb:
-                    fetched = {"errors": [f"{type(exc).__name__}: {exc}"]}
-                else:
-                    raise HTTPException(400, f"{type(exc).__name__}: {exc}") from exc
-            if fetched and fetched.get("pdb_id"):
-                pdb_id = fetched.get("pdb_id") or pdb_id
-            if fetched and fetched.get("uniprot_id"):
-                uniprot_id = fetched.get("uniprot_id") or uniprot_id
-            query_pdb = _existing_query_pdb(inputs)
-            if query_pdb:
-                pdb_path = query_pdb
-                has_pdb = True
-                if protein == "protein":
-                    protein = pdb_id or uniprot_id or Path(query_pdb).stem
-            if not fasta_path and not pdb_path:
+            if not fasta_path and not pdb_path and not pdb_id and not uniprot_id:
                 raise HTTPException(
                     400,
                     "Provide a FASTA and/or PDB, a PDB/UniProt id, or set demo=true",
                 )
+            argv_spec = {
+                "fasta": fasta_path,
+                "pdb": pdb_path,
+                "mutants": mutants_path,
+                "msa_dir": msa_dir,
+                "mutant_sites": None if mutants_path else (mutant_sites or "1"),
+                "positions": positions,
+                "residue_range": residue_range,
+                "max_mutants": max_mutants,
+                "scoring_strategy": scoring_strategy,
+            }
             argv = build_argv(
                 model=model,
                 recipe=recipe,
@@ -348,7 +317,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
                 residue_range=residue_range,
                 max_mutants=max_mutants,
                 scoring_strategy=scoring_strategy,
-            )
+            ) if (fasta_path or pdb_path) else []
 
         job = {
             "id": run_id,
@@ -370,7 +339,10 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
             "uniprot_id": uniprot_id,
             "structure_sources": {},
             "preferred_source": None,
-            "fetch_errors": (fetched or {}).get("errors") or [],
+            "fetch_mode": "none" if is_demo else (_blank(fetch_structure) or "auto"),
+            "fetch_errors": [],
+            "argv_spec": argv_spec,
+            "progress": {"pct": 0, "stage": "queued", "message": "Queued"},
             "has_dms": False,
             "sequence": "",
             "score_columns": [],

@@ -322,6 +322,130 @@ input[type="range"] {
   margin-bottom: 18px;
 }
 
+.flow-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.flow-rail li {
+  margin: 0;
+}
+
+.flow-dot,
+.next-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+button.flow-dot {
+  font: inherit;
+  cursor: pointer;
+  line-height: inherit;
+}
+
+.flow-dot.is-on,
+.flow-dot.is-done {
+  color: var(--accent);
+  border-color: #b7cfc6;
+  background: var(--accent-soft);
+}
+
+.flow-dot.is-fail {
+  color: var(--danger);
+  border-color: #e4b8bb;
+  background: var(--danger-soft);
+}
+
+.wiz-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.next-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.next-card {
+  display: block;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.next-card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.next-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.next-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.run-log {
+  max-height: 240px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--viewer);
+  color: #d7ecdf;
+  border-radius: 8px;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.progress {
+  margin: 0 0 14px;
+}
+
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.progress-bar.is-fail {
+  background: var(--danger);
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .page-head .muted,
 .muted {
   color: var(--muted);
@@ -820,7 +944,8 @@ table.data .num {
   overflow: hidden;
 }
 
-.viewer-host-lg {
+.viewer-host-lg,
+.viewer-host-fill {
   height: min(64vh, 680px);
   min-height: 400px;
   border: 1px solid #2a2f28;
@@ -830,6 +955,216 @@ table.data .num {
   display: grid;
   grid-template-columns: 228px minmax(0, 1fr);
   gap: 14px;
+}
+
+.mol-stage-fill {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+html:has(body.is-bench),
+body.is-bench {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.is-bench #app {
+  height: 100vh;
+  min-height: 0;
+}
+
+body.is-bench #main {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.is-bench #page-workspace:not([hidden]),
+body.is-bench #page-structure:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+body.is-bench #workspace-body,
+body.is-bench #structure-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.is-splitting {
+  cursor: col-resize;
+  user-select: none;
+}
+
+body.is-splitting iframe,
+body.is-splitting canvas {
+  pointer-events: none;
+}
+
+.protein-bench {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: var(--bg);
+}
+
+.protein-side-pane {
+  flex: 1 1 auto;
+  min-width: 240px;
+  overflow: auto;
+  padding: 12px 14px 20px;
+}
+
+.protein-side-pane .seq {
+  max-height: 160px;
+}
+
+.protein-gutter {
+  flex: 0 0 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background:
+    linear-gradient(var(--line), var(--line)) center / 1px 100% no-repeat,
+    var(--bg-2);
+  cursor: col-resize;
+}
+
+.protein-gutter:hover,
+.protein-gutter.is-drag {
+  background:
+    linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat,
+    var(--accent-soft);
+}
+
+.protein-viewer-pane {
+  flex: 0 0 56%;
+  min-width: 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--viewer);
+}
+
+.protein-viewer-pane .mol-stage-fill,
+.protein-viewer-pane .mol-fs-target {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.protein-viewer-pane .viewer-host-fill {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.bench-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.bench-head h1 {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.bench-head .flow-rail {
+  margin: 0;
+}
+
+.bench-head .next-row {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.viewer-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: #c5d4c8;
+  text-align: center;
+}
+
+.viewer-empty h2 {
+  color: #e8f3ea;
+  font-size: 20px;
+}
+
+.mol-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.mol-overlay > * {
+  pointer-events: auto;
+}
+
+.mol-overlay select,
+.mol-overlay .btn,
+.mol-overlay .mol-check {
+  min-height: 28px;
+  padding: 3px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border-color: #3a4036;
+  background: rgba(17, 20, 15, 0.82);
+  color: #e8f3ea;
+}
+
+.mol-overlay .mol-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #d7ecdf;
+}
+
+.mol-chrome {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  color: #c5d4c8;
+  pointer-events: none;
+}
+
+.mol-chrome .mol-legend,
+.mol-chrome .mol-pick {
+  margin: 0;
 }
 
 .mol-controls {
@@ -968,6 +1303,25 @@ body.mol-fs .mol-fs-target .viewer-host-lg {
 }
 
 @media (max-width: 960px) {
+  .protein-bench {
+    flex-direction: column-reverse;
+  }
+
+  .protein-gutter {
+    cursor: row-resize;
+  }
+
+  .protein-viewer-pane,
+  .protein-side-pane {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .protein-viewer-pane {
+    flex: 0 0 55vh !important;
+    min-height: 50vh;
+  }
+
   .mol-stage,
   .form-grid,
   .file-grid {

@@ -2,7 +2,7 @@
   "use strict";
 
   var PAGE_SIZE = 80;
-  var POLL_MS = 4000;
+  var POLL_MS = 1000;
   var HEALTH_MS = 15000;
   var MOL_SOURCES = [
     "vendor/3Dmol-min.js",
@@ -15,6 +15,10 @@
     Q: -3.5, D: -3.5, N: -3.5, K: -3.9, R: -4.5,
   };
   var STORE_RUN = "rem2.activeRunId";
+  var STORE_SPLIT = {
+    review: "rem2.split.review",
+    structure: "rem2.split.structure",
+  };
 
   var FALLBACK_RECIPES = [
     { id: "full", label: "Full rem2", argv: [] },
@@ -36,10 +40,10 @@
   ];
 
   var FALLBACK_MODELS = [
+    { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true },
     { name: "esm2", description: "ESM-2 650M", supports_mask: true, needs_pdb: false, size_hint: "first download ~2.5 GB" },
     { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, needs_pdb: false, size_hint: "first download ~30 MB" },
     { name: "saprot", description: "SaProt", supports_mask: true, needs_pdb: true },
-    { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true },
     { name: "proteinmpnn", description: "ProteinMPNN", supports_tf: true, needs_pdb: true },
   ];
 
@@ -88,6 +92,11 @@
     },
     logText: null,
     logMissing: "",
+    wizardStep: 1,
+    split: {
+      review: 56,
+      structure: 64,
+    },
   };
 
   var els = {};
@@ -287,7 +296,7 @@
 
   function buildCli(opts) {
     if (opts.demo) return "rem2 demo --model esm2-8m";
-    var parts = ["rem2", "--model", shellArg(opts.model || "esm2")];
+    var parts = ["rem2", "--model", shellArg(opts.model || "venusrem2")];
     if (opts.fasta) parts.push("--fasta", shellArg(opts.fasta));
     if (opts.pdb) parts.push("--pdb", shellArg(opts.pdb));
     if (!opts.pdb && (opts.pdb_id || opts.uniprot_id) && opts.fetch_structure !== "none") {
@@ -314,11 +323,11 @@
   function formSnapshot() {
     var form = els.form;
     if (!form) {
-      return { model: "esm2", recipe: "full", mutant_sites: "1", scoring_strategy: "wt" };
+      return { model: "venusrem2", recipe: "full", mutant_sites: "1", scoring_strategy: "wt" };
     }
     var data = new FormData(form);
     return {
-      model: data.get("model") || "esm2",
+      model: data.get("model") || "venusrem2",
       recipe: data.get("recipe") || "full",
       fasta: fileName(form.fasta),
       pdb: fileName(form.pdb),
@@ -402,6 +411,14 @@
       } catch (err) {
         text = "";
       }
+      try {
+        var parsed = JSON.parse(text);
+        if (parsed && parsed.detail) {
+          text = typeof parsed.detail === "string" ? parsed.detail : JSON.stringify(parsed.detail);
+        }
+      } catch (err2) {
+        /* keep text */
+      }
       var err = new Error(text || res.status + " " + res.statusText);
       err.status = res.status;
       err.body = text;
@@ -422,25 +439,45 @@
     updateSelectTab();
   }
 
-  function enableRunTab(tab, hrefWhenOn, hrefWhenOff) {
-    if (!tab) return;
+  function activeJob() {
+    if (state.job && state.job.id && state.job.id === state.activeRunId) return state.job;
     var id = state.activeRunId;
-    if (id) {
-      tab.href = hrefWhenOn.replace("{id}", encodeURIComponent(id));
+    if (!id) return null;
+    var runs = state.runs || [];
+    for (var i = 0; i < runs.length; i++) {
+      if (runs[i].id === id) return runs[i];
+    }
+    return null;
+  }
+
+  function setTabEnabled(tab, href, titleWhenOff) {
+    if (!tab) return;
+    if (href) {
+      tab.href = href;
       tab.classList.remove("is-disabled");
       tab.removeAttribute("aria-disabled");
       tab.removeAttribute("title");
     } else {
-      tab.href = hrefWhenOff;
+      tab.href = "#/runs";
       tab.classList.add("is-disabled");
       tab.setAttribute("aria-disabled", "true");
-      tab.title = "Choose a run first";
+      tab.title = titleWhenOff;
     }
   }
 
   function updateSelectTab() {
-    enableRunTab(els.tabSelect, "#/select/{id}", "#/select");
-    enableRunTab(els.tabStructure, "#/structure/{id}", "#/structure");
+    var job = activeJob();
+    var id = (job && job.id) || state.activeRunId;
+    setTabEnabled(
+      els.tabStructure,
+      id ? "#/structure/" + encodeURIComponent(id) : "",
+      "Open a run first"
+    );
+    setTabEnabled(
+      els.tabSelect,
+      job && job.status === "done" ? "#/select/" + encodeURIComponent(job.id) : "",
+      id ? "Wait until scoring finishes" : "Open a finished run first"
+    );
   }
 
   function setTabs(page) {
@@ -537,17 +574,22 @@
   function fillModels() {
     var sel = els.modelSelect;
     if (!sel) return;
-    var prev = sel.value || "esm2";
+    var prev = sel.value || "venusrem2";
     sel.innerHTML = "";
-    for (var i = 0; i < state.models.length; i++) {
-      var m = state.models[i];
+    var models = state.models.slice().sort(function (a, b) {
+      if (a.name === "venusrem2") return -1;
+      if (b.name === "venusrem2") return 1;
+      return 0;
+    });
+    for (var i = 0; i < models.length; i++) {
+      var m = models[i];
       var opt = document.createElement("option");
       opt.value = m.name;
       opt.textContent = m.name;
       sel.appendChild(opt);
     }
     if (modelByName(prev)) sel.value = prev;
-    else if (modelByName("esm2")) sel.value = "esm2";
+    else if (modelByName("venusrem2")) sel.value = "venusrem2";
     updateModelMeta();
     updateCli();
   }
@@ -598,6 +640,174 @@
     fillRecipes();
   }
 
+  function showWizard(step) {
+    var n = Math.max(1, Math.min(3, parseInt(step, 10) || 1));
+    state.wizardStep = n;
+    var panels = document.querySelectorAll("[data-wiz-panel]");
+    for (var i = 0; i < panels.length; i++) {
+      var id = parseInt(panels[i].getAttribute("data-wiz-panel"), 10);
+      setHidden(panels[i], id !== n);
+    }
+    var tabs = document.querySelectorAll("[data-wiz-tab]");
+    for (var t = 0; t < tabs.length; t++) {
+      var tab = tabs[t];
+      var idx = parseInt(tab.getAttribute("data-wiz-tab"), 10);
+      tab.classList.toggle("is-on", idx === n);
+      tab.classList.toggle("is-done", idx < n);
+    }
+    var back = $("btn-wiz-back");
+    var next = $("btn-wiz-next");
+    if (back) setHidden(back, n <= 1);
+    if (next) setHidden(next, n >= 3);
+    if (els.btnSubmit) setHidden(els.btnSubmit, n < 3);
+  }
+
+  function wizardCanAdvance() {
+    var snap = formSnapshot();
+    if (state.wizardStep === 1) {
+      if (snap.fasta || snap.pdb || snap.pdb_id || snap.uniprot_id) return true;
+      showFormError("Add a FASTA, PDB file, PDB id, or UniProt accession.");
+      return false;
+    }
+    if (state.wizardStep === 2) {
+      var spec = modelByName(snap.model);
+      if (spec && spec.needs_pdb && !snap.pdb && snap.fetch_structure === "none") {
+        showFormError("This model needs a structure. Upload a PDB or set Fetch back to Auto.");
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function runPhase(job) {
+    if (!job) return "queue";
+    var stage = ((job.progress || {}).stage || job.status || "").toLowerCase();
+    if (job.status === "failed" || job.status === "cancelled") {
+      return stage === "fetch" ? "fetch" : "score";
+    }
+    if (job.status === "done") return "review";
+    if (stage === "fetch") return "fetch";
+    if (stage === "score" || job.status === "running") return "score";
+    return "queue";
+  }
+
+  function runFlowHtml(job) {
+    var phase = runPhase(job);
+    var order = ["queue", "fetch", "score", "review"];
+    var labels = { queue: "1. Queued", fetch: "2. Structure", score: "3. Score", review: "4. Review" };
+    var current = order.indexOf(phase);
+    var html = '<ol class="flow-rail" aria-label="Run progress">';
+    for (var i = 0; i < order.length; i++) {
+      var cls = "flow-dot";
+      if (job && (job.status === "failed" || job.status === "cancelled") && order[i] === phase) cls += " is-fail";
+      else if (i === current) cls += " is-on";
+      else if (i < current) cls += " is-done";
+      html += "<li><span class=\"" + cls + "\">" + labels[order[i]] + "</span></li>";
+    }
+    return html + "</ol>";
+  }
+
+  function nextActionsHtml(job, opts) {
+    if (!job || job.status !== "done") return "";
+    opts = opts || {};
+    var cards = "";
+    if (!opts.hideStructure) {
+      cards +=
+        '<a class="next-card" href="#/structure/' +
+        encodeURIComponent(job.id) +
+        '"><strong>Structure</strong><span>' +
+        (job.has_pdb ? "Open the 3D bench." : "No PDB yet. Fetch RCSB / AlphaFold DB.") +
+        "</span></a>";
+    }
+    cards +=
+      '<a class="next-card" href="#/select/' +
+      encodeURIComponent(job.id) +
+      '"><strong>Select top-K</strong><span>Export the highest-ranked mutants.</span></a>' +
+      '<a class="next-card" href="#/predict"><strong>New job</strong><span>Score another sequence.</span></a>';
+    return '<div class="next-row">' + cards + "</div>";
+  }
+
+  function readSplit(kind, fallback) {
+    try {
+      var n = parseFloat(localStorage.getItem(STORE_SPLIT[kind] || ""));
+      if (isFinite(n)) return n;
+    } catch (err) {
+      /* ignore */
+    }
+    return fallback;
+  }
+
+  function writeSplit(kind, pct) {
+    state.split[kind] = pct;
+    try {
+      localStorage.setItem(STORE_SPLIT[kind], String(pct));
+    } catch (err) {
+      /* ignore */
+    }
+  }
+
+  function clampSplit(pct) {
+    return Math.max(50, Math.min(82, pct));
+  }
+
+  function applySplit(bench, pct) {
+    if (!bench) return;
+    var viewer = bench.querySelector(".protein-viewer-pane");
+    if (!viewer) return;
+    viewer.style.flex = "0 0 " + pct + "%";
+  }
+
+  function resizeViewerSoon() {
+    if (!state.viewer) return;
+    setTimeout(function () {
+      try {
+        state.viewer.resize();
+        state.viewer.render();
+      } catch (err) {
+        /* ignore */
+      }
+    }, 30);
+  }
+
+  function setBenchMode(on) {
+    document.body.classList.toggle("is-bench", !!on);
+    if (!on) document.body.classList.remove("is-splitting");
+  }
+
+  function mountBench(kind) {
+    var bench = document.querySelector(".protein-bench");
+    if (!bench) {
+      setBenchMode(false);
+      return;
+    }
+    var fallback = kind === "structure" ? 64 : 56;
+    var pct = clampSplit(readSplit(kind, state.split[kind] || fallback));
+    state.split[kind] = pct;
+    applySplit(bench, pct);
+    setBenchMode(true);
+    resizeViewerSoon();
+  }
+
+  function proteinBenchHtml(kind, sideHtml, viewerHtml) {
+    return (
+      '<div class="protein-bench" data-split="' +
+      esc(kind) +
+      '" data-viewer="end">' +
+      '<aside class="protein-side-pane">' +
+      sideHtml +
+      "</aside>" +
+      '<div class="protein-gutter" data-gutter role="separator" aria-orientation="vertical" title="Drag to resize"></div>' +
+      '<section class="protein-viewer-pane">' +
+      viewerHtml +
+      "</section></div>"
+    );
+  }
+
+  function lastLogLines(text, n) {
+    var lines = String(text || "").split(/\r?\n/).filter(Boolean);
+    return lines.slice(Math.max(0, lines.length - (n || 24))).join("\n");
+  }
+
   function renderRuns() {
     var host = $("runs-body");
     if (!host) return;
@@ -605,13 +815,25 @@
     if (!runs.length) {
       host.innerHTML =
         '<div class="empty-state"><h2>No runs yet</h2>' +
-        "<p>Submit a FASTA, or fetch a structure from RCSB / AlphaFold DB.</p>" +
+        "<p>Start a job, wait for scoring, then review and select.</p>" +
         '<a class="btn btn-primary" href="#/predict">New job</a></div>';
       return;
     }
     var rows = runs
       .map(function (run) {
         var id = encodeURIComponent(run.id);
+        var actions =
+          '<a class="btn-link" href="#/runs/' +
+          id +
+          '">' +
+          (isLive(run.status) ? "Watch" : "Open") +
+          "</a>" +
+          '<a class="btn-link" href="#/structure/' +
+          id +
+          '">Structure</a>';
+        if (run.status === "done") {
+          actions += '<a class="btn-link" href="#/select/' + id + '">Select</a>';
+        }
         return (
           "<tr data-id=\"" +
           esc(run.id) +
@@ -635,15 +857,7 @@
           esc(fmtTime(run.created_at)) +
           "</td>" +
           "<td>" +
-          '<a class="btn-link" href="#/runs/' +
-          id +
-          '">Open</a>' +
-          '<a class="btn-link" href="#/select/' +
-          id +
-          '">Select</a>' +
-          '<a class="btn-link" href="#/structure/' +
-          id +
-          '">Structure</a>' +
+          actions +
           "</td>" +
           "</tr>"
         );
@@ -764,6 +978,43 @@
     return fmtScore(bin.lo) + " … " + fmtScore(bin.hi) + "  n=" + (bin.count || 0);
   }
 
+  function jobProgress(job) {
+    var p = (job && job.progress) || {};
+    var pct = Number(p.pct);
+    if (!isFinite(pct)) {
+      if (job && job.status === "queued") pct = 4;
+      else if (job && job.status === "running") pct = 18;
+      else if (job && job.status === "done") pct = 100;
+      else pct = 0;
+    }
+    return {
+      pct: Math.max(0, Math.min(100, pct)),
+      message: p.message || (job && job.status) || "",
+      stage: p.stage || (job && job.status) || "",
+    };
+  }
+
+  function progressHtml(job) {
+    if (!job || (!isLive(job.status) && job.status !== "failed")) {
+      if (job && job.status === "done") return "";
+    }
+    var p = jobProgress(job);
+    if (!isLive(job.status) && job.status !== "failed") return "";
+    return (
+      '<div class="progress" id="run-progress">' +
+      '<div class="progress-track"><div class="progress-bar' +
+      (job.status === "failed" ? " is-fail" : "") +
+      '" style="width:' +
+      p.pct +
+      '%"></div></div>' +
+      '<div class="progress-meta"><span>' +
+      esc(p.message || job.status) +
+      "</span><span class=\"mono\">" +
+      p.pct +
+      "%</span></div></div>"
+    );
+  }
+
   function pipelineHtml(recipe) {
     var rec = String(recipe || "full");
     var html = [];
@@ -871,6 +1122,7 @@
     if (!host) return;
     var job = state.job;
     if (!job) {
+      setBenchMode(false);
       host.innerHTML = '<div class="empty">Run not loaded.</div>';
       return;
     }
@@ -881,24 +1133,6 @@
     var positions = muts.map(function (m) {
       return m.pos;
     });
-    var viewerBlock = "";
-    if (job.has_pdb && !state.molFailed) {
-      viewerBlock =
-        '<div class="panel view-box">' +
-        '<div class="toolbar"><h2 style="margin:0;flex:1">Structure</h2>' +
-        '<a class="btn" href="#/structure/' +
-        encodeURIComponent(job.id) +
-        '">Open PyMOL view</a></div>' +
-        originNoteHtml(job) +
-        molPanelHtml("compact") +
-        "</div>";
-    } else {
-      viewerBlock =
-        '<div class="panel view-box"><p class="muted">No PDB in this run. ' +
-        '<a href="#/structure/' +
-        encodeURIComponent(job.id) +
-        '">Fetch from RCSB or AlphaFold DB</a>.</p></div>';
-    }
     var err = job.error
       ? '<div class="error-box">' + esc(job.error) + "</div>"
       : "";
@@ -906,10 +1140,12 @@
       isLive(job.status)
         ? '<button type="button" class="btn btn-danger" id="btn-cancel">Cancel</button>'
         : "";
-    host.innerHTML =
+    var head =
       '<div class="page-head"><h1 class="mono">' +
       esc(job.protein || job.id) +
-      "</h1></div>" +
+      "</h1>" +
+      '<p class="muted">Follow the steps. Structure and top-K come after scoring finishes.</p></div>' +
+      runFlowHtml(job) +
       '<div class="panel overview">' +
       ov("protein", job.protein || "—") +
       ov("model", job.model || "—") +
@@ -917,14 +1153,31 @@
       badge(job.status) +
       "</div></div>" +
       ov("mutants", nMut != null ? nMut : "—") +
-      ov("primary score", primary) +
       ov("recipe", job.recipe || "—") +
       "</div>" +
-      pipelineHtml(job.recipe) +
+      progressHtml(job) +
+      err;
+    if (isLive(job.status) || (job.status === "failed" && !(state.scores && state.scores.total))) {
+      setBenchMode(false);
+      host.innerHTML =
+        head +
+        '<div class="panel"><div class="toolbar"><h2 style="margin:0;flex:1">Live log</h2>' +
+        cancel +
+        "</div><pre class=\"run-log\" id=\"run-log\">" +
+        esc(lastLogLines(state.logText, 30) || "Waiting for rem2…") +
+        "</pre></div>";
+      return;
+    }
+    var hasCoord = !!(job.has_pdb || currentSourceKey(job));
+    var side =
+      '<div class="bench-head">' +
+      '<div><h1 class="mono">' +
+      esc(job.protein || job.id) +
+      "</h1><p class=\"muted\">Candidates on the left. Protein stays on the right — drag the gutter.</p></div>" +
+      runFlowHtml(job) +
+      "</div>" +
       err +
-      '<div class="inspector' +
-      (viewerBlock ? "" : " has-no-viewer") +
-      '">' +
+      nextActionsHtml(job, { hideStructure: hasCoord }) +
       '<div class="panel seq-box"><h2>Sequence</h2>' +
       renderSequence(seq, positions) +
       "</div>" +
@@ -933,8 +1186,6 @@
       '<div class="hist-meta"><span id="hist-tip"> </span><span>' +
       esc(primary) +
       "</span></div></div>" +
-      viewerBlock +
-      "</div>" +
       '<div class="panel">' +
       '<div class="toolbar">' +
       '<input type="search" id="score-q" placeholder="Search mutants" title="Press Enter" value="' +
@@ -942,38 +1193,25 @@
       '">' +
       '<button type="button" class="btn" id="btn-copy-mutant">Copy mutant</button>' +
       '<button type="button" class="btn" id="btn-copy-selected">Copy selected</button>' +
-      '<a class="btn" href="#/select/' +
-      encodeURIComponent(job.id) +
-      '">Select top-K</a>' +
       cancel +
-      (job.has_pdb
-        ? '<a class="btn btn-ghost" href="/api/runs/' +
-          encodeURIComponent(job.id) +
-          '/artifact?kind=pdb' +
-          (structureSources(job).query ? "&source=query" : "") +
-          '">PDB</a>'
-        : "") +
-      '<a class="btn btn-ghost" href="/api/runs/' +
-      encodeURIComponent(job.id) +
-      '/artifact?kind=fasta">FASTA</a>' +
       "</div>" +
       scoreTableHtml(job, state.scores) +
       selectedDetailHtml(job, state.selectedRow) +
       "</div>" +
-      (job.argv
-        ? '<details class="advanced"><summary>Job argv</summary><pre class="cli">' +
-          esc(Array.isArray(job.argv) ? job.argv.join(" ") : job.argv) +
-          "</pre></details>"
-        : "") +
       (state.logText
-        ? '<details class="advanced"><summary>Log</summary><pre class="log-pre">' +
+        ? '<details class="advanced"><summary>Full log</summary><pre class="log-pre">' +
           esc(state.logText) +
           "</pre></details>"
         : "");
-
+    var viewer = hasCoord
+      ? molPanelHtml("bench")
+      : '<div class="viewer-empty"><h2>No coordinates</h2><p>The protein pane stays here. Fetch RCSB / AlphaFold when you have an id.</p><a class="btn btn-primary" href="#/structure/' +
+        encodeURIComponent(job.id) +
+        '">Fetch structure</a></div>';
+    host.innerHTML = proteinBenchHtml("review", side, viewer);
+    mountBench("review");
     var canvas = $("hist-canvas");
     if (canvas) drawHistogram(canvas, state.histogram || { bins: [] });
-    maybeLoadViewer(job, positions);
   }
 
   function ov(k, v) {
@@ -1323,7 +1561,7 @@
 
   function molPanelHtml(kind) {
     var v = state.view;
-    var large = kind === "full";
+    var bench = kind === "bench" || kind === "full";
     function opt(name, value, label) {
       return (
         '<option value="' +
@@ -1337,7 +1575,7 @@
     }
     function chk(name, label) {
       return (
-        '<label><input type="checkbox" data-mol="' +
+        '<label class="mol-check"><input type="checkbox" data-mol="' +
         name +
         '"' +
         (v[name] ? " checked" : "") +
@@ -1346,65 +1584,52 @@
         "</label>"
       );
     }
-    var controls =
-      '<div class="mol-controls">' +
-      "<h3>Display</h3>" +
-      '<label>Representation<select data-mol="rep">' +
+    var overlay =
+      '<div class="mol-overlay">' +
+      '<select data-mol="rep" title="Representation">' +
       opt("rep", "cartoon", "Cartoon") +
       opt("rep", "cartoon-stick", "Cartoon + sticks") +
       opt("rep", "stick", "Sticks") +
       opt("rep", "line", "Lines") +
       opt("rep", "sphere", "Spheres") +
-      "</select></label>" +
-      '<label>Color<select data-mol="color">' +
-      opt("color", "spectrum", "Spectrum (N→C)") +
+      "</select>" +
+      '<select data-mol="color" title="Color">' +
+      opt("color", "spectrum", "Spectrum") +
       opt("color", "chain", "Chain") +
       opt("color", "ss", "Secondary structure") +
-      opt("color", "plddt", sourceHasPlddt(state.job) ? "pLDDT" : "pLDDT (unavailable on crystal)") +
+      opt("color", "plddt", sourceHasPlddt(state.job) ? "pLDDT" : "pLDDT (n/a)") +
       opt("color", "hydrophobic", "Hydrophobicity") +
       opt("color", "white", "Uniform") +
-      "</select></label>" +
+      "</select>" +
       sourceSelectHtml() +
-      '<label>Side chains<select data-mol="sidechains">' +
-      opt("sidechains", "off", "Hidden") +
-      opt("sidechains", "selection", "Selection") +
-      opt("sidechains", "polar", "Polar") +
-      opt("sidechains", "all", "All") +
-      "</select></label>" +
-      '<div class="mol-toggles">' +
-      chk("surface", "Surface") +
-      chk("labels", "Residue labels") +
-      chk("hetero", "Hetero / ligand") +
-      chk("water", "Waters") +
-      "</div>" +
-      '<label>Background<select data-mol="bg">' +
+      '<select data-mol="sidechains" title="Side chains">' +
+      opt("sidechains", "off", "SC off") +
+      opt("sidechains", "selection", "SC selection") +
+      opt("sidechains", "polar", "SC polar") +
+      opt("sidechains", "all", "SC all") +
+      "</select>" +
+      '<select data-mol="bg" title="Background">' +
       opt("bg", "dark", "Dark") +
       opt("bg", "black", "Black") +
       opt("bg", "white", "White") +
-      "</select></label>" +
-      '<div class="mol-actions">' +
-      '<button type="button" class="btn" data-mol="reset">Reset view</button>' +
-      '<button type="button" class="btn" data-mol="zoom">Zoom selection</button>' +
+      "</select>" +
+      chk("surface", "Surface") +
+      chk("labels", "Labels") +
+      chk("hetero", "Het") +
+      chk("water", "HOH") +
+      '<button type="button" class="btn" data-mol="reset">Reset</button>' +
+      '<button type="button" class="btn" data-mol="zoom">Zoom sel</button>' +
       '<button type="button" class="btn" data-mol="fs">' +
-      (document.body.classList.contains("mol-fs") ? "Exit full" : "Fullscreen") +
-      "</button>" +
-      "</div>" +
-      '<p class="mol-hint">Drag rotate · scroll zoom · click a residue or sequence letter to select. Shift-click adds.</p>' +
-      "</div>";
+      (document.body.classList.contains("mol-fs") ? "Exit full" : "Full") +
+      "</button></div>";
     var canvas =
       '<div class="mol-fs-target" id="mol-fs-box">' +
-      '<div id="mol-host" class="viewer-host' +
-      (large ? " viewer-host-lg" : "") +
-      '"></div>' +
-      '<div class="mol-legend" id="mol-legend"></div>' +
-      '<div class="mol-pick" id="mol-pick"></div></div>';
-    if (large) return '<div class="mol-stage">' + controls + canvas + "</div>";
-    return (
-      '<div class="mol-toolbar">' +
-      controls +
-      "</div>" +
-      canvas
-    );
+      overlay +
+      '<div id="mol-host" class="viewer-host viewer-host-fill"></div>' +
+      '<div class="mol-chrome"><div class="mol-legend" id="mol-legend"></div>' +
+      '<div class="mol-pick" id="mol-pick"></div></div></div>';
+    if (bench) return '<div class="mol-stage mol-stage-fill">' + canvas + "</div>";
+    return '<div class="mol-toolbar">' + overlay + "</div>" + canvas;
   }
 
   function sourceSelectHtml() {
@@ -1430,7 +1655,7 @@
         return opt(key, label);
       })
       .join("");
-    return '<label>Structure<select data-mol="source">' + options + "</select></label>";
+    return '<select data-mol="source" title="Structure">' + options + "</select>";
   }
 
   function legendHtml() {
@@ -1816,6 +2041,9 @@
     await loadFastaIfNeeded(state.job);
     await Promise.all([loadScores(), loadHistogram(id), loadLog(id)]);
     renderWorkspace();
+    if ($("mol-host")) {
+      await maybeLoadViewer(state.job, selectionResis());
+    }
   }
 
   function topColumns(rows, primary) {
@@ -1850,12 +2078,45 @@
         );
       })
       .join("");
+    if (!job) {
+      host.innerHTML =
+        '<div class="empty-state"><h2>No run selected</h2>' +
+        "<p>Finish a scoring job first, then export top-K from here.</p>" +
+        '<a class="btn btn-primary" href="#/runs">Back to runs</a></div>';
+      return;
+    }
+    if (isLive(job.status)) {
+      host.innerHTML =
+        '<div class="page-head"><h1>Select</h1>' +
+        '<p class="muted">This step waits for scores.</p></div>' +
+        runFlowHtml(job) +
+        '<div class="empty-state"><h2>Scoring is still running</h2>' +
+        "<p>Top-K is available after the score table is written.</p>" +
+        '<a class="btn btn-primary" href="#/runs/' +
+        encodeURIComponent(job.id) +
+        '">Watch this run</a></div>';
+      return;
+    }
+    if (job.status !== "done") {
+      host.innerHTML =
+        '<div class="page-head"><h1>Select</h1></div>' +
+        runFlowHtml(job) +
+        '<div class="empty-state"><h2>No scores to export</h2>' +
+        "<p>This run " +
+        esc(job.status || "stopped") +
+        ". Open it to read the log, or start a new job.</p>" +
+        '<a class="btn btn-primary" href="#/runs/' +
+        encodeURIComponent(job.id) +
+        '">Open run</a></div>';
+      return;
+    }
     if (!body) body = '<tr><td colspan="' + (dms ? 4 : 3) + '"><div class="empty">No variants yet.</div></td></tr>';
     host.innerHTML =
       '<div class="page-head"><h1>Select</h1>' +
-      '<p class="muted">Top variants for <span class="mono">' +
+      '<p class="muted">Step 5 — export top-ranked mutants for <span class="mono">' +
       esc((job && (job.protein || job.id)) || state.route.id || "") +
       "</span></p></div>" +
+      (job ? runFlowHtml(job) : "") +
       '<div class="panel">' +
       '<div class="k-row"><label for="k-slider">k</label>' +
       '<input type="range" id="k-slider" min="5" max="100" step="1" value="' +
@@ -2005,8 +2266,12 @@
     var host = $("structure-body");
     if (!host) return;
     var job = state.job;
-    if (!job) {
-      host.innerHTML = '<div class="empty">Run not loaded.</div>';
+    if (!job || !job.id) {
+      setBenchMode(false);
+      host.innerHTML =
+        '<div class="empty-state"><h2>No run selected</h2>' +
+        "<p>Open a run first. If it has no PDB, fetch RCSB / AlphaFold here.</p>" +
+        '<a class="btn btn-primary" href="#/runs">Back to runs</a></div>';
       return;
     }
     var seq = jobSequence(job);
@@ -2014,29 +2279,30 @@
     var positions = muts.map(function (m) {
       return m.pos;
     });
-    var viewer =
-      job.has_pdb || currentSourceKey(job)
-        ? '<div class="panel">' + molPanelHtml("full") + "</div>"
-        : '<div class="empty">No coordinate file yet. Fetch from RCSB or AlphaFold DB, or re-submit with a PDB.</div>';
-    host.innerHTML =
-      '<div class="page-head"><h1>Structure</h1>' +
-      '<p class="muted">' +
+    var hasCoord = !!(job.has_pdb || currentSourceKey(job));
+    var side =
+      '<div class="bench-head">' +
+      "<div><h1>Structure</h1><p class=\"muted\">" +
       esc(job.protein || job.id) +
-      " · " +
-      esc(job.model || "") +
       ' · <a href="#/runs/' +
       encodeURIComponent(job.id) +
-      '">back to scores</a></p></div>' +
-      fetchBarHtml(job) +
-      viewer +
-      '<div class="inspector has-no-viewer" style="margin-top:10px">' +
+      '">back to scores</a>. Crystal B-factors are not pLDDT.</p></div>' +
+      runFlowHtml(job) +
+      "</div>" +
       '<div class="panel seq-box"><h2>Sequence</h2>' +
       renderSequence(seq, positions) +
       "</div>" +
       '<div class="panel"><h2>Selection</h2>' +
       selectedDetailHtml(job, state.selectedRow) +
-      '<p class="mol-hint">Table selection and residue clicks stay in sync with the 3D view.</p></div>' +
-      "</div>";
+      '<p class="mol-hint">Click the chain or a letter. Drag the gutter to grow the protein.</p></div>' +
+      fetchBarHtml(job);
+    var viewer = hasCoord
+      ? molPanelHtml("bench")
+      : '<div class="viewer-empty"><h2>' +
+        (isLive(job.status) ? "Waiting for coordinates" : "No coordinates") +
+        "</h2><p>Paste a PDB id or UniProt on the left. This does not re-score.</p></div>";
+    host.innerHTML = proteinBenchHtml("structure", side, viewer);
+    mountBench("structure");
   }
 
   async function fetchRunStructure(source) {
@@ -2114,7 +2380,10 @@
 
   function setBusy(busy) {
     if (els.btnDemo) els.btnDemo.disabled = busy;
-    if (els.btnSubmit) els.btnSubmit.disabled = busy;
+    if (els.btnSubmit) {
+      els.btnSubmit.disabled = busy;
+      els.btnSubmit.textContent = busy ? "Starting…" : "Start scoring";
+    }
   }
 
   function showFormError(msg) {
@@ -2172,7 +2441,10 @@
       var id = job && job.id;
       if (!id) throw new Error("Server did not return a run id.");
       setActiveRun(id);
-      go("#/runs/" + encodeURIComponent(id));
+      showWizard(1);
+      var dest = "#/runs/" + encodeURIComponent(id);
+      go(dest);
+      if (location.hash !== dest) location.hash = dest;
     } catch (err) {
       showFormError(err.message || "Submit failed.");
     } finally {
@@ -2266,6 +2538,7 @@
   async function onRoute() {
     flash("");
     var route = parseHash();
+    if (route.page !== "workspace" && route.page !== "structure") setBenchMode(false);
     if ((route.page === "select" || route.page === "structure") && !route.id) {
       if (state.activeRunId) {
         go("#/" + route.page + "/" + encodeURIComponent(state.activeRunId));
@@ -2289,6 +2562,7 @@
       }
     } else if (route.page === "predict") {
       showPage("page-predict");
+      showWizard(state.wizardStep || 1);
       updateCli();
     } else if (route.page === "workspace") {
       showPage("page-workspace");
@@ -2318,6 +2592,23 @@
       if (key === "status") v.innerHTML = badge(job.status);
       if (key === "mutants" && nMut != null) v.textContent = String(nMut);
     }
+    var rail = document.querySelector("#workspace-body .flow-rail");
+    if (rail) {
+      var tmp = document.createElement("div");
+      tmp.innerHTML = runFlowHtml(job);
+      if (tmp.firstChild) rail.replaceWith(tmp.firstChild);
+    }
+    var host = $("run-progress");
+    if (isLive(job.status) || job.status === "failed") {
+      var html = progressHtml(job);
+      if (host) host.outerHTML = html;
+      else {
+        var pipe = document.querySelector("#workspace-body .chips");
+        if (pipe) pipe.insertAdjacentHTML("afterend", html);
+      }
+    } else if (host) {
+      host.remove();
+    }
     var cancel = $("btn-cancel");
     if (cancel && !isLive(job.status)) cancel.remove();
     if (!cancel && isLive(job.status)) {
@@ -2342,6 +2633,7 @@
       }
       if (state.route.page === "workspace" && state.route.id) {
         var prev = state.job && state.job.status;
+        var prevPhase = runPhase(state.job);
         var hadPdb = state.job && state.job.has_pdb;
         state.job = await apiJson("/api/runs/" + encodeURIComponent(state.route.id));
         state.lastPoll = new Date();
@@ -2354,11 +2646,15 @@
         ]);
         var pdbArrived = state.job.has_pdb && !hadPdb;
         var statusChanged = prev !== state.job.status;
-        if (!$("score-table") || pdbArrived || (statusChanged && !isLive(state.job.status))) {
+        var phaseChanged = prevPhase !== runPhase(state.job);
+        if (statusChanged || pdbArrived || phaseChanged || (!$("run-progress") && !$("run-log") && !$("score-table") && !$("mol-host"))) {
           renderWorkspace();
+          if ($("mol-host")) await maybeLoadViewer(state.job, selectionResis());
         } else {
           patchOverview(state.job);
-          patchScores();
+          var logEl = $("run-log");
+          if (logEl) logEl.textContent = lastLogLines(state.logText, 30) || "Waiting for rem2…";
+          if ($("score-table")) patchScores();
           var canvas = $("hist-canvas");
           if (canvas) drawHistogram(canvas, state.histogram || { bins: [] });
         }
@@ -2367,6 +2663,27 @@
         state.job = await apiJson("/api/runs/" + encodeURIComponent(state.route.id));
         await loadTop(state.route.id);
         renderSelect();
+        updateChrome();
+      } else if (state.route.page === "structure" && state.route.id && state.job && isLive(state.job.status)) {
+        var hadStruct = !!(state.job.has_pdb || currentSourceKey(state.job));
+        var structPhase = runPhase(state.job);
+        state.job = await apiJson("/api/runs/" + encodeURIComponent(state.route.id));
+        state.lastPoll = new Date();
+        state.connected = true;
+        var nowStruct = !!(state.job.has_pdb || currentSourceKey(state.job));
+        if (hadStruct !== nowStruct || structPhase !== runPhase(state.job) || state.job.status !== "running") {
+          renderStructure();
+          if (nowStruct) {
+            await maybeLoadViewer(state.job, selectionResis());
+          }
+        } else {
+          var rail = document.querySelector("#structure-body .flow-rail");
+          if (rail) {
+            var box = document.createElement("div");
+            box.innerHTML = runFlowHtml(state.job);
+            if (box.firstChild) rail.replaceWith(box.firstChild);
+          }
+        }
         updateChrome();
       }
     } catch (err) {
@@ -2380,7 +2697,11 @@
     clearTimeout(pollTimer);
     var need =
       anyLive() ||
-      (state.job && isLive(state.job.status) && (state.route.page === "workspace" || state.route.page === "select"));
+      (state.job &&
+        isLive(state.job.status) &&
+        (state.route.page === "workspace" ||
+          state.route.page === "select" ||
+          state.route.page === "structure"));
     if (need) pollTimer = setTimeout(pollTick, POLL_MS);
   }
 
@@ -2405,8 +2726,90 @@
         submitJob(true);
       });
     }
+    var next = $("btn-wiz-next");
+    var back = $("btn-wiz-back");
+    if (next) {
+      next.addEventListener("click", function () {
+        if (wizardCanAdvance()) {
+          showFormError("");
+          showWizard(state.wizardStep + 1);
+        }
+      });
+    }
+    if (back) {
+      back.addEventListener("click", function () {
+        showFormError("");
+        showWizard(state.wizardStep - 1);
+      });
+    }
+    document.querySelectorAll("[data-wiz-tab]").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        var dest = parseInt(tab.getAttribute("data-wiz-tab"), 10);
+        if (dest > state.wizardStep && !wizardCanAdvance()) return;
+        showFormError("");
+        showWizard(dest);
+      });
+    });
     updateFileLabels();
     updateCli();
+    showWizard(state.wizardStep || 1);
+  }
+
+  function bindSplit() {
+    document.addEventListener("pointerdown", function (ev) {
+      var gutter = ev.target.closest("[data-gutter]");
+      if (!gutter) return;
+      var bench = gutter.closest(".protein-bench");
+      if (!bench) return;
+      ev.preventDefault();
+      var kind = bench.getAttribute("data-split") || "review";
+      var rect = bench.getBoundingClientRect();
+      var viewerAtEnd = bench.getAttribute("data-viewer") === "end";
+      document.body.classList.add("is-splitting");
+      gutter.classList.add("is-drag");
+      function pctFromX(x) {
+        var raw = viewerAtEnd ? ((rect.right - x) / rect.width) * 100 : ((x - rect.left) / rect.width) * 100;
+        return clampSplit(raw);
+      }
+      function move(e) {
+        var pct = pctFromX(e.clientX);
+        applySplit(bench, pct);
+        writeSplit(kind, pct);
+        resizeViewerSoon();
+      }
+      function end(e) {
+        gutter.classList.remove("is-drag");
+        document.body.classList.remove("is-splitting");
+        try {
+          gutter.releasePointerCapture(e.pointerId);
+        } catch (err) {
+          /* ignore */
+        }
+        gutter.removeEventListener("pointermove", move);
+        gutter.removeEventListener("pointerup", end);
+        gutter.removeEventListener("pointercancel", end);
+        resizeViewerSoon();
+      }
+      try {
+        gutter.setPointerCapture(ev.pointerId);
+      } catch (err) {
+        /* ignore */
+      }
+      gutter.addEventListener("pointermove", move);
+      gutter.addEventListener("pointerup", end);
+      gutter.addEventListener("pointercancel", end);
+    });
+    document.addEventListener("dblclick", function (ev) {
+      var gutter = ev.target.closest("[data-gutter]");
+      if (!gutter) return;
+      var bench = gutter.closest(".protein-bench");
+      if (!bench) return;
+      var kind = bench.getAttribute("data-split") || "review";
+      var fallback = kind === "structure" ? 64 : 56;
+      writeSplit(kind, fallback);
+      applySplit(bench, fallback);
+      resizeViewerSoon();
+    });
   }
 
   function bindChrome() {
@@ -2422,14 +2825,7 @@
     window.addEventListener("resize", function () {
       var canvas = $("hist-canvas");
       if (canvas && state.histogram) drawHistogram(canvas, state.histogram);
-      if (state.viewer) {
-        try {
-          state.viewer.resize();
-          state.viewer.render();
-        } catch (err) {
-          /* ignore */
-        }
-      }
+      resizeViewerSoon();
     });
   }
 
@@ -2457,6 +2853,7 @@
     fillModels();
     fillRecipes();
     bindChrome();
+    bindSplit();
     bindPredict();
     bindWorkspaceOnce();
     var structHost = $("structure-body");

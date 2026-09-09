@@ -36,20 +36,30 @@ Python import: `rem2`. Default backbone: ESM-2 650M.
 
 Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `rem2 demo` (ESM-2 8M) can run on CPU.
 
+Two optional install forms — pick one. For everything in one shot, use `[all]`.
+
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-pip install "rem2[recommended] @ git+https://github.com/tyang816/VenusREM2.git"
-rem2 doctor
-rem2 demo
+
+# complete: CLI + dashboard + all backbones
+pip install "rem2[all] @ git+https://github.com/tyang816/VenusREM2.git"
+
+# CLI only: rem2 / rem2 demo / rem2 doctor
+pip install "rem2[cli] @ git+https://github.com/tyang816/VenusREM2.git"
+
+# Dashboard: local console (includes [cli])
+pip install "rem2[dashboard] @ git+https://github.com/tyang816/VenusREM2.git"
 ```
 
-Editable: `pip install -e ".[recommended]"`.
+Editable: `pip install -e ".[all]"` / `".[cli]"` / `".[dashboard]"`.
 
 | Extra | Use |
 |-------|-----|
 | (core) | ESM-2 and other HF sequence LMs |
-| `[recommended]` | biotite (RSA / PDB) |
-| `[dashboard]` | FastAPI console |
+| `[cli]` | biotite (RSA / PDB); terminal scoring |
+| `[dashboard]` | FastAPI console + `[cli]` |
+| `[all]` | CLI + dashboard + ProSST / CARP / ESM-3 / S3F |
+| `[recommended]` | alias of `[cli]` |
 | `[prosst]` | VenusREM2 / ProSST |
 | `[carp]`, `[esm3]`, `[s3f]` | other backbones (`[s3f]`: Python &lt; 3.11) |
 | `[dev]` | pytest / ruff |
@@ -106,11 +116,11 @@ Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 w
 ### 3. Open the local dashboard
 
 ```bash
-pip install 'rem2[dashboard]'   # if the console extra is not installed
+pip install 'rem2[dashboard]'   # CLI + FastAPI console
 rem2 dashboard
 ```
 
-Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service.
+Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service. Scoring-only installs use `rem2[cli]`.
 
 ## Dashboard
 
@@ -127,7 +137,7 @@ CLI scoring still writes `result/scores/`. Dashboard sessions also keep working 
 rem2 dashboard
 ```
 
-If `rem2 dashboard` is missing, install the extra: `pip install 'rem2[dashboard]'`.
+If `rem2 dashboard` is missing, install the dashboard form: `pip install 'rem2[dashboard]'`. For scoring only: `pip install 'rem2[cli]'`.
 
 ## Data
 
@@ -302,11 +312,12 @@ rem2 --model prosst-2048 --base_dir data/proteingym_v1 \
 ## Development
 
 ```bash
-pip install -e ".[prosst,dev]"
+pip install -e ".[cli,prosst,dev]"          # scoring tests
+pip install -e ".[dashboard,prosst,dev]"    # plus console tests
 pytest test/ -v
 ```
 
-Dashboard tests live in `test/test_dashboard.py`.
+Dashboard tests live in `test/test_dashboard.py` and `test/test_dashboard_flows.py`.
 
 **Publish to PyPI.** First upload creates the `rem2` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
 

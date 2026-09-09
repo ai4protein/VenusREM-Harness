@@ -85,11 +85,18 @@ esm3 = [
 msa = [
   "biopython>=1.80",
 ]
-# Everyday scoring: core + better PDB I/O.
+# First-class install forms (pick one):
+#   pip install rem2[cli]         terminal scoring
+#   pip install rem2[dashboard]   local web console (includes [cli])
+cli = [
+  "biotite>=0.40",
+]
+# Alias of [cli], kept so existing docs / pins keep working.
 recommended = [
   "biotite>=0.40",
 ]
 dashboard = [
+  "biotite>=0.40",
   "fastapi>=0.110",
   "uvicorn>=0.27",
   "python-multipart>=0.0.9",
@@ -117,6 +124,10 @@ all = [
   "pykeops>=2.1",
   "robust-laplacian>=0.2",
   "scikit-learn>=1.3",
+  "httpx>=0.27",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "python-multipart>=0.0.9",
 ]
 dev = [
   "pytest>=7.0",

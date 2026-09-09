@@ -15,7 +15,7 @@ def doctor_report() -> dict[str, Any]:
 
     extras = [
         ("biopython", "Bio", "core: FASTA + RSA"),
-        ("biotite", "biotite", "recommended: PDB I/O"),
+        ("biotite", "biotite", "cli: PDB I/O  pip install 'rem2[cli]'"),
         ("fastapi", "fastapi", "dashboard console  pip install 'rem2[dashboard]'"),
         ("torch-geometric", "torch_geometric", "ProSST / VenusREM2"),
         ("esm", "esm", "ESM-3"),
@@ -75,4 +75,21 @@ def list_model_payload() -> list[dict[str, Any]]:
                 "size_hint": hint,
             }
         )
+    if not any(row["name"] == "venusrem2" for row in rows):
+        rows.insert(
+            0,
+            {
+                "name": "venusrem2",
+                "description": "Official ProSST ensemble",
+                "default_model_id": None,
+                "needs_pdb": True,
+                "extras": "prosst",
+                "notes": "wt only; six official ProSST checkpoints",
+                "aliases": ["venusrem", "prosst_ensemble"],
+                "supports_mask": False,
+                "supports_tf": False,
+                "size_hint": MODEL_SIZE_HINTS.get("venusrem2"),
+            },
+        )
+    rows.sort(key=lambda row: (row["name"] != "venusrem2", row["name"]))
     return rows
