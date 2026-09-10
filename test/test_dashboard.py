@@ -258,6 +258,9 @@ def test_proteingym_leaderboard(client):
     assert [item["id"] for item in benchmark["properties"]] == [
         "overall", "activity", "binding", "expression", "organismal", "stability"
     ]
+    assert [item["id"] for item in benchmark["metrics"]] == [
+        "spearman", "ndcg", "auc", "mcc", "top_recall"
+    ]
     assert [item["status"] for item in api["benchmarks"][1:]] == ["planned", "planned"]
     pairs = {row["key"]: row for row in benchmark["pairs"]}
     assert pairs["prosst_ensemble"]["base"] == 0.529
@@ -269,6 +272,9 @@ def test_proteingym_leaderboard(client):
     assert pairs["prosst_ensemble"]["inputs"] == ["seq", "str"]
     assert pairs["prosst_ensemble"]["properties"]["activity"] == {
         "base": 0.485, "rem2": 0.539, "delta": 0.054
+    }
+    assert pairs["prosst_ensemble"]["properties_by_metric"]["ndcg"]["activity"] == {
+        "base": 0.790, "rem2": 0.815, "delta": 0.025
     }
     assert pairs["esm2_650m_wt"]["enhanced"] == 0.472
     assert "official_reference" not in pairs["prosst_ensemble"]

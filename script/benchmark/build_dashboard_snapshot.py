@@ -31,6 +31,13 @@ COMPARE_METRICS = {
     "mcc": "MCC",
     "top_recall": "Top_recall",
 }
+METRIC_SHEETS = {
+    "spearman": ("Spearman", "Average_Spearman"),
+    "ndcg": ("NDCG", "Average_NDCG"),
+    "auc": ("AUC", "Average_AUC"),
+    "mcc": ("MCC", "Average_MCC"),
+    "top_recall": ("Top_recall", "Average_Top_recall"),
+}
 
 
 def column_index(cell_ref: str) -> int:
@@ -83,8 +90,13 @@ def main() -> None:
     snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
     compare = sheet_records(args.workbook, "Leaderboard_Compare")
     compare_index = {row["model_key"]: row for row in compare if row.get("model_key")}
-    summaries = sheet_records(args.workbook, "Spearman")
-    summary_index = {(row["Variant"], row["Model_name"]): row for row in summaries}
+    summary_indexes = {
+        metric_key: {
+            (row["Variant"], row["Model_name"]): row
+            for row in sheet_records(args.workbook, sheet_name)
+        }
+        for metric_key, (sheet_name, _average_column) in METRIC_SHEETS.items()
+    }
 
     # The paired aggregate sheet contains 59 pairs plus the standalone VenusREM row.
     if len(snapshot["pairs"]) != 59 or len(compare) != 60:
@@ -108,24 +120,29 @@ def main() -> None:
                         f"{actual_value} != {expected_value}"
                     )
                 checked_values += 1
-        raw = summary_index[("Raw", pair["base_name"])]
-        rem2 = summary_index[("rem2", pair["rem2_name"])]
-        expected = pair["metrics"]["spearman"]
-        actual = (float(raw["Average_Spearman"]), float(rem2["Average_Spearman"]))
-        if actual != (float(expected["base"]), float(expected["rem2"])):
-            raise SystemExit(f"Spearman mismatch for {pair['key']}: {actual} != {expected}")
-        pair["properties"] = {
-            "overall": {"base": actual[0], "rem2": actual[1]},
-            **{
-                key: {
-                    "base": float(raw[column]),
-                    "rem2": float(rem2[column]),
+        pair["properties_by_metric"] = {}
+        for metric_key, (_sheet_name, average_column) in METRIC_SHEETS.items():
+            raw = summary_indexes[metric_key][("Raw", pair["base_name"])]
+            rem2 = summary_indexes[metric_key][("rem2", pair["rem2_name"])]
+            expected = pair["metrics"][metric_key]
+            actual = (float(raw[average_column]), float(rem2[average_column]))
+            if actual != (float(expected["base"]), float(expected["rem2"])):
+                raise SystemExit(f"{metric_key} mismatch for {pair['key']}: {actual} != {expected}")
+            properties = {
+                "overall": {"base": actual[0], "rem2": actual[1]},
+                **{
+                    key: {
+                        "base": float(raw[column]),
+                        "rem2": float(rem2[column]),
+                    }
+                    for key, column in PROPERTY_COLUMNS.items()
                 }
-                for key, column in PROPERTY_COLUMNS.items()
-            },
-        }
-        for values in pair["properties"].values():
-            values["delta"] = round(values["rem2"] - values["base"], 3)
+            }
+            for values in properties.values():
+                values["delta"] = round(values["rem2"] - values["base"], 3)
+            pair["properties_by_metric"][metric_key] = properties
+        # Preserve the original field for older dashboard clients.
+        pair["properties"] = pair["properties_by_metric"]["spearman"]
         checked += 1
 
     snapshot["properties"] = [
@@ -139,6 +156,7 @@ def main() -> None:
     args.snapshot.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
     print(
         f"verified {checked_values} aggregate cells and enriched "
+        f"{checked * len(METRIC_SHEETS) * 6 * 2} property cells across "
         f"{checked} paired models from {args.workbook}"
     )
 

@@ -261,6 +261,10 @@
   FALLBACK_CATALOG.benchmarks[0].pairs.forEach(function (pair) {
     pair.inputs = pair.key.indexOf("prosst") >= 0 || pair.key.indexOf("saprot") >= 0 ? ["seq", "str"] : ["seq"];
     pair.properties = { overall: { base: pair.base, rem2: pair.enhanced, delta: pair.delta } };
+    pair.properties_by_metric = { spearman: pair.properties };
+    Object.keys(pair.metrics || {}).forEach(function (metric) {
+      if (!pair.properties_by_metric[metric]) pair.properties_by_metric[metric] = { overall: pair.metrics[metric] };
+    });
   });
   FALLBACK_CATALOG.benchmarks.push(
     { id: "venusmuthub", label: "VenusMutHub", title: "VenusMutHub", description: "The leaderboard shell is ready; benchmark-specific properties will appear with the dataset.", status: "planned", n: null, pairs: [] },
@@ -287,6 +291,7 @@
     board: FALLBACK_BOARD,
     boardId: "substitutions",
     benchmarkId: "proteingym",
+    benchmarkMetric: "spearman",
     benchmarkProperty: "overall",
     benchmarkInput: "all",
     benchmarkVariant: "rem2",
@@ -1205,13 +1210,21 @@
   }
 
   function benchmarkPropertyValue(row, property, field) {
-    var values = row.properties && row.properties[property || "overall"];
+    var metric = state.benchmarkMetric || "spearman";
+    var metricProperties = row.properties_by_metric && row.properties_by_metric[metric];
+    var values = metricProperties && metricProperties[property || "overall"];
+    if (!values && metric === "spearman") values = row.properties && row.properties[property || "overall"];
+    if (!values && property === "overall") values = row.metrics && row.metrics[metric];
     if (values) return Number(values[field === "enhanced" ? "rem2" : field]);
     return Number(row[field]);
   }
 
   function benchmarkPropertyDelta(row, property) {
-    var values = row.properties && row.properties[property || "overall"];
+    var metric = state.benchmarkMetric || "spearman";
+    var metricProperties = row.properties_by_metric && row.properties_by_metric[metric];
+    var values = metricProperties && metricProperties[property || "overall"];
+    if (!values && metric === "spearman") values = row.properties && row.properties[property || "overall"];
+    if (!values && property === "overall") values = row.metrics && row.metrics[metric];
     if (values) return Number(values.delta);
     return Number(row.delta);
   }
@@ -1227,7 +1240,9 @@
     var variant = state.benchmarkVariant || "rem2";
     var query = String(state.benchmarkQuery || "").trim().toLowerCase();
     var rows = (benchmark.pairs || []).filter(function (row) {
-      if (!row.properties || !row.properties[property]) return false;
+      var metric = state.benchmarkMetric || "spearman";
+      var metricProperties = row.properties_by_metric && row.properties_by_metric[metric];
+      if ((!metricProperties || !metricProperties[property]) && !(metric === "spearman" && row.properties && row.properties[property])) return false;
       if (input !== "all" && benchmarkVisibleInputs(row).indexOf(input) < 0) return false;
       if (!query) return true;
       return [row.key, row.base_name, row.enhanced_name, row.protocol].join(" ").toLowerCase().indexOf(query) >= 0;
@@ -1260,32 +1275,32 @@
     }).join("");
   }
 
-  function benchmarkBar(score, variant) {
-    var pct = Math.max(0, Math.min(100, Number(score) / 0.75 * 100)).toFixed(1);
+  function benchmarkBar(score, variant, scale) {
+    var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100)).toFixed(1);
     return '<span class="benchmark-chart-bar is-' + variant + '"><i style="width:' + pct + '%"></i></span>';
   }
 
-  function benchmarkFeaturedRow(benchmark, property) {
+  function benchmarkFeaturedRow(benchmark, property, scale) {
     var row = (benchmark.pairs || []).filter(function (item) { return item.key === "prosst_ensemble"; })[0];
     if (!row) return "";
     var score = benchmarkPropertyValue(row, property, "enhanced");
     return '<div class="benchmark-chart-row is-featured"><span class="benchmark-chart-rank">—</span>' +
       '<strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
-      benchmarkBar(score, "rem2") + '</div><div class="benchmark-chart-model"><strong>VenusREM2 <em>ours</em></strong>' +
+      benchmarkBar(score, "rem2", scale) + '</div><div class="benchmark-chart-model"><strong>VenusREM2 <em>ours</em></strong>' +
       '<span>ProSST ensemble + REM2</span></div><div class="benchmark-chart-inputs">' + benchmarkTags(["seq", "str", "evo"]) + '</div></div>';
   }
 
-  function benchmarkPairRow(row, rank, property) {
+  function benchmarkPairRow(row, rank, property, scale) {
     var base = benchmarkPropertyValue(row, property, "base");
     var rem2 = benchmarkPropertyValue(row, property, "enhanced");
     var delta = benchmarkPropertyDelta(row, property);
     var variant = state.benchmarkVariant || "rem2";
     var score = variant === "raw" ? base : rem2;
-    var sub = variant === "raw" ? "Foundation model" : signed(delta, 3) + " vs Raw";
+    var sub = variant === "raw" ? "" : signed(delta, 3) + " vs Raw";
     return '<div class="benchmark-chart-row"><span class="benchmark-chart-rank">' + rank +
       '</span><strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
-      benchmarkBar(score, variant) + '</div><div class="benchmark-chart-model"><strong>' + esc(row.family) +
-      '</strong><span>' + esc(sub) + '</span></div><div class="benchmark-chart-inputs">' +
+      benchmarkBar(score, variant, scale) + '</div><div class="benchmark-chart-model"><strong>' + esc(row.family) +
+      '</strong>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div><div class="benchmark-chart-inputs">' +
       benchmarkTags(benchmarkVisibleInputs(row)) + '</div></div>';
   }
 
@@ -1305,6 +1320,14 @@
     var allPairs = benchmark.pairs || [];
     var pairs = benchmarkRows(benchmark);
     var properties = benchmark.properties || [{ id: "overall", label: "Overall" }];
+    var metrics = benchmark.metrics || [{ id: "spearman", label: "Spearman" }];
+    var metric = state.benchmarkMetric || "spearman";
+    var activeMetric = metrics.filter(function (item) { return item.id === metric; })[0] || metrics[0];
+    metric = activeMetric.id;
+    var metricTabs = metrics.map(function (item) {
+      return '<button type="button" class="benchmark-filter-pill' + (item.id === metric ? " is-on" : "") +
+        '" data-benchmark-metric="' + esc(item.id) + '">' + esc(item.label) + '</button>';
+    }).join("");
     var property = state.benchmarkProperty || "overall";
     var activeProperty = properties.filter(function (item) { return item.id === property; })[0] || properties[0];
     property = activeProperty.id;
@@ -1320,23 +1343,29 @@
       return '<button type="button" class="benchmark-filter-pill benchmark-variant-pill' + (item.id === variant ? " is-on" : "") +
         '" data-benchmark-variant="' + item.id + '">' + item.label + '</button>';
     }).join("");
-    var body = pairs.map(function (row, index) { return benchmarkPairRow(row, index + 1, property); }).join("");
+    var scaleScores = pairs.map(function (row) {
+      return benchmarkPropertyValue(row, property, variant === "raw" ? "base" : "enhanced");
+    });
+    var featured = (benchmark.pairs || []).filter(function (item) { return item.key === "prosst_ensemble"; })[0];
+    if (featured) scaleScores.push(benchmarkPropertyValue(featured, property, "enhanced"));
+    var scale = Math.min(1, Math.max(0.1, Math.ceil(Math.max.apply(Math, scaleScores) * 10) / 10));
+    var body = pairs.map(function (row, index) { return benchmarkPairRow(row, index + 1, property, scale); }).join("");
     host.innerHTML = '<header class="benchmark-cross-head"><div><span class="section-kicker">Cross-benchmark leaderboard</span><h2>REM2 benchmark evidence</h2>' +
-      '<p>Scores are mean Spearman across ProteinGym assays. Switch Raw and +REM2 to compare the same 59 models.</p></div>' +
+      '<p>Switch evaluation metric, protein property, and Raw or +REM2 while keeping the same 59-model comparison.</p></div>' +
       '<dl><div><dt>Models</dt><dd>' + allPairs.length + '</dd></div><div><dt>Assays</dt><dd>' + esc(benchmark.n) +
       '</dd></div></dl></header><div class="benchmark-filter-stack"><div class="benchmark-filter-row"><span>Benchmark</span><div class="benchmark-tabs">' +
-      tabs + '</div></div><div class="benchmark-filter-row"><span>Property</span><div>' + propertyTabs +
+      tabs + '</div></div><div class="benchmark-filter-row"><span>Metric</span><div>' + metricTabs +
+      '</div></div><div class="benchmark-filter-row"><span>Property</span><div>' + propertyTabs +
       '</div></div><div class="benchmark-filter-row"><span>Model input</span><div>' + benchmarkInputOptions(allPairs) +
       '</div></div><div class="benchmark-filter-row"><span>Score</span><div>' + variantTabs +
       '</div></div></div><div class="benchmark-list-tools"><p><strong>' + pairs.length + '</strong> of ' + allPairs.length +
-      ' models · ranked by ' + (variant === "raw" ? "Raw " : "+REM2 ") + esc(activeProperty.label) + '</p><label class="benchmark-search"><span>Find model</span>' +
+      ' models · ranked by ' + (variant === "raw" ? "Raw " : "+REM2 ") + esc(activeMetric.label) + ' · ' + esc(activeProperty.label) + '</p><label class="benchmark-search"><span>Find model</span>' +
       '<input type="search" data-benchmark-query value="' + esc(state.benchmarkQuery || "") +
       '" placeholder="ESM, ProSST, SaProt…"></label></div><section class="benchmark-chart"><div class="benchmark-chart-header">' +
-      '<span>Rank</span><span>Score</span><span>Average Spearman</span><span>Model</span><span>Inputs</span></div>' +
-      benchmarkFeaturedRow(benchmark, property) + '<div class="benchmark-chart-divider"><span>Foundation models</span><span>' +
+      '<span>Rank</span><span>Score</span><span>' + esc(activeMetric.label) + '</span><span>Model</span><span>Inputs</span></div>' +
+      benchmarkFeaturedRow(benchmark, property, scale) + '<div class="benchmark-chart-divider"><span>Models</span><span>' +
       (variant === "raw" ? "Raw" : "+REM2") + ' scores</span></div>' +
-      (body || '<p class="benchmark-no-results">No models match these filters.</p>') + '</section><p class="benchmark-source-line"><span>Source</span> ' +
-      esc(benchmark.source || "") + ' · <a href="' + esc(benchmark.source_url || catalog.url) + '" target="_blank" rel="noreferrer">ProteinGym</a></p>';
+      (body || '<p class="benchmark-no-results">No models match these filters.</p>') + '</section>';
   }
 
   function renderLeaderboard() {
@@ -4223,6 +4252,12 @@
           renderLeaderboard();
           return;
         }
+        var metricBtn = ev.target.closest("[data-benchmark-metric]");
+        if (metricBtn) {
+          state.benchmarkMetric = metricBtn.getAttribute("data-benchmark-metric");
+          renderLeaderboard();
+          return;
+        }
         var inputBtn = ev.target.closest("[data-benchmark-input]");
         if (inputBtn) {
           state.benchmarkInput = inputBtn.getAttribute("data-benchmark-input");
@@ -4240,6 +4275,7 @@
         if (benchmarkBtn) {
           state.benchmarkId = benchmarkBtn.getAttribute("data-benchmark");
           state.benchmarkProperty = "overall";
+          state.benchmarkMetric = "spearman";
           state.benchmarkInput = "all";
           state.benchmarkVariant = "rem2";
           state.benchmarkQuery = "";

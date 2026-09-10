@@ -380,6 +380,10 @@ check("product benchmark compares the same base with REM2", () => {
   assert.ok(enhanced.includes("esm2_650m_wt"));
   assert.ok(enhanced.includes("+0.054"));
   assert.ok(enhanced.includes("Evo"));
+  context.state.benchmarkVariant = "raw";
+  const raw = context.benchmarkPairRow(benchmark.pairs[1], 2, "overall");
+  assert.ok(!raw.includes("Foundation model"));
+  context.state.benchmarkVariant = "rem2";
 });
 
 check("benchmark property, input, and score mode keep one row per model", () => {
@@ -387,8 +391,8 @@ check("benchmark property, input, and score mode keep one row per model", () => 
   context.state.catalog = { default_benchmark: "proteingym", benchmarks: [{
     id: "proteingym",
     pairs: [
-      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", inputs: ["seq"], protocol: "paired", properties: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } } },
-      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", inputs: ["str"], protocol: "paired", properties: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } } },
+      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", inputs: ["seq"], protocol: "paired", properties: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } }, properties_by_metric: { spearman: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } }, ndcg: { binding: { base: 0.6, rem2: 0.7, delta: 0.1 } } } },
+      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", inputs: ["str"], protocol: "paired", properties: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } }, properties_by_metric: { spearman: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } }, ndcg: { binding: { base: 0.8, rem2: 0.75, delta: -0.05 } } } },
     ],
   }] };
   context.state.benchmarkProperty = "binding";
@@ -398,6 +402,9 @@ check("benchmark property, input, and score mode keep one row per model", () => 
   assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["beta", "alpha"]);
   context.state.benchmarkVariant = "rem2";
   assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["alpha", "beta"]);
+  context.state.benchmarkMetric = "ndcg";
+  assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["beta", "alpha"]);
+  context.state.benchmarkMetric = "spearman";
   context.state.benchmarkInput = "str";
   const rows = context.benchmarkRows(context.currentBenchmark());
   assert.strictEqual(rows.length, 1);

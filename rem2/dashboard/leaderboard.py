@@ -236,6 +236,7 @@ def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
                 "protocol": raw["notes"],
                 "metrics": raw["metrics"],
                 "properties": raw["properties"],
+                "properties_by_metric": raw["properties_by_metric"],
                 "inputs": _benchmark_inputs(raw["key"]),
             }
         )
@@ -244,6 +245,7 @@ def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
 
 def _proteingym_product_benchmark() -> dict[str, Any]:
     pairs, properties = _proteingym_pairs()
+    raw_data = json.loads(_PROTEINGYM_REM2_DATA.read_text(encoding="utf-8"))
     return {
         "id": "proteingym",
         "label": "ProteinGym",
@@ -257,6 +259,7 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "source_url": "https://proteingym.org/benchmarks",
         "model_count": len(pairs),
         "properties": properties,
+        "metrics": raw_data["metrics"],
         "pairs": pairs,
         "function_scores": {
             "activity": 0.539,
