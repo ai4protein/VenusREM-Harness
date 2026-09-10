@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>REM2 Dashboard</title>
-  <link rel="stylesheet" href="app.css?v=20260910b">
+  <link rel="stylesheet" href="app.css?v=20260910c">
 </head>
 <body>
   <div id="app">
@@ -29,7 +29,7 @@
     </header>
 
     <div class="banner" role="note">
-      Scores rank variants. This is not ΔΔG. Validate experimentally.
+      Prediction scores rank variants: higher is better. They are not physical ΔΔG measurements and have no kcal/mol unit.
     </div>
 
     <div id="flash" class="flash" hidden></div>
@@ -53,7 +53,7 @@
         </div>
 
         <div class="workflow-rail" aria-label="Prediction workflow">
-          <span class="is-current"><b>1</b> Target</span><span><b>2</b> Evidence</span><span><b>3</b> Model</span><span><b>4</b> Review</span><span><b>5</b> Experiment</span>
+          <span class="is-current"><b>1</b> Target</span><span><b>2</b> Evidence</span><span><b>3</b> Model</span><span><b>4</b> Review</span><span><b>5</b> Export</span>
         </div>
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
@@ -86,7 +86,7 @@
                   <strong>Drop FASTA</strong>
                   <span>or click to upload</span>
                 </label>
-                <label class="slot-id">UniProt or PDB id
+                <label class="slot-id">Protein ID <span class="label-note">UniProt or PDB</span>
                   <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 or 2L6Q" autocomplete="off">
                 </label>
                 <div class="slot-chips" id="slot-sequence-chips"></div>
@@ -97,9 +97,6 @@
                   <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
                   <strong>Drop PDB / CIF</strong>
                   <span>or click to upload</span>
-                </label>
-                <label class="slot-id">PDB or UniProt id
-                  <input type="text" id="f-struct-id" placeholder="2L6Q or P0A6Y8" autocomplete="off">
                 </label>
                 <label class="slot-id">Fetch
                   <select name="fetch_structure" id="f-fetch">
@@ -124,23 +121,24 @@
               </div>
             </div>
             <div id="input-gate" class="input-gate" aria-live="polite"></div>
-            <details class="advanced">
-              <summary>Mutants and limits</summary>
+            <details class="advanced scope-details">
+              <summary><span>Limit mutation scope</span><small>Optional · default is all positions × 19 substitutions</small></summary>
+              <p class="scope-copy"><strong>Default:</strong> predict every single-amino-acid substitution at every residue. Only change this section when you want a smaller candidate set or already have a mutant list.</p>
               <label class="file-field">
-                <span>Mutants CSV</span>
+                <span>Use a predefined mutant list</span>
                 <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
                 <span class="file-name" data-for="file-mutants"></span>
               </label>
               <fieldset id="saturation-fields" class="field sat-box">
-                <legend>Saturation limits</legend>
+                <legend>Or limit saturation mutagenesis</legend>
                 <div class="field-row">
-                  <label>mutant_sites
+                  <label>Mutation order <span class="label-note">1 = single substitutions</span>
                     <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
                   </label>
-                  <label>positions
+                  <label>Specific positions <span class="label-note">optional</span>
                     <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
                   </label>
-                  <label>residue_range
+                  <label>Residue range <span class="label-note">optional</span>
                     <input type="text" name="residue_range" id="f-range" placeholder="10-20">
                   </label>
                 </div>
@@ -224,6 +222,6 @@
   <noscript>
     <p class="noscript">REM2 Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260910b"></script>
+  <script src="app.js?v=20260910c"></script>
 </body>
 </html>

@@ -279,6 +279,15 @@ check("html flow chrome", () => {
   assert.ok(html.includes('id="slot-structure"'));
   assert.ok(html.includes('id="slot-msa"'));
   assert.ok(html.includes('name="seq_id"'));
+  assert.ok(!html.includes('id="f-struct-id"'));
+  assert.ok(html.includes("default is all positions × 19 substitutions"));
+  assert.ok(html.includes("They are not physical ΔΔG measurements"));
+  assert.ok(html.includes("<b>5</b> Export"));
+  assert.ok(src.includes('data-delete-run="'));
+  assert.ok(src.includes("refreshReviewSelection();"));
+  assert.ok(!html.includes('id="f-struct-id"'));
+  assert.ok(html.includes("default is all positions × 19 substitutions"));
+  assert.ok(html.includes("They are not physical ΔΔG measurements"));
   assert.ok(!html.includes('id="file-bundle"'));
   assert.ok(html.includes('id="model-series"'));
   assert.ok(html.includes('id="model-select"') && html.includes('name="model"'));
@@ -289,6 +298,8 @@ check("html flow chrome", () => {
   assert.ok(!html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
   assert.ok(html.includes('id="leaderboard-body"'));
   assert.ok(html.includes("skip → α=0"));
+  assert.ok(src.includes('data-delete-run="'));
+  assert.ok(src.includes("refreshReviewSelection"));
 });
 
 check("fasta-only unlocks sequence models only", () => {

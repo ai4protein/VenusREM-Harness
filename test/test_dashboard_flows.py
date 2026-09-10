@@ -88,6 +88,32 @@ def test_pdb_only_run_preserves_upload_name_after_enrichment(store_client):
     assert job["protein"] == "5A71_kcat"
 
 
+def test_delete_finished_run_removes_local_artifacts(store_client):
+    store, _runner, client = store_client
+    response = client.post(
+        "/api/runs",
+        data={"model": "esm2-8m", "recipe": "full", "fetch_structure": "none"},
+        files={"fasta": ("delete-me.fasta", b">delete-me\nACDE\n", "text/plain")},
+    )
+    run_id = response.json()["id"]
+    _wait(client, run_id)
+    assert store.run_dir(run_id).is_dir()
+
+    deleted = client.delete(f"/api/runs/{run_id}")
+    assert deleted.status_code == 200
+    assert deleted.json() == {"deleted": run_id}
+    assert not store.run_dir(run_id).exists()
+    assert client.get(f"/api/runs/{run_id}").status_code == 404
+
+
+def test_delete_live_run_requires_cancel(store_client):
+    store, _runner, client = store_client
+    store.write_job({"id": "queued-delete", "status": "queued"})
+    response = client.delete("/api/runs/queued-delete")
+    assert response.status_code == 409
+    assert store.run_dir("queued-delete").is_dir()
+
+
 def test_pdb_upload_mutants_and_limits(store_client):
     store, _runner, client = store_client
     res = client.post(

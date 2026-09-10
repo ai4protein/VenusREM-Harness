@@ -47,6 +47,6 @@ def run_dashboard(argv: Optional[Sequence[str]] = None) -> int:
     app = create_app(store.root)
     print(f"rem2 dashboard  http://{args.host}:{args.port}")
     print(f"runs            {store.runs_dir}")
-    print("Scores rank variants. This is not ΔΔG. Validate experimentally.")
+    print("Prediction scores rank variants; higher is better. They are not physical ΔΔG values.")
     uvicorn.run(app, host=args.host, port=int(args.port), log_level="info")
     return 0

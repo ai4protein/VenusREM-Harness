@@ -101,6 +101,21 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
             attach_structure_meta(job, store)
         return job
 
+    @app.delete("/api/runs/{run_id}")
+    def delete_run(run_id: str):
+        job = store.load_job(run_id)
+        if job is None:
+            raise HTTPException(404, "run not found")
+        if job.get("status") in {"queued", "running"}:
+            raise HTTPException(409, "Cancel this run before deleting it")
+        try:
+            deleted = store.delete_run(run_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        if not deleted:
+            raise HTTPException(404, "run not found")
+        return {"deleted": run_id}
+
     @app.get("/api/runs/{run_id}/scores")
     def get_scores(
         run_id: str,

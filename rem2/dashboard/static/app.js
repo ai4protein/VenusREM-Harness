@@ -288,6 +288,7 @@
   var healthTimer = null;
   var scoresAbort = null;
   var topAbort = null;
+  var reviewViewTimer = null;
   var lastFocus = null;
   var workspaceBound = false;
   var selectTimer = null;
@@ -518,8 +519,8 @@
     return { pdb_id: v.toUpperCase(), uniprot_id: "" };
   }
 
-  function syncStructAccession() {
-    var el = $("f-struct-id");
+  function syncTargetAccession() {
+    var el = $("f-seq-id");
     if (!el) return;
     var acc = classifyAccession(el.value);
     var pdb = $("f-pdb-id");
@@ -533,10 +534,10 @@
     if (!form) {
       return { model: "venusrem2", recipe: "full", mutant_sites: "1", scoring_strategy: "wt" };
     }
-    syncStructAccession();
+    syncTargetAccession();
     var data = new FormData(form);
-    var structEl = $("f-struct-id");
-    var classified = classifyAccession(structEl ? structEl.value : "");
+    var targetEl = $("f-seq-id");
+    var classified = classifyAccession(targetEl ? targetEl.value : "");
     return {
       model: data.get("model") || "venusrem2",
       recipe: data.get("recipe") || "full",
@@ -1304,8 +1305,7 @@
     ]);
     renderSlotChips("slot-structure-chips", [
       snap.pdb ? "PDB · " + snap.pdb : "",
-      snap.pdb_id || "",
-      snap.uniprot_id || "",
+      !snap.pdb && (snap.pdb_id || snap.uniprot_id) ? "Fetch · " + (snap.pdb_id || snap.uniprot_id) : "",
     ]);
     renderSlotChips("slot-msa-chips", [snap.msa ? "MSA · " + snap.msa : ""]);
   }
@@ -1456,11 +1456,17 @@
         var id = encodeURIComponent(run.id);
         var dest = run.status === "done" ? "#/review/" + id : "#/runs/" + id;
         var actions =
-          '<a class="btn-link" href="' +
+          '<span class="run-actions"><a class="btn-link" href="' +
           dest +
           '">' +
-          (isLive(run.status) ? "Watch" : "Review") +
-          "</a>";
+          (isLive(run.status) ? "Watch" : run.status === "done" ? "Review" : "Open") +
+          '</a><button type="button" class="btn-link run-delete" data-delete-run="' +
+          esc(run.id) +
+          '" data-run-name="' +
+          esc(run.protein || run.id) +
+          '"' +
+          (isLive(run.status) ? ' disabled title="Cancel this run before deleting it"' : "") +
+          '>Delete</button></span>';
         return (
           "<tr data-id=\"" +
           esc(run.id) +
@@ -1827,7 +1833,7 @@
     var selMut = mutantField(state.selectedRow);
     var head =
       "<tr>" +
-      '<th class="experiment-check"><span class="sr-only">Experiment</span></th>' +
+      '<th class="experiment-check"><span class="sr-only">CSV shortlist</span></th>' +
       thSort("rank", "Rank") +
       thSort("mutant", "Mutation") +
       thSort("score", "Ranking score") +
@@ -1852,7 +1858,7 @@
           esc(mut) +
           '" aria-label="Add ' +
           esc(mut) +
-          ' to experiment"' +
+          ' to CSV shortlist"' +
           (checked ? " checked" : "") +
           '></td><td class="num rank-cell">' +
           esc(rank) +
@@ -1893,7 +1899,7 @@
       to +
       " of " +
       total +
-      " · ranking score, not ΔΔG" +
+      " · relative ranking score · higher is better" +
       "</span>" +
       '<span class="btn-row">' +
       '<button type="button" class="btn" id="btn-prev"' +
@@ -2080,7 +2086,7 @@
     return (
       '<section class="review-evidence" aria-live="polite"><div class="review-section-head"><div><span class="section-kicker">Decision support</span><h2>' +
       (state.evidenceMode === "compare" ? "Candidate comparison" : "Evidence for " + esc(mut)) +
-      '</h2></div><div class="evidence-head-actions"><span class="score-disclaimer">Ranking score · not ΔΔG</span>' +
+      '</h2></div><div class="evidence-head-actions"><span class="score-disclaimer" title="A relative model ranking signal, not a physical stability measurement">Relative score · higher ranks better</span>' +
       reviewModeTabsHtml() +
       '</div></div>' +
       (state.evidenceMode === "compare" ? compareEvidenceHtml() : singleEvidenceHtml(row)) +
@@ -2116,7 +2122,7 @@
     var blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "rem2-" + (state.route.id || "run") + "-experiment.csv";
+    a.download = "rem2-" + (state.route.id || "run") + "-shortlist.csv";
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
@@ -2240,6 +2246,53 @@
     if ($("mol-host")) maybeLoadViewer(state.job, []);
   }
 
+  function replaceReviewBlock(selector, html) {
+    var current = document.querySelector(selector);
+    if (!current) return;
+    var holder = document.createElement("div");
+    holder.innerHTML = html;
+    if (holder.firstChild) current.replaceWith(holder.firstChild);
+  }
+
+  function scheduleReviewViewUpdate() {
+    clearTimeout(reviewViewTimer);
+    reviewViewTimer = setTimeout(function () {
+      reviewViewTimer = null;
+      applyView();
+    }, 80);
+  }
+
+  function refreshReviewSelection(updateStructure) {
+    if (state.route.page !== "review") {
+      rerenderReview();
+      return;
+    }
+    var table = $("score-table");
+    if (table) {
+      var oldScroll = table.closest(".candidate-table-scroll");
+      var oldPager = oldScroll && oldScroll.nextElementSibling;
+      var holder = document.createElement("div");
+      holder.innerHTML = scoreTableHtml(state.job, state.scores);
+      var nextScroll = holder.firstChild;
+      var nextPager = nextScroll && nextScroll.nextElementSibling;
+      if (oldScroll && nextScroll) oldScroll.replaceWith(nextScroll);
+      if (oldPager && oldPager.classList.contains("pager") && nextPager) oldPager.replaceWith(nextPager);
+    }
+    replaceReviewBlock(".review-evidence", reviewEvidenceHtml());
+    replaceReviewBlock(".experiment-tray", experimentTrayHtml());
+    var structureSummary = document.querySelector(".structure-head h2 small");
+    if (structureSummary) {
+      var rows = experimentRows();
+      var positions = experimentMutationPositions();
+      structureSummary.textContent = rows.length
+        ? rows.length + " candidates · " + positions.length + " positions"
+        : mutantField(state.selectedRow) || "—";
+    }
+    refreshSequenceHighlight();
+    if (updateStructure !== false) scheduleReviewViewUpdate();
+    drawReviewHists();
+  }
+
   function histPanelHtml(id, title, extra) {
     return (
       '<div class="panel hist-box"><h2>' +
@@ -2309,19 +2362,19 @@
           ? { chain: "", resi: experimentMutation.pos, resn: experimentMutation.wt, b: null }
           : null;
         toggleExperimentRow(experimentRow, experimentInput.checked);
-        rerenderReview();
+        refreshReviewSelection(true);
         return;
       }
       var mode = ev.target.closest("[data-evidence-mode]");
       if (mode && host.contains(mode)) {
         state.evidenceMode = mode.getAttribute("data-evidence-mode") === "compare" ? "compare" : "evidence";
-        rerenderReview();
+        refreshReviewSelection(false);
         return;
       }
       var remove = ev.target.closest("[data-remove-experiment]");
       if (remove && host.contains(remove)) {
         delete state.experimentRows[remove.getAttribute("data-remove-experiment")];
-        rerenderReview();
+        refreshReviewSelection(true);
         return;
       }
       var th = ev.target.closest("th[data-sort]");
@@ -2338,7 +2391,7 @@
         state.picked = rowMutation
           ? { chain: "", resi: rowMutation.pos, resn: rowMutation.wt, b: null }
           : null;
-        rerenderReview();
+        refreshReviewSelection(true);
         return;
       }
       var id = ev.target.id;
@@ -2450,7 +2503,7 @@
 
   function patchScores() {
     if (state.route.page === "review") {
-      rerenderReview();
+      refreshReviewSelection();
       return;
     }
     var table = $("score-table");
@@ -2566,7 +2619,23 @@
     }
   }
 
+  async function deleteRun(id, name) {
+    if (!id) return;
+    var label = name || id;
+    if (!window.confirm('Delete "' + label + '" and its local inputs, logs, and results? This cannot be undone.')) return;
+    try {
+      await api("/api/runs/" + encodeURIComponent(id), { method: "DELETE" });
+      state.runs = (state.runs || []).filter(function (run) { return run.id !== id; });
+      if (state.activeRunId === id) setActiveRun("");
+      renderRuns();
+    } catch (err) {
+      flash(err.message || "Delete failed.");
+    }
+  }
+
   function teardownViewer() {
+    clearTimeout(reviewViewTimer);
+    reviewViewTimer = null;
     document.body.classList.remove("mol-fs");
     if (state.viewer) {
       try {
@@ -2609,7 +2678,7 @@
   }
 
   function bgColor() {
-    if (state.view.bg === "white") return "#f7f8f6";
+    if (state.view.bg === "white") return "#faf8f2";
     if (state.view.bg === "black") return "#000000";
     return "#11140f";
   }
@@ -2850,7 +2919,7 @@
     var candidates = experimentRows();
     var positions = experimentMutationPositions();
     if (candidates.length) {
-      return "<span>Experiment selection: " + candidates.length + " candidates across " + positions.length + " highlighted positions.</span>";
+      return "<span>CSV shortlist: " + candidates.length + " candidates across " + positions.length + " highlighted positions.</span>";
     }
     return "<span>Click a residue or select candidates in the table to inspect the structure.</span>";
   }
@@ -2923,12 +2992,12 @@
           { stick: { radius: 0.14, colorscheme: "amino" } }
         );
       } else if (side === "selection" && selPos.length) {
-        viewer.addStyle({ resi: selPos }, { stick: { radius: 0.16, color: "#8769e8" } });
+        viewer.addStyle({ resi: selPos }, { stick: { radius: 0.16, color: "#145246" } });
       }
       if (experimentPos.length) {
         viewer.addStyle(
           { resi: experimentPos },
-          { cartoon: { color: "#8769e8", thickness: 0.5 } }
+          { cartoon: { color: "#145246", thickness: 0.5 } }
         );
       }
       if (inspectedPos.length) {
@@ -3036,7 +3105,7 @@
       var viewer = mol.createViewer(host, {
         backgroundColor: bgColor(),
         antialias: true,
-        cartoonQuality: 10,
+        cartoonQuality: 5,
       });
       var fmt = "pdb";
       if (/\n\s*data_/m.test(state.pdbText) || /\n_atom_site\./.test(state.pdbText)) fmt = "cif";
@@ -3248,12 +3317,14 @@
       }
       return;
     }
-    await loadFastaIfNeeded(state.job);
-    await Promise.all([loadScores(), loadHistogram(id), loadLog(id), loadTop(id), loadFeatures(id)]);
+    // Paint the useful shell as soon as the run and first score page arrive.
+    // Structure features and 3D rendering can take longer, so hydrate them
+    // without holding the entire Review screen blank.
+    await Promise.all([loadFastaIfNeeded(state.job), loadScores()]);
     renderWorkspace();
-    if ($("mol-host")) {
-      await maybeLoadViewer(state.job, []);
-    }
+    var viewerReady = $("mol-host") ? maybeLoadViewer(state.job, []) : Promise.resolve();
+    await Promise.all([loadHistogram(id), loadLog(id), loadTop(id), loadFeatures(id), viewerReady]);
+    if (state.route.page === "review") refreshReviewSelection();
   }
 
   function topColumns(rows, primary) {
@@ -4103,6 +4174,15 @@
     var runsHost = $("runs-body");
     if (runsHost) {
       runsHost.addEventListener("click", function (ev) {
+        var deleteButton = ev.target.closest("[data-delete-run]");
+        if (deleteButton) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (!deleteButton.disabled) {
+            deleteRun(deleteButton.getAttribute("data-delete-run"), deleteButton.getAttribute("data-run-name"));
+          }
+          return;
+        }
         if (ev.target.closest("a")) return;
         var tr = ev.target.closest("tr[data-id]");
         if (tr) {

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -96,6 +97,18 @@ class RunStore:
                 jobs.append(job)
         jobs.sort(key=lambda item: item.get("created_at") or "", reverse=True)
         return jobs
+
+    def delete_run(self, run_id: str) -> bool:
+        """Delete one exact dashboard run directory and all of its artifacts."""
+        if not run_id or safe_stem(run_id, "") != run_id:
+            raise ValueError("invalid run id")
+        target = self.run_dir(run_id)
+        if not target.exists():
+            return False
+        if target.is_symlink() or target.resolve().parent != self.runs_dir.resolve():
+            raise ValueError("invalid run directory")
+        shutil.rmtree(target)
+        return True
 
     def append_log(self, run_id: str, text: str) -> None:
         if not text:
