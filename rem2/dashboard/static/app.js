@@ -236,10 +236,10 @@
     source: "REM2 paired evaluation on 217 ProteinGym substitution assays",
     source_url: "https://proteingym.org/benchmarks",
     pairs: [
-      { family: "ProSST ensemble", base_name: "ProSST ensemble", enhanced_name: "VenusREM2", inputs: ["seq", "str", "evo"], base: 0.524, enhanced: 0.556, delta: 0.032, protocol: "Six ProSST checkpoints · same internal pipeline" },
-      { family: "ESM-2 650M", base_name: "ESM-2 650M", enhanced_name: "ESM-2 650M + REM2", inputs: ["seq", "evo"], base: 0.418, enhanced: 0.468, delta: 0.050, protocol: "wt-marginals · same internal pipeline" },
-      { family: "SaProt AF-650M", base_name: "SaProt AF-650M", enhanced_name: "SaProt AF-650M + REM2", inputs: ["seq", "str", "evo"], base: 0.424, enhanced: 0.454, delta: 0.030, protocol: "wt-marginals · same internal pipeline" },
-      { family: "ESM-1v ensemble", base_name: "ESM-1v 5-seed ensemble", enhanced_name: "ESM-1v ensemble + REM2", inputs: ["seq", "evo"], base: 0.410, enhanced: 0.457, delta: 0.047, protocol: "wt-marginals · same internal pipeline" },
+      { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base_name: "ProSST-Ensemble (K=all)", enhanced_name: "ProSST-Ensemble (K=all, rem2)", base: 0.529, enhanced: 0.556, delta: 0.027, protocol: "Six-checkpoint score-level ensemble; same internal pipeline" },
+      { key: "esm2_650m_wt", family: "esm2_650m_wt", base_name: "esm2_650m_wt", enhanced_name: "esm2_650m_wt", base: 0.418, enhanced: 0.472, delta: 0.054, protocol: "Same model backbone; full REM2 recipe." },
+      { key: "saprot_wt", family: "saprot_wt", base_name: "saprot_wt", enhanced_name: "saprot_wt", base: 0.424, enhanced: 0.465, delta: 0.041, protocol: "Same model backbone; full REM2 recipe." },
+      { key: "esm1v_wt", family: "esm1v_wt", base_name: "esm1v_wt", enhanced_name: "esm1v_wt", base: 0.410, enhanced: 0.465, delta: 0.055, protocol: "Same model backbone; full REM2 recipe." },
     ],
     stages: [
       { name: "VenusREM2 · rem2", score: 0.556, note: "+ pLDDT (full)", highlight: true },
@@ -248,7 +248,7 @@
       { name: "VenusREM2 · adaptive mix", score: 0.542, note: "entropy-α MSA" },
       { name: "VenusREM2 · raw", score: 0.524, note: "uncalibrated ProSST ensemble" },
     ],
-    function_scores: { activity: 0.541, binding: 0.495, expression: 0.557, "organismal fitness": 0.494, stability: 0.691 },
+    function_scores: { activity: 0.539, binding: 0.499, expression: 0.562, "organismal fitness": 0.483, stability: 0.698 },
   }];
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
 
@@ -271,6 +271,9 @@
     board: FALLBACK_BOARD,
     boardId: "substitutions",
     benchmarkId: "proteingym",
+    benchmarkMetric: "spearman",
+    benchmarkQuery: "",
+    benchmarkLimit: 12,
     features: null,
     runs: [],
     job: null,
@@ -1183,34 +1186,68 @@
     }).join("");
   }
 
-  function benchmarkScorePanel(title, kicker, rows, field) {
-    var ranked = rows.slice().sort(function (a, b) { return Number(b[field]) - Number(a[field]); });
+  function benchmarkMetricValue(row, metric, field) {
+    var values = row.metrics && row.metrics[metric];
+    if (values) return Number(values[field === "enhanced" ? "rem2" : field]);
+    return Number(row[field]);
+  }
+
+  function benchmarkMetricDelta(row, metric) {
+    var values = row.metrics && row.metrics[metric];
+    if (values) return Number(values.delta);
+    return Number(row.delta);
+  }
+
+  function signed(value, digits) {
+    var number = Number(value);
+    return (number >= 0 ? "+" : "") + number.toFixed(digits == null ? 3 : digits);
+  }
+
+  function benchmarkRows(benchmark) {
+    var metric = state.benchmarkMetric || "spearman";
+    var query = String(state.benchmarkQuery || "").trim().toLowerCase();
+    var rows = (benchmark.pairs || []).filter(function (row) {
+      if ((!row.metrics || !row.metrics[metric]) && metric !== "spearman") return false;
+      if (!query) return true;
+      return [row.key, row.base_name, row.enhanced_name, row.protocol].join(" ").toLowerCase().indexOf(query) >= 0;
+    }).sort(function (a, b) {
+      return benchmarkMetricValue(b, metric, "enhanced") - benchmarkMetricValue(a, metric, "enhanced");
+    });
+    return rows.slice(0, Math.max(1, Number(state.benchmarkLimit) || 12));
+  }
+
+  function benchmarkScorePanel(title, kicker, rows, field, metricLabel) {
+    var metric = state.benchmarkMetric || "spearman";
+    var ranked = rows.slice().sort(function (a, b) {
+      return benchmarkMetricValue(b, metric, field) - benchmarkMetricValue(a, metric, field);
+    });
     var body = ranked.map(function (row, i) {
-      var score = Number(row[field]);
-      var pct = (Math.max(0, Math.min(0.65, score)) / 0.65 * 100).toFixed(1);
+      var score = benchmarkMetricValue(row, metric, field);
+      var pct = (Math.max(0, Math.min(1, score)) * 100).toFixed(1);
       var name = field === "base" ? row.base_name : row.enhanced_name;
       return '<div class="benchmark-rank-row"><span class="benchmark-rank">' + (i + 1) +
-        '</span><div class="benchmark-model"><strong>' + esc(name) + '</strong><span>' +
-        benchmarkTags(row.inputs) + '</span></div><div class="benchmark-score-cell"><strong>' +
+        '</span><div class="benchmark-model"><strong>' + esc(name) + '</strong><span class="benchmark-model-key">' +
+        esc(row.key || "") + '</span></div><div class="benchmark-score-cell"><strong>' +
         score.toFixed(3) + '</strong><span class="benchmark-mini-track"><i style="width:' + pct +
-        '%"></i></span>' + (field === "enhanced" ? '<small>+' + Number(row.delta).toFixed(3) + '</small>' : '') +
+        '%"></i></span>' + (field === "enhanced" ? '<small>' + signed(benchmarkMetricDelta(row, metric), 3) + '</small>' : '') +
         '</div></div>';
     }).join("");
     return '<section class="benchmark-score-panel ' + (field === "enhanced" ? "is-rem2" : "") +
       '"><div class="benchmark-panel-head"><div><span class="section-kicker">' + esc(kicker) +
-      '</span><h2>' + esc(title) + '</h2></div><span class="benchmark-panel-unit">Mean Spearman</span></div>' +
-      body + '</section>';
+      '</span><h2>' + esc(title) + '</h2></div><span class="benchmark-panel-unit">' + esc(metricLabel) +
+      '</span></div><div class="benchmark-score-list">' + body + '</div></section>';
   }
 
-  function benchmarkAuditTable(rows) {
+  function benchmarkAuditTable(rows, metricLabel) {
+    var metric = state.benchmarkMetric || "spearman";
     var body = rows.map(function (row) {
       return '<tr><td><strong>' + esc(row.family) +
-        '</strong></td><td class="num">' + Number(row.base).toFixed(3) + '</td><td class="num rem2-value">' +
-        Number(row.enhanced).toFixed(3) + '</td><td class="num lift-value">+' + Number(row.delta).toFixed(3) +
+        '</strong></td><td class="num">' + benchmarkMetricValue(row, metric, "base").toFixed(3) + '</td><td class="num rem2-value">' +
+        benchmarkMetricValue(row, metric, "enhanced").toFixed(3) + '</td><td class="num lift-value">' + signed(benchmarkMetricDelta(row, metric), 3) +
         '</td><td><small class="protocol-copy">' + esc(row.protocol) + '</small></td></tr>';
     }).join("");
     return '<div class="benchmark-audit"><div class="benchmark-section-title"><div><span class="section-kicker">Paired results</span>' +
-      '<h2>Same backbone, one evaluation pipeline</h2></div><p>The lift is always calculated against the matching internal Base result.</p></div>' +
+      '<h2>' + esc(metricLabel) + ' · same backbone</h2></div><p>The lift is always calculated against the matching internal Base result.</p></div>' +
       '<div class="benchmark-table-scroll"><table class="benchmark-compare-table"><thead><tr><th>Backbone</th><th>Internal base</th>' +
       '<th>Full +REM2</th><th>Lift</th><th>Evaluation</th></tr></thead><tbody>' + body +
       '</tbody></table></div></div>';
@@ -1223,13 +1260,18 @@
       return '<div class="benchmark-metric"><span>' + esc(name) + '</span><strong>' + value.toFixed(3) +
         '</strong><i><b style="width:' + (value / 0.75 * 100).toFixed(1) + '%"></b></i></div>';
     }).join("");
-    var stages = (benchmark.stages || []).map(function (row) {
-      return '<div class="benchmark-stage"><span><strong>' + esc(row.name) + '</strong><small>' + esc(row.note || "") +
-        '</small></span><b>' + Number(row.score).toFixed(3) + '</b></div>';
+    var ensemble = (benchmark.pairs || []).filter(function (row) { return row.key === "prosst_ensemble"; })[0];
+    var metrics = benchmark.metrics || [];
+    var metricRows = metrics.map(function (item) {
+      var values = ensemble && ensemble.metrics && ensemble.metrics[item.id];
+      if (!values) return "";
+      return '<div class="benchmark-stage"><span><strong>' + esc(item.label) + '</strong><small>Base ' +
+        Number(values.base).toFixed(3) + '</small></span><b>' + Number(values.rem2).toFixed(3) +
+        '<small>' + signed(Number(values.delta), 3) + '</small></b></div>';
     }).join("");
     return '<div class="benchmark-detail-grid"><section><div class="benchmark-panel-head"><div><span class="section-kicker">VenusREM2</span>' +
       '<h2>Performance by function</h2></div></div>' + fnRows + '</section><section><div class="benchmark-panel-head"><div>' +
-      '<span class="section-kicker">Recipe evidence</span><h2>ProSST ensemble ablation</h2></div></div>' + stages + '</section></div>';
+      '<span class="section-kicker">Metric coverage</span><h2>ProSST ensemble · Base to REM2</h2></div></div>' + metricRows + '</section></div>';
   }
 
   function renderProductBenchmark(host, benchmark, catalog) {
@@ -1237,16 +1279,28 @@
       return '<button type="button" class="benchmark-tab' + (item.id === benchmark.id ? " is-on" : "") +
         '" data-benchmark="' + esc(item.id) + '">' + esc(item.label || item.title) + '</button>';
     }).join("");
-    var pairs = benchmark.pairs || [];
+    var allPairs = benchmark.pairs || [];
+    var pairs = benchmarkRows(benchmark);
+    var metrics = benchmark.metrics || [{ id: "spearman", label: "Spearman" }];
+    var activeMetric = metrics.filter(function (item) { return item.id === state.benchmarkMetric; })[0] || metrics[0];
+    var metricTabs = metrics.map(function (item) {
+      return '<button type="button" class="benchmark-metric-tab' + (item.id === activeMetric.id ? " is-on" : "") +
+        '" data-benchmark-metric="' + esc(item.id) + '">' + esc(item.label) + '</button>';
+    }).join("");
+    var showingAll = Number(state.benchmarkLimit) >= allPairs.length;
     host.innerHTML = '<div class="benchmark-tabs" id="benchmark-tabs" role="tablist" aria-label="Benchmark dataset">' + tabs +
       '</div><header class="benchmark-board-head"><div><span class="section-kicker">Benchmark</span><h2>' +
       esc(benchmark.title) + '</h2><p>' + esc(benchmark.description || "") + '</p></div><dl><div><dt>Assays</dt><dd>' +
       esc(benchmark.n) + '</dd></div><div><dt>Setting</dt><dd>' + esc(benchmark.setting) + '</dd></div><div><dt>Metric</dt><dd>' +
       esc(benchmark.metric) + '</dd></div></dl></header><div class="benchmark-source-line"><span>Source</span> ' +
-      esc(benchmark.source || "") + '</div><div class="benchmark-dual">' +
-      benchmarkScorePanel("Foundation models", "Base", pairs, "base") +
-      benchmarkScorePanel("With REM2", "Enhanced", pairs, "enhanced") + '</div>' +
-      benchmarkAuditTable(pairs) + benchmarkDetails(benchmark);
+      esc(benchmark.source || "") + '</div><div class="benchmark-toolbar"><div class="benchmark-metric-tabs" role="tablist" aria-label="Metric">' +
+      metricTabs + '</div><label class="benchmark-search"><span>Search models</span><input type="search" data-benchmark-query value="' +
+      esc(state.benchmarkQuery || "") + '" placeholder="ESM, ProSST, SaProt…"></label><button type="button" class="btn btn-quiet" data-benchmark-limit>' +
+      (showingAll ? "Show top 12" : "Show all " + allPairs.length) + '</button></div><p class="benchmark-result-count">Showing ' +
+      pairs.length + ' of ' + allPairs.length + ' paired models · ranked by REM2 ' + esc(activeMetric.label) + '</p><div class="benchmark-dual">' +
+      benchmarkScorePanel("Foundation models", "Base", pairs, "base", activeMetric.label) +
+      benchmarkScorePanel("With REM2", "Enhanced", pairs, "enhanced", activeMetric.label) + '</div>' +
+      benchmarkAuditTable(pairs, activeMetric.label) + benchmarkDetails(benchmark);
   }
 
   function renderLeaderboard() {
@@ -4127,10 +4181,42 @@
     var benchmarkHost = $("pg-board");
     if (benchmarkHost) {
       benchmarkHost.addEventListener("click", function (ev) {
-        var btn = ev.target.closest("[data-benchmark]");
-        if (!btn) return;
-        state.benchmarkId = btn.getAttribute("data-benchmark");
-        renderLeaderboard();
+        var metricBtn = ev.target.closest("[data-benchmark-metric]");
+        if (metricBtn) {
+          state.benchmarkMetric = metricBtn.getAttribute("data-benchmark-metric");
+          renderLeaderboard();
+          return;
+        }
+        var limitBtn = ev.target.closest("[data-benchmark-limit]");
+        if (limitBtn) {
+          var benchmark = currentBenchmark();
+          var count = (benchmark && benchmark.pairs || []).length;
+          state.benchmarkLimit = Number(state.benchmarkLimit) >= count ? 12 : count;
+          renderLeaderboard();
+          return;
+        }
+        var benchmarkBtn = ev.target.closest("[data-benchmark]");
+        if (benchmarkBtn) {
+          state.benchmarkId = benchmarkBtn.getAttribute("data-benchmark");
+          state.benchmarkMetric = "spearman";
+          state.benchmarkQuery = "";
+          state.benchmarkLimit = 12;
+          renderLeaderboard();
+        }
+      });
+      var benchmarkSearchTimer = null;
+      benchmarkHost.addEventListener("input", function (ev) {
+        if (!ev.target.matches("[data-benchmark-query]")) return;
+        state.benchmarkQuery = ev.target.value;
+        clearTimeout(benchmarkSearchTimer);
+        benchmarkSearchTimer = setTimeout(function () {
+          renderLeaderboard();
+          var next = benchmarkHost.querySelector("[data-benchmark-query]");
+          if (next) {
+            next.focus();
+            next.setSelectionRange(next.value.length, next.value.length);
+          }
+        }, 180);
       });
     }
     function bindSlotDrop(id, slot) {

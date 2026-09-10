@@ -59,6 +59,7 @@ this.classifyIntakeFile = classifyIntakeFile;
 this.currentBoard = currentBoard;
 this.currentBenchmark = currentBenchmark;
 this.benchmarkScorePanel = benchmarkScorePanel;
+this.benchmarkRows = benchmarkRows;
 `;
 
 const context = vm.createContext({
@@ -367,15 +368,35 @@ check("product benchmark compares the same base with REM2", () => {
   const benchmark = context.currentBenchmark();
   assert.strictEqual(benchmark.id, "proteingym");
   assert.strictEqual(benchmark.pairs.length, 4);
-  const prosst = benchmark.pairs.find((row) => row.family === "ProSST ensemble");
-  assert.strictEqual(prosst.base, 0.524);
+  const prosst = benchmark.pairs.find((row) => row.key === "prosst_ensemble");
+  assert.strictEqual(prosst.base, 0.529);
   assert.strictEqual(prosst.enhanced, 0.556);
-  assert.strictEqual(prosst.delta, 0.032);
-  const saprot = benchmark.pairs.find((row) => row.family === "SaProt AF-650M");
+  assert.strictEqual(prosst.delta, 0.027);
+  const saprot = benchmark.pairs.find((row) => row.key === "saprot_wt");
   assert.strictEqual(Object.prototype.hasOwnProperty.call(saprot, "official_reference"), false);
-  const enhanced = context.benchmarkScorePanel("With REM2", "Enhanced", benchmark.pairs, "enhanced");
-  assert.ok(enhanced.includes("ESM-2 650M + REM2"));
-  assert.ok(enhanced.includes("+0.050"));
+  const enhanced = context.benchmarkScorePanel("With REM2", "Enhanced", benchmark.pairs, "enhanced", "Spearman");
+  assert.ok(enhanced.includes("esm2_650m_wt"));
+  assert.ok(enhanced.includes("+0.054"));
+});
+
+check("benchmark metric and model filters preserve paired rows", () => {
+  const original = context.state.catalog;
+  context.state.catalog = { default_benchmark: "proteingym", benchmarks: [{
+    id: "proteingym",
+    pairs: [
+      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", protocol: "paired", metrics: { ndcg: { base: 0.7, rem2: 0.8, delta: 0.1 } } },
+      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", protocol: "paired", metrics: { ndcg: { base: 0.75, rem2: 0.76, delta: 0.01 } } },
+    ],
+  }] };
+  context.state.benchmarkMetric = "ndcg";
+  context.state.benchmarkQuery = "alpha";
+  context.state.benchmarkLimit = 12;
+  const rows = context.benchmarkRows(context.currentBenchmark());
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].key, "alpha");
+  context.state.catalog = original;
+  context.state.benchmarkMetric = "spearman";
+  context.state.benchmarkQuery = "";
 });
 
 check("model picker groups by series", () => {

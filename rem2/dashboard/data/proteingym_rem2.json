@@ -1,0 +1,1977 @@
+{
+  "benchmark": "ProteinGym",
+  "revision": 461,
+  "assays": 217,
+  "source": "PG_Raw_vs_REM2",
+  "metrics": [
+    {
+      "id": "spearman",
+      "label": "Spearman"
+    },
+    {
+      "id": "ndcg",
+      "label": "NDCG"
+    },
+    {
+      "id": "auc",
+      "label": "AUC"
+    },
+    {
+      "id": "mcc",
+      "label": "MCC"
+    },
+    {
+      "id": "top_recall",
+      "label": "Top recall"
+    }
+  ],
+  "pairs": [
+    {
+      "key": "prosst_ensemble",
+      "base_name": "ProSST-Ensemble (K=all)",
+      "rem2_name": "ProSST-Ensemble (K=all, rem2)",
+      "notes": "ProSST K-series (20/128/512/1024/2048/4096) score-level ensemble; raw ens + recipe ens w=0.85; consistent new-CCD components",
+      "metrics": {
+        "spearman": {
+          "base": 0.529,
+          "rem2": 0.556,
+          "delta": 0.027
+        },
+        "ndcg": {
+          "base": 0.793,
+          "rem2": 0.808,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.788,
+          "rem2": 0.802,
+          "delta": 0.014
+        },
+        "mcc": {
+          "base": 0.408,
+          "rem2": 0.431,
+          "delta": 0.023
+        },
+        "top_recall": {
+          "base": 0.258,
+          "rem2": 0.266,
+          "delta": 0.008
+        }
+      }
+    },
+    {
+      "key": "prosst_k4096",
+      "base_name": "ProSST (K=4096)",
+      "rem2_name": "ProSST (K=4096, rem2)",
+      "notes": "ProteinGym-style ProSST (K=4096); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.498,
+          "rem2": 0.536,
+          "delta": 0.038
+        },
+        "ndcg": {
+          "base": 0.774,
+          "rem2": 0.795,
+          "delta": 0.021
+        },
+        "auc": {
+          "base": 0.773,
+          "rem2": 0.792,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.385,
+          "rem2": 0.416,
+          "delta": 0.031
+        },
+        "top_recall": {
+          "base": 0.232,
+          "rem2": 0.253,
+          "delta": 0.021
+        }
+      }
+    },
+    {
+      "key": "prosst_k2048",
+      "base_name": "ProSST (K=2048)",
+      "rem2_name": "ProSST (K=2048, rem2)",
+      "notes": "ProteinGym-style ProSST (K=2048); raw vs full 4-module rem2 (MSA+CCD+RSA+pLDDT)",
+      "metrics": {
+        "spearman": {
+          "base": 0.507,
+          "rem2": 0.531,
+          "delta": 0.024
+        },
+        "ndcg": {
+          "base": 0.757,
+          "rem2": 0.773,
+          "delta": 0.016
+        },
+        "auc": {
+          "base": 0.777,
+          "rem2": 0.789,
+          "delta": 0.012
+        },
+        "mcc": {
+          "base": 0.398,
+          "rem2": 0.415,
+          "delta": 0.017
+        },
+        "top_recall": {
+          "base": 0.236,
+          "rem2": 0.245,
+          "delta": 0.009
+        }
+      }
+    },
+    {
+      "key": "prosst_k1024",
+      "base_name": "ProSST (K=1024)",
+      "rem2_name": "ProSST (K=1024, rem2)",
+      "notes": "ProteinGym-style ProSST (K=1024); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.485,
+          "rem2": 0.527,
+          "delta": 0.042
+        },
+        "ndcg": {
+          "base": 0.761,
+          "rem2": 0.785,
+          "delta": 0.024
+        },
+        "auc": {
+          "base": 0.764,
+          "rem2": 0.786,
+          "delta": 0.022
+        },
+        "mcc": {
+          "base": 0.372,
+          "rem2": 0.406,
+          "delta": 0.034
+        },
+        "top_recall": {
+          "base": 0.23,
+          "rem2": 0.248,
+          "delta": 0.018
+        }
+      }
+    },
+    {
+      "key": "prosst_k128",
+      "base_name": "ProSST (K=128)",
+      "rem2_name": "ProSST (K=128, rem2)",
+      "notes": "ProteinGym-style ProSST (K=128); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.469,
+          "rem2": 0.52,
+          "delta": 0.051
+        },
+        "ndcg": {
+          "base": 0.754,
+          "rem2": 0.786,
+          "delta": 0.032
+        },
+        "auc": {
+          "base": 0.757,
+          "rem2": 0.783,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.363,
+          "rem2": 0.404,
+          "delta": 0.041
+        },
+        "top_recall": {
+          "base": 0.227,
+          "rem2": 0.251,
+          "delta": 0.024
+        }
+      }
+    },
+    {
+      "key": "prosst_k512",
+      "base_name": "ProSST (K=512)",
+      "rem2_name": "ProSST (K=512, rem2)",
+      "notes": "ProteinGym-style ProSST (K=512); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.471,
+          "rem2": 0.52,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.759,
+          "rem2": 0.787,
+          "delta": 0.028
+        },
+        "auc": {
+          "base": 0.757,
+          "rem2": 0.782,
+          "delta": 0.025
+        },
+        "mcc": {
+          "base": 0.36,
+          "rem2": 0.401,
+          "delta": 0.041
+        },
+        "top_recall": {
+          "base": 0.222,
+          "rem2": 0.246,
+          "delta": 0.024
+        }
+      }
+    },
+    {
+      "key": "prosst_k20",
+      "base_name": "ProSST (K=20)",
+      "rem2_name": "ProSST (K=20, rem2)",
+      "notes": "ProteinGym-style ProSST (K=20); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.438,
+          "rem2": 0.506,
+          "delta": 0.068
+        },
+        "ndcg": {
+          "base": 0.745,
+          "rem2": 0.784,
+          "delta": 0.039
+        },
+        "auc": {
+          "base": 0.739,
+          "rem2": 0.775,
+          "delta": 0.036
+        },
+        "mcc": {
+          "base": 0.336,
+          "rem2": 0.391,
+          "delta": 0.055
+        },
+        "top_recall": {
+          "base": 0.21,
+          "rem2": 0.241,
+          "delta": 0.031
+        }
+      }
+    },
+    {
+      "key": "s3f_wt",
+      "base_name": "s3f_wt",
+      "rem2_name": "s3f_wt",
+      "notes": "ESM-style: raw+rem2 both wt-marginals LxV (no native hybrid)",
+      "metrics": {
+        "spearman": {
+          "base": 0.46,
+          "rem2": 0.488,
+          "delta": 0.028
+        },
+        "ndcg": {
+          "base": 0.773,
+          "rem2": 0.784,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.752,
+          "rem2": 0.767,
+          "delta": 0.015
+        },
+        "mcc": {
+          "base": 0.361,
+          "rem2": 0.382,
+          "delta": 0.021
+        },
+        "top_recall": {
+          "base": 0.233,
+          "rem2": 0.239,
+          "delta": 0.006
+        }
+      }
+    },
+    {
+      "key": "s3f_mask",
+      "base_name": "s3f_mask",
+      "rem2_name": "s3f_mask",
+      "notes": "ESM-style: raw+rem2 both masked-marginals LxV (no native hybrid)",
+      "metrics": {
+        "spearman": {
+          "base": 0.466,
+          "rem2": 0.487,
+          "delta": 0.021
+        },
+        "ndcg": {
+          "base": 0.77,
+          "rem2": 0.78,
+          "delta": 0.01
+        },
+        "auc": {
+          "base": 0.755,
+          "rem2": 0.766,
+          "delta": 0.011
+        },
+        "mcc": {
+          "base": 0.365,
+          "rem2": 0.382,
+          "delta": 0.017
+        },
+        "top_recall": {
+          "base": 0.237,
+          "rem2": 0.242,
+          "delta": 0.005
+        }
+      }
+    },
+    {
+      "key": "esm3",
+      "base_name": "esm3",
+      "rem2_name": "esm3",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.442,
+          "rem2": 0.484,
+          "delta": 0.042
+        },
+        "ndcg": {
+          "base": 0.767,
+          "rem2": 0.779,
+          "delta": 0.012
+        },
+        "auc": {
+          "base": 0.744,
+          "rem2": 0.766,
+          "delta": 0.022
+        },
+        "mcc": {
+          "base": 0.346,
+          "rem2": 0.379,
+          "delta": 0.033
+        },
+        "top_recall": {
+          "base": 0.228,
+          "rem2": 0.237,
+          "delta": 0.009
+        }
+      }
+    },
+    {
+      "key": "saprot_mask",
+      "base_name": "saprot_mask",
+      "rem2_name": "saprot_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.457,
+          "rem2": 0.484,
+          "delta": 0.027
+        },
+        "ndcg": {
+          "base": 0.769,
+          "rem2": 0.776,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.752,
+          "rem2": 0.766,
+          "delta": 0.014
+        },
+        "mcc": {
+          "base": 0.359,
+          "rem2": 0.38,
+          "delta": 0.021
+        },
+        "top_recall": {
+          "base": 0.234,
+          "rem2": 0.24,
+          "delta": 0.006
+        }
+      }
+    },
+    {
+      "key": "saprot650m_pdb_mask",
+      "base_name": "SaProt (650M_PDB, mask)",
+      "rem2_name": "SaProt (650M_PDB, mask)",
+      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=mask-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.463,
+          "rem2": 0.484,
+          "delta": 0.021
+        },
+        "ndcg": {
+          "base": 0.775,
+          "rem2": 0.781,
+          "delta": 0.006
+        },
+        "auc": {
+          "base": 0.756,
+          "rem2": 0.767,
+          "delta": 0.011
+        },
+        "mcc": {
+          "base": 0.365,
+          "rem2": 0.379,
+          "delta": 0.014
+        },
+        "top_recall": {
+          "base": 0.231,
+          "rem2": 0.237,
+          "delta": 0.006
+        }
+      }
+    },
+    {
+      "key": "protssn",
+      "base_name": "protssn",
+      "rem2_name": "protssn",
+      "notes": "ensmble",
+      "metrics": {
+        "spearman": {
+          "base": 0.451,
+          "rem2": 0.482,
+          "delta": 0.031
+        },
+        "ndcg": {
+          "base": 0.766,
+          "rem2": 0.781,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.748,
+          "rem2": 0.765,
+          "delta": 0.017
+        },
+        "mcc": {
+          "base": 0.353,
+          "rem2": 0.379,
+          "delta": 0.026
+        },
+        "top_recall": {
+          "base": 0.228,
+          "rem2": 0.234,
+          "delta": 0.006
+        }
+      }
+    },
+    {
+      "key": "esm2_650m_wt",
+      "base_name": "esm2_650m_wt",
+      "rem2_name": "esm2_650m_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.418,
+          "rem2": 0.472,
+          "delta": 0.054
+        },
+        "ndcg": {
+          "base": 0.751,
+          "rem2": 0.778,
+          "delta": 0.027
+        },
+        "auc": {
+          "base": 0.732,
+          "rem2": 0.76,
+          "delta": 0.028
+        },
+        "mcc": {
+          "base": 0.334,
+          "rem2": 0.369,
+          "delta": 0.035
+        },
+        "top_recall": {
+          "base": 0.214,
+          "rem2": 0.227,
+          "delta": 0.013
+        }
+      }
+    },
+    {
+      "key": "esm1v_wt",
+      "base_name": "esm1v_wt",
+      "rem2_name": "esm1v_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.41,
+          "rem2": 0.465,
+          "delta": 0.055
+        },
+        "ndcg": {
+          "base": 0.752,
+          "rem2": 0.776,
+          "delta": 0.024
+        },
+        "auc": {
+          "base": 0.727,
+          "rem2": 0.756,
+          "delta": 0.029
+        },
+        "mcc": {
+          "base": 0.324,
+          "rem2": 0.364,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.21,
+          "rem2": 0.224,
+          "delta": 0.014
+        }
+      }
+    },
+    {
+      "key": "esm2_650m_mask",
+      "base_name": "esm2_650m_mask",
+      "rem2_name": "esm2_650m_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.415,
+          "rem2": 0.465,
+          "delta": 0.05
+        },
+        "ndcg": {
+          "base": 0.748,
+          "rem2": 0.768,
+          "delta": 0.02
+        },
+        "auc": {
+          "base": 0.729,
+          "rem2": 0.756,
+          "delta": 0.027
+        },
+        "mcc": {
+          "base": 0.328,
+          "rem2": 0.366,
+          "delta": 0.038
+        },
+        "top_recall": {
+          "base": 0.217,
+          "rem2": 0.229,
+          "delta": 0.012
+        }
+      }
+    },
+    {
+      "key": "mifst",
+      "base_name": "mifst",
+      "rem2_name": "mifst",
+      "notes": "MIF-ST (Yang et al.); AF2 PDB; rem2 = α=0.8 + adaptive CCD + RSA/pLDDT above_mean",
+      "metrics": {
+        "spearman": {
+          "base": 0.43,
+          "rem2": 0.465,
+          "delta": 0.035
+        },
+        "ndcg": {
+          "base": 0.772,
+          "rem2": 0.78,
+          "delta": 0.008
+        },
+        "auc": {
+          "base": 0.736,
+          "rem2": 0.756,
+          "delta": 0.02
+        },
+        "mcc": {
+          "base": 0.339,
+          "rem2": 0.368,
+          "delta": 0.029
+        },
+        "top_recall": {
+          "base": 0.233,
+          "rem2": 0.238,
+          "delta": 0.005
+        }
+      }
+    },
+    {
+      "key": "saprot_wt",
+      "base_name": "saprot_wt",
+      "rem2_name": "saprot_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.424,
+          "rem2": 0.465,
+          "delta": 0.041
+        },
+        "ndcg": {
+          "base": 0.757,
+          "rem2": 0.776,
+          "delta": 0.019
+        },
+        "auc": {
+          "base": 0.735,
+          "rem2": 0.756,
+          "delta": 0.021
+        },
+        "mcc": {
+          "base": 0.335,
+          "rem2": 0.364,
+          "delta": 0.029
+        },
+        "top_recall": {
+          "base": 0.223,
+          "rem2": 0.233,
+          "delta": 0.01
+        }
+      }
+    },
+    {
+      "key": "saprot650m_pdb_wt",
+      "base_name": "SaProt (650M_PDB, wt)",
+      "rem2_name": "SaProt (650M_PDB, wt)",
+      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=wt-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.428,
+          "rem2": 0.462,
+          "delta": 0.034
+        },
+        "ndcg": {
+          "base": 0.766,
+          "rem2": 0.775,
+          "delta": 0.009
+        },
+        "auc": {
+          "base": 0.736,
+          "rem2": 0.755,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.336,
+          "rem2": 0.365,
+          "delta": 0.029
+        },
+        "top_recall": {
+          "base": 0.221,
+          "rem2": 0.229,
+          "delta": 0.008
+        }
+      }
+    },
+    {
+      "key": "esm2_150m_wt",
+      "base_name": "esm2_150m_wt",
+      "rem2_name": "esm2_150m_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.393,
+          "rem2": 0.462,
+          "delta": 0.069
+        },
+        "ndcg": {
+          "base": 0.736,
+          "rem2": 0.77,
+          "delta": 0.034
+        },
+        "auc": {
+          "base": 0.718,
+          "rem2": 0.755,
+          "delta": 0.037
+        },
+        "mcc": {
+          "base": 0.31,
+          "rem2": 0.36,
+          "delta": 0.05
+        },
+        "top_recall": {
+          "base": 0.21,
+          "rem2": 0.229,
+          "delta": 0.019
+        }
+      }
+    },
+    {
+      "key": "esm1v_mask",
+      "base_name": "esm1v_mask",
+      "rem2_name": "esm1v_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.407,
+          "rem2": 0.461,
+          "delta": 0.054
+        },
+        "ndcg": {
+          "base": 0.75,
+          "rem2": 0.763,
+          "delta": 0.013
+        },
+        "auc": {
+          "base": 0.724,
+          "rem2": 0.753,
+          "delta": 0.029
+        },
+        "mcc": {
+          "base": 0.32,
+          "rem2": 0.362,
+          "delta": 0.042
+        },
+        "top_recall": {
+          "base": 0.211,
+          "rem2": 0.222,
+          "delta": 0.011
+        }
+      }
+    },
+    {
+      "key": "esmc_600m",
+      "base_name": "esmc_600m",
+      "rem2_name": "esmc_600m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.407,
+          "rem2": 0.461,
+          "delta": 0.054
+        },
+        "ndcg": {
+          "base": 0.75,
+          "rem2": 0.766,
+          "delta": 0.016
+        },
+        "auc": {
+          "base": 0.726,
+          "rem2": 0.754,
+          "delta": 0.028
+        },
+        "mcc": {
+          "base": 0.322,
+          "rem2": 0.362,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.205,
+          "rem2": 0.217,
+          "delta": 0.012
+        }
+      }
+    },
+    {
+      "key": "esm2_3b_wt",
+      "base_name": "esm2_3b_wt",
+      "rem2_name": "esm2_3b_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.406,
+          "rem2": 0.461,
+          "delta": 0.055
+        },
+        "ndcg": {
+          "base": 0.759,
+          "rem2": 0.778,
+          "delta": 0.019
+        },
+        "auc": {
+          "base": 0.725,
+          "rem2": 0.754,
+          "delta": 0.029
+        },
+        "mcc": {
+          "base": 0.324,
+          "rem2": 0.363,
+          "delta": 0.039
+        },
+        "top_recall": {
+          "base": 0.213,
+          "rem2": 0.224,
+          "delta": 0.011
+        }
+      }
+    },
+    {
+      "key": "esm2_3b_mask",
+      "base_name": "esm2_3b_mask",
+      "rem2_name": "esm2_3b_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.407,
+          "rem2": 0.459,
+          "delta": 0.052
+        },
+        "ndcg": {
+          "base": 0.756,
+          "rem2": 0.771,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.724,
+          "rem2": 0.752,
+          "delta": 0.028
+        },
+        "mcc": {
+          "base": 0.321,
+          "rem2": 0.361,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.213,
+          "rem2": 0.225,
+          "delta": 0.012
+        }
+      }
+    },
+    {
+      "key": "saprot35m_af2_mask",
+      "base_name": "SaProt (35M_AF2, mask)",
+      "rem2_name": "SaProt (35M_AF2, mask)",
+      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=mask-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.408,
+          "rem2": 0.458,
+          "delta": 0.05
+        },
+        "ndcg": {
+          "base": 0.736,
+          "rem2": 0.754,
+          "delta": 0.018
+        },
+        "auc": {
+          "base": 0.724,
+          "rem2": 0.751,
+          "delta": 0.027
+        },
+        "mcc": {
+          "base": 0.318,
+          "rem2": 0.359,
+          "delta": 0.041
+        },
+        "top_recall": {
+          "base": 0.215,
+          "rem2": 0.23,
+          "delta": 0.015
+        }
+      }
+    },
+    {
+      "key": "esmc",
+      "base_name": "esmc",
+      "rem2_name": "esmc",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.409,
+          "rem2": 0.458,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.751,
+          "rem2": 0.762,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.728,
+          "rem2": 0.753,
+          "delta": 0.025
+        },
+        "mcc": {
+          "base": 0.322,
+          "rem2": 0.362,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.213,
+          "rem2": 0.219,
+          "delta": 0.006
+        }
+      }
+    },
+    {
+      "key": "esm1b_wt",
+      "base_name": "esm1b_wt",
+      "rem2_name": "esm1b_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.394,
+          "rem2": 0.457,
+          "delta": 0.063
+        },
+        "ndcg": {
+          "base": 0.747,
+          "rem2": 0.771,
+          "delta": 0.024
+        },
+        "auc": {
+          "base": 0.719,
+          "rem2": 0.752,
+          "delta": 0.033
+        },
+        "mcc": {
+          "base": 0.311,
+          "rem2": 0.36,
+          "delta": 0.049
+        },
+        "top_recall": {
+          "base": 0.202,
+          "rem2": 0.216,
+          "delta": 0.014
+        }
+      }
+    },
+    {
+      "key": "esmif",
+      "base_name": "esmif",
+      "rem2_name": "esmif",
+      "notes": "teacher force",
+      "metrics": {
+        "spearman": {
+          "base": 0.421,
+          "rem2": 0.453,
+          "delta": 0.032
+        },
+        "ndcg": {
+          "base": 0.747,
+          "rem2": 0.761,
+          "delta": 0.014
+        },
+        "auc": {
+          "base": 0.729,
+          "rem2": 0.747,
+          "delta": 0.018
+        },
+        "mcc": {
+          "base": 0.328,
+          "rem2": 0.354,
+          "delta": 0.026
+        },
+        "top_recall": {
+          "base": 0.223,
+          "rem2": 0.23,
+          "delta": 0.007
+        }
+      }
+    },
+    {
+      "key": "proteinmpnn",
+      "base_name": "ProteinMPNN (v_48_020)",
+      "rem2_name": "ProteinMPNN (v_48_020)",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.389,
+          "rem2": 0.451,
+          "delta": 0.062
+        },
+        "ndcg": {
+          "base": 0.746,
+          "rem2": 0.769,
+          "delta": 0.023
+        },
+        "auc": {
+          "base": 0.71,
+          "rem2": 0.744,
+          "delta": 0.034
+        },
+        "mcc": {
+          "base": 0.304,
+          "rem2": 0.349,
+          "delta": 0.045
+        },
+        "top_recall": {
+          "base": 0.226,
+          "rem2": 0.241,
+          "delta": 0.015
+        }
+      }
+    },
+    {
+      "key": "esm2_150m_mask",
+      "base_name": "esm2_150m_mask",
+      "rem2_name": "esm2_150m_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.388,
+          "rem2": 0.448,
+          "delta": 0.06
+        },
+        "ndcg": {
+          "base": 0.729,
+          "rem2": 0.748,
+          "delta": 0.019
+        },
+        "auc": {
+          "base": 0.715,
+          "rem2": 0.747,
+          "delta": 0.032
+        },
+        "mcc": {
+          "base": 0.304,
+          "rem2": 0.353,
+          "delta": 0.049
+        },
+        "top_recall": {
+          "base": 0.205,
+          "rem2": 0.219,
+          "delta": 0.014
+        }
+      }
+    },
+    {
+      "key": "esm1b_mask",
+      "base_name": "esm1b_mask",
+      "rem2_name": "esm1b_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.389,
+          "rem2": 0.448,
+          "delta": 0.059
+        },
+        "ndcg": {
+          "base": 0.742,
+          "rem2": 0.759,
+          "delta": 0.017
+        },
+        "auc": {
+          "base": 0.715,
+          "rem2": 0.747,
+          "delta": 0.032
+        },
+        "mcc": {
+          "base": 0.306,
+          "rem2": 0.355,
+          "delta": 0.049
+        },
+        "top_recall": {
+          "base": 0.202,
+          "rem2": 0.213,
+          "delta": 0.011
+        }
+      }
+    },
+    {
+      "key": "pmpnn_v_48_030",
+      "base_name": "ProteinMPNN (v_48_030)",
+      "rem2_name": "ProteinMPNN (v_48_030)",
+      "notes": "ProteinMPNN checkpoint v_48_030; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.381,
+          "rem2": 0.447,
+          "delta": 0.066
+        },
+        "ndcg": {
+          "base": 0.736,
+          "rem2": 0.766,
+          "delta": 0.03
+        },
+        "auc": {
+          "base": 0.707,
+          "rem2": 0.743,
+          "delta": 0.036
+        },
+        "mcc": {
+          "base": 0.296,
+          "rem2": 0.348,
+          "delta": 0.052
+        },
+        "top_recall": {
+          "base": 0.218,
+          "rem2": 0.238,
+          "delta": 0.02
+        }
+      }
+    },
+    {
+      "key": "pmpnn_v_48_010",
+      "base_name": "ProteinMPNN (v_48_010)",
+      "rem2_name": "ProteinMPNN (v_48_010)",
+      "notes": "ProteinMPNN checkpoint v_48_010; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.385,
+          "rem2": 0.446,
+          "delta": 0.061
+        },
+        "ndcg": {
+          "base": 0.747,
+          "rem2": 0.77,
+          "delta": 0.023
+        },
+        "auc": {
+          "base": 0.709,
+          "rem2": 0.742,
+          "delta": 0.033
+        },
+        "mcc": {
+          "base": 0.303,
+          "rem2": 0.346,
+          "delta": 0.043
+        },
+        "top_recall": {
+          "base": 0.225,
+          "rem2": 0.24,
+          "delta": 0.015
+        }
+      }
+    },
+    {
+      "key": "carp_640m",
+      "base_name": "carp_640m",
+      "rem2_name": "carp_640m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.39,
+          "rem2": 0.445,
+          "delta": 0.055
+        },
+        "ndcg": {
+          "base": 0.747,
+          "rem2": 0.764,
+          "delta": 0.017
+        },
+        "auc": {
+          "base": 0.716,
+          "rem2": 0.745,
+          "delta": 0.029
+        },
+        "mcc": {
+          "base": 0.307,
+          "rem2": 0.35,
+          "delta": 0.043
+        },
+        "top_recall": {
+          "base": 0.208,
+          "rem2": 0.22,
+          "delta": 0.012
+        }
+      }
+    },
+    {
+      "key": "saprot35m_af2_wt",
+      "base_name": "SaProt (35M_AF2, wt)",
+      "rem2_name": "SaProt (35M_AF2, wt)",
+      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=wt-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "metrics": {
+        "spearman": {
+          "base": 0.366,
+          "rem2": 0.444,
+          "delta": 0.078
+        },
+        "ndcg": {
+          "base": 0.726,
+          "rem2": 0.764,
+          "delta": 0.038
+        },
+        "auc": {
+          "base": 0.702,
+          "rem2": 0.743,
+          "delta": 0.041
+        },
+        "mcc": {
+          "base": 0.286,
+          "rem2": 0.342,
+          "delta": 0.056
+        },
+        "top_recall": {
+          "base": 0.2,
+          "rem2": 0.226,
+          "delta": 0.026
+        }
+      }
+    },
+    {
+      "key": "esm2_35m_wt",
+      "base_name": "esm2_35m_wt",
+      "rem2_name": "esm2_35m_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.329,
+          "rem2": 0.442,
+          "delta": 0.113
+        },
+        "ndcg": {
+          "base": 0.712,
+          "rem2": 0.765,
+          "delta": 0.053
+        },
+        "auc": {
+          "base": 0.682,
+          "rem2": 0.743,
+          "delta": 0.061
+        },
+        "mcc": {
+          "base": 0.257,
+          "rem2": 0.342,
+          "delta": 0.085
+        },
+        "top_recall": {
+          "base": 0.192,
+          "rem2": 0.223,
+          "delta": 0.031
+        }
+      }
+    },
+    {
+      "key": "pmpnn_v_48_002",
+      "base_name": "ProteinMPNN (v_48_002)",
+      "rem2_name": "ProteinMPNN (v_48_002)",
+      "notes": "ProteinMPNN checkpoint v_48_002; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.378,
+          "rem2": 0.437,
+          "delta": 0.059
+        },
+        "ndcg": {
+          "base": 0.741,
+          "rem2": 0.766,
+          "delta": 0.025
+        },
+        "auc": {
+          "base": 0.706,
+          "rem2": 0.738,
+          "delta": 0.032
+        },
+        "mcc": {
+          "base": 0.302,
+          "rem2": 0.34,
+          "delta": 0.038
+        },
+        "top_recall": {
+          "base": 0.218,
+          "rem2": 0.236,
+          "delta": 0.018
+        }
+      }
+    },
+    {
+      "key": "progen2_xl",
+      "base_name": "ProGen2-XL",
+      "rem2_name": "ProGen2-XL",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.351,
+          "rem2": 0.435,
+          "delta": 0.084
+        },
+        "ndcg": {
+          "base": 0.755,
+          "rem2": 0.775,
+          "delta": 0.02
+        },
+        "auc": {
+          "base": 0.694,
+          "rem2": 0.739,
+          "delta": 0.045
+        },
+        "mcc": {
+          "base": 0.275,
+          "rem2": 0.341,
+          "delta": 0.066
+        },
+        "top_recall": {
+          "base": 0.198,
+          "rem2": 0.212,
+          "delta": 0.014
+        }
+      }
+    },
+    {
+      "key": "progen2_m",
+      "base_name": "ProGen2-M",
+      "rem2_name": "ProGen2-M",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.337,
+          "rem2": 0.43,
+          "delta": 0.093
+        },
+        "ndcg": {
+          "base": 0.736,
+          "rem2": 0.767,
+          "delta": 0.031
+        },
+        "auc": {
+          "base": 0.687,
+          "rem2": 0.736,
+          "delta": 0.049
+        },
+        "mcc": {
+          "base": 0.266,
+          "rem2": 0.336,
+          "delta": 0.07
+        },
+        "top_recall": {
+          "base": 0.191,
+          "rem2": 0.215,
+          "delta": 0.024
+        }
+      }
+    },
+    {
+      "key": "progen2_b",
+      "base_name": "ProGen2-B",
+      "rem2_name": "ProGen2-B",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.33,
+          "rem2": 0.429,
+          "delta": 0.099
+        },
+        "ndcg": {
+          "base": 0.736,
+          "rem2": 0.768,
+          "delta": 0.032
+        },
+        "auc": {
+          "base": 0.682,
+          "rem2": 0.736,
+          "delta": 0.054
+        },
+        "mcc": {
+          "base": 0.259,
+          "rem2": 0.337,
+          "delta": 0.078
+        },
+        "top_recall": {
+          "base": 0.193,
+          "rem2": 0.214,
+          "delta": 0.021
+        }
+      }
+    },
+    {
+      "key": "pmpnn_soluble_v_48_010",
+      "base_name": "ProteinMPNN-Soluble (v_48_010)",
+      "rem2_name": "ProteinMPNN-Soluble (v_48_010)",
+      "notes": "ProteinMPNN checkpoint soluble_v_48_010; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.363,
+          "rem2": 0.428,
+          "delta": 0.065
+        },
+        "ndcg": {
+          "base": 0.735,
+          "rem2": 0.761,
+          "delta": 0.026
+        },
+        "auc": {
+          "base": 0.697,
+          "rem2": 0.733,
+          "delta": 0.036
+        },
+        "mcc": {
+          "base": 0.286,
+          "rem2": 0.33,
+          "delta": 0.044
+        },
+        "top_recall": {
+          "base": 0.215,
+          "rem2": 0.232,
+          "delta": 0.017
+        }
+      }
+    },
+    {
+      "key": "pmpnn_soluble_v_48_020",
+      "base_name": "ProteinMPNN-Soluble (v_48_020)",
+      "rem2_name": "ProteinMPNN-Soluble (v_48_020)",
+      "notes": "ProteinMPNN checkpoint soluble_v_48_020; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.361,
+          "rem2": 0.428,
+          "delta": 0.067
+        },
+        "ndcg": {
+          "base": 0.731,
+          "rem2": 0.757,
+          "delta": 0.026
+        },
+        "auc": {
+          "base": 0.696,
+          "rem2": 0.733,
+          "delta": 0.037
+        },
+        "mcc": {
+          "base": 0.283,
+          "rem2": 0.33,
+          "delta": 0.047
+        },
+        "top_recall": {
+          "base": 0.215,
+          "rem2": 0.228,
+          "delta": 0.013
+        }
+      }
+    },
+    {
+      "key": "progen3_3b",
+      "base_name": "progen3_3b",
+      "rem2_name": "progen3_3b",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.331,
+          "rem2": 0.426,
+          "delta": 0.095
+        },
+        "ndcg": {
+          "base": 0.744,
+          "rem2": 0.768,
+          "delta": 0.024
+        },
+        "auc": {
+          "base": 0.683,
+          "rem2": 0.734,
+          "delta": 0.051
+        },
+        "mcc": {
+          "base": 0.257,
+          "rem2": 0.333,
+          "delta": 0.076
+        },
+        "top_recall": {
+          "base": 0.195,
+          "rem2": 0.213,
+          "delta": 0.018
+        }
+      }
+    },
+    {
+      "key": "pmpnn_soluble_v_48_030",
+      "base_name": "ProteinMPNN-Soluble (v_48_030)",
+      "rem2_name": "ProteinMPNN-Soluble (v_48_030)",
+      "notes": "ProteinMPNN checkpoint soluble_v_48_030; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.353,
+          "rem2": 0.424,
+          "delta": 0.071
+        },
+        "ndcg": {
+          "base": 0.726,
+          "rem2": 0.756,
+          "delta": 0.03
+        },
+        "auc": {
+          "base": 0.691,
+          "rem2": 0.731,
+          "delta": 0.04
+        },
+        "mcc": {
+          "base": 0.273,
+          "rem2": 0.33,
+          "delta": 0.057
+        },
+        "top_recall": {
+          "base": 0.211,
+          "rem2": 0.227,
+          "delta": 0.016
+        }
+      }
+    },
+    {
+      "key": "esm2_35m_mask",
+      "base_name": "esm2_35m_mask",
+      "rem2_name": "esm2_35m_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.321,
+          "rem2": 0.423,
+          "delta": 0.102
+        },
+        "ndcg": {
+          "base": 0.705,
+          "rem2": 0.739,
+          "delta": 0.034
+        },
+        "auc": {
+          "base": 0.676,
+          "rem2": 0.732,
+          "delta": 0.056
+        },
+        "mcc": {
+          "base": 0.25,
+          "rem2": 0.331,
+          "delta": 0.081
+        },
+        "top_recall": {
+          "base": 0.186,
+          "rem2": 0.211,
+          "delta": 0.025
+        }
+      }
+    },
+    {
+      "key": "progen2",
+      "base_name": "ProGen2-L",
+      "rem2_name": "ProGen2-L",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.327,
+          "rem2": 0.422,
+          "delta": 0.095
+        },
+        "ndcg": {
+          "base": 0.737,
+          "rem2": 0.766,
+          "delta": 0.029
+        },
+        "auc": {
+          "base": 0.681,
+          "rem2": 0.732,
+          "delta": 0.051
+        },
+        "mcc": {
+          "base": 0.258,
+          "rem2": 0.333,
+          "delta": 0.075
+        },
+        "top_recall": {
+          "base": 0.192,
+          "rem2": 0.216,
+          "delta": 0.024
+        }
+      }
+    },
+    {
+      "key": "pmpnn_soluble_v_48_002",
+      "base_name": "ProteinMPNN-Soluble (v_48_002)",
+      "rem2_name": "ProteinMPNN-Soluble (v_48_002)",
+      "notes": "ProteinMPNN checkpoint soluble_v_48_002; teacher-force LxV; new-CCD rem2 (2026-08-07)",
+      "metrics": {
+        "spearman": {
+          "base": 0.357,
+          "rem2": 0.421,
+          "delta": 0.064
+        },
+        "ndcg": {
+          "base": 0.731,
+          "rem2": 0.759,
+          "delta": 0.028
+        },
+        "auc": {
+          "base": 0.695,
+          "rem2": 0.73,
+          "delta": 0.035
+        },
+        "mcc": {
+          "base": 0.282,
+          "rem2": 0.326,
+          "delta": 0.044
+        },
+        "top_recall": {
+          "base": 0.213,
+          "rem2": 0.228,
+          "delta": 0.015
+        }
+      }
+    },
+    {
+      "key": "esm2_8m_wt",
+      "base_name": "esm2_8m_wt",
+      "rem2_name": "esm2_8m_wt",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.251,
+          "rem2": 0.42,
+          "delta": 0.169
+        },
+        "ndcg": {
+          "base": 0.685,
+          "rem2": 0.761,
+          "delta": 0.076
+        },
+        "auc": {
+          "base": 0.641,
+          "rem2": 0.731,
+          "delta": 0.09
+        },
+        "mcc": {
+          "base": 0.196,
+          "rem2": 0.324,
+          "delta": 0.128
+        },
+        "top_recall": {
+          "base": 0.167,
+          "rem2": 0.213,
+          "delta": 0.046
+        }
+      }
+    },
+    {
+      "key": "rita_l",
+      "base_name": "rita_l",
+      "rem2_name": "rita_l",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.309,
+          "rem2": 0.419,
+          "delta": 0.11
+        },
+        "ndcg": {
+          "base": 0.727,
+          "rem2": 0.761,
+          "delta": 0.034
+        },
+        "auc": {
+          "base": 0.672,
+          "rem2": 0.732,
+          "delta": 0.06
+        },
+        "mcc": {
+          "base": 0.241,
+          "rem2": 0.331,
+          "delta": 0.09
+        },
+        "top_recall": {
+          "base": 0.18,
+          "rem2": 0.208,
+          "delta": 0.028
+        }
+      }
+    },
+    {
+      "key": "rita_xl",
+      "base_name": "rita_xl",
+      "rem2_name": "rita_xl",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.305,
+          "rem2": 0.417,
+          "delta": 0.112
+        },
+        "ndcg": {
+          "base": 0.731,
+          "rem2": 0.767,
+          "delta": 0.036
+        },
+        "auc": {
+          "base": 0.67,
+          "rem2": 0.731,
+          "delta": 0.061
+        },
+        "mcc": {
+          "base": 0.241,
+          "rem2": 0.329,
+          "delta": 0.088
+        },
+        "top_recall": {
+          "base": 0.179,
+          "rem2": 0.207,
+          "delta": 0.028
+        }
+      }
+    },
+    {
+      "key": "progen3_762m",
+      "base_name": "progen3_762m",
+      "rem2_name": "progen3_762m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.304,
+          "rem2": 0.416,
+          "delta": 0.112
+        },
+        "ndcg": {
+          "base": 0.719,
+          "rem2": 0.754,
+          "delta": 0.035
+        },
+        "auc": {
+          "base": 0.667,
+          "rem2": 0.728,
+          "delta": 0.061
+        },
+        "mcc": {
+          "base": 0.237,
+          "rem2": 0.322,
+          "delta": 0.085
+        },
+        "top_recall": {
+          "base": 0.181,
+          "rem2": 0.211,
+          "delta": 0.03
+        }
+      }
+    },
+    {
+      "key": "progen3_339m",
+      "base_name": "progen3_339m",
+      "rem2_name": "progen3_339m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.286,
+          "rem2": 0.416,
+          "delta": 0.13
+        },
+        "ndcg": {
+          "base": 0.708,
+          "rem2": 0.749,
+          "delta": 0.041
+        },
+        "auc": {
+          "base": 0.656,
+          "rem2": 0.727,
+          "delta": 0.071
+        },
+        "mcc": {
+          "base": 0.222,
+          "rem2": 0.325,
+          "delta": 0.103
+        },
+        "top_recall": {
+          "base": 0.176,
+          "rem2": 0.208,
+          "delta": 0.032
+        }
+      }
+    },
+    {
+      "key": "rita_m",
+      "base_name": "rita_m",
+      "rem2_name": "rita_m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.297,
+          "rem2": 0.414,
+          "delta": 0.117
+        },
+        "ndcg": {
+          "base": 0.714,
+          "rem2": 0.756,
+          "delta": 0.042
+        },
+        "auc": {
+          "base": 0.664,
+          "rem2": 0.727,
+          "delta": 0.063
+        },
+        "mcc": {
+          "base": 0.23,
+          "rem2": 0.323,
+          "delta": 0.093
+        },
+        "top_recall": {
+          "base": 0.177,
+          "rem2": 0.206,
+          "delta": 0.029
+        }
+      }
+    },
+    {
+      "key": "progen3",
+      "base_name": "progen3",
+      "rem2_name": "progen3",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.32,
+          "rem2": 0.413,
+          "delta": 0.093
+        },
+        "ndcg": {
+          "base": 0.732,
+          "rem2": 0.759,
+          "delta": 0.027
+        },
+        "auc": {
+          "base": 0.677,
+          "rem2": 0.726,
+          "delta": 0.049
+        },
+        "mcc": {
+          "base": 0.251,
+          "rem2": 0.323,
+          "delta": 0.072
+        },
+        "top_recall": {
+          "base": 0.191,
+          "rem2": 0.211,
+          "delta": 0.02
+        }
+      }
+    },
+    {
+      "key": "progen3_219m",
+      "base_name": "progen3_219m",
+      "rem2_name": "progen3_219m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.264,
+          "rem2": 0.411,
+          "delta": 0.147
+        },
+        "ndcg": {
+          "base": 0.698,
+          "rem2": 0.748,
+          "delta": 0.05
+        },
+        "auc": {
+          "base": 0.643,
+          "rem2": 0.724,
+          "delta": 0.081
+        },
+        "mcc": {
+          "base": 0.203,
+          "rem2": 0.319,
+          "delta": 0.116
+        },
+        "top_recall": {
+          "base": 0.175,
+          "rem2": 0.215,
+          "delta": 0.04
+        }
+      }
+    },
+    {
+      "key": "progen2_s",
+      "base_name": "ProGen2-S",
+      "rem2_name": "ProGen2-S",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.288,
+          "rem2": 0.408,
+          "delta": 0.12
+        },
+        "ndcg": {
+          "base": 0.708,
+          "rem2": 0.749,
+          "delta": 0.041
+        },
+        "auc": {
+          "base": 0.658,
+          "rem2": 0.723,
+          "delta": 0.065
+        },
+        "mcc": {
+          "base": 0.223,
+          "rem2": 0.317,
+          "delta": 0.094
+        },
+        "top_recall": {
+          "base": 0.175,
+          "rem2": 0.209,
+          "delta": 0.034
+        }
+      }
+    },
+    {
+      "key": "progen3_112m",
+      "base_name": "progen3_112m",
+      "rem2_name": "progen3_112m",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.232,
+          "rem2": 0.405,
+          "delta": 0.173
+        },
+        "ndcg": {
+          "base": 0.68,
+          "rem2": 0.739,
+          "delta": 0.059
+        },
+        "auc": {
+          "base": 0.628,
+          "rem2": 0.722,
+          "delta": 0.094
+        },
+        "mcc": {
+          "base": 0.179,
+          "rem2": 0.318,
+          "delta": 0.139
+        },
+        "top_recall": {
+          "base": 0.16,
+          "rem2": 0.203,
+          "delta": 0.043
+        }
+      }
+    },
+    {
+      "key": "rita_s",
+      "base_name": "rita_s",
+      "rem2_name": "rita_s",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.254,
+          "rem2": 0.403,
+          "delta": 0.149
+        },
+        "ndcg": {
+          "base": 0.696,
+          "rem2": 0.747,
+          "delta": 0.051
+        },
+        "auc": {
+          "base": 0.641,
+          "rem2": 0.722,
+          "delta": 0.081
+        },
+        "mcc": {
+          "base": 0.203,
+          "rem2": 0.319,
+          "delta": 0.116
+        },
+        "top_recall": {
+          "base": 0.17,
+          "rem2": 0.202,
+          "delta": 0.032
+        }
+      }
+    },
+    {
+      "key": "esm2_8m_mask",
+      "base_name": "esm2_8m_mask",
+      "rem2_name": "esm2_8m_mask",
+      "notes": "Same model backbone; full REM2 recipe.",
+      "metrics": {
+        "spearman": {
+          "base": 0.223,
+          "rem2": 0.389,
+          "delta": 0.166
+        },
+        "ndcg": {
+          "base": 0.667,
+          "rem2": 0.728,
+          "delta": 0.061
+        },
+        "auc": {
+          "base": 0.623,
+          "rem2": 0.714,
+          "delta": 0.091
+        },
+        "mcc": {
+          "base": 0.17,
+          "rem2": 0.307,
+          "delta": 0.137
+        },
+        "top_recall": {
+          "base": 0.153,
+          "rem2": 0.196,
+          "delta": 0.043
+        }
+      }
+    }
+  ]
+}

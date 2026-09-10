@@ -161,6 +161,7 @@ rem2 = [
   "examples/**/*",
   "dashboard/static/**/*",
   "dashboard/static/vendor/**/*",
+  "dashboard/data/*.json",
 ]
 
 [tool.setuptools.exclude-package-data]

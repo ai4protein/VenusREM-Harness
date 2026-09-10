@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 # Official 217-assay Average Spearman and the five ProteinGym function types.
@@ -204,57 +206,32 @@ _VENUSREM2_STAGES = [
     {"name": "VenusREM2 · raw", "score": 0.524, "note": "uncalibrated ProSST ensemble", "recipe": "raw"},
 ]
 
-# Paired, same-pipeline ProteinGym results from the REM2 paper.  These are the
-# values that answer the product question directly: what changes when REM2 is
-# added to a fixed backbone? Public leaderboard values intentionally stay out
-# of the product payload because their evaluation protocols are not guaranteed
-# to match this internal paired evaluation.
-_PROTEINGYM_REM2_PAIRS = [
-    {
-        "family": "ProSST ensemble",
-        "base_name": "ProSST ensemble",
-        "enhanced_name": "VenusREM2",
-        "inputs": ["seq", "str", "evo"],
-        "base": 0.524,
-        "enhanced": 0.556,
-        "protocol": "Six ProSST checkpoints · same internal pipeline",
-    },
-    {
-        "family": "ESM-2 650M",
-        "base_name": "ESM-2 650M",
-        "enhanced_name": "ESM-2 650M + REM2",
-        "inputs": ["seq", "evo"],
-        "base": 0.418,
-        "enhanced": 0.468,
-        "protocol": "wt-marginals · same internal pipeline",
-    },
-    {
-        "family": "SaProt AF-650M",
-        "base_name": "SaProt AF-650M",
-        "enhanced_name": "SaProt AF-650M + REM2",
-        "inputs": ["seq", "str", "evo"],
-        "base": 0.424,
-        "enhanced": 0.454,
-        "protocol": "wt-marginals · same internal pipeline",
-    },
-    {
-        "family": "ESM-1v ensemble",
-        "base_name": "ESM-1v 5-seed ensemble",
-        "enhanced_name": "ESM-1v ensemble + REM2",
-        "inputs": ["seq", "evo"],
-        "base": 0.410,
-        "enhanced": 0.457,
-        "protocol": "wt-marginals · same internal pipeline",
-    },
-]
+_PROTEINGYM_REM2_DATA = Path(__file__).with_name("data") / "proteingym_rem2.json"
+
+
+def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    raw_data = json.loads(_PROTEINGYM_REM2_DATA.read_text(encoding="utf-8"))
+    pairs = []
+    for raw in raw_data["pairs"]:
+        spearman = raw["metrics"]["spearman"]
+        pairs.append(
+            {
+                "key": raw["key"],
+                "family": raw["base_name"],
+                "base_name": raw["base_name"],
+                "enhanced_name": raw["rem2_name"],
+                "base": spearman["base"],
+                "enhanced": spearman["rem2"],
+                "delta": spearman["delta"],
+                "protocol": raw["notes"],
+                "metrics": raw["metrics"],
+            }
+        )
+    return pairs, raw_data["metrics"]
 
 
 def _proteingym_product_benchmark() -> dict[str, Any]:
-    pairs = []
-    for raw in _PROTEINGYM_REM2_PAIRS:
-        row = dict(raw)
-        row["delta"] = round(float(row["enhanced"]) - float(row["base"]), 3)
-        pairs.append(row)
+    pairs, metrics = _proteingym_pairs()
     return {
         "id": "proteingym",
         "label": "ProteinGym",
@@ -263,17 +240,18 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "status": "ready",
         "n": 217,
         "setting": "Zero-shot · substitutions",
-        "metric": "Mean Spearman",
-        "source": "REM2 paired evaluation on 217 ProteinGym substitution assays",
+        "metric": "Five paired metrics",
+        "source": "PG_Raw_vs_REM2 · Feishu revision 461",
         "source_url": "https://proteingym.org/benchmarks",
+        "model_count": len(pairs),
+        "metrics": metrics,
         "pairs": pairs,
-        "stages": [dict(row) for row in _VENUSREM2_STAGES],
         "function_scores": {
-            "activity": 0.541,
-            "binding": 0.495,
-            "expression": 0.557,
-            "organismal fitness": 0.494,
-            "stability": 0.691,
+            "activity": 0.539,
+            "binding": 0.499,
+            "expression": 0.562,
+            "organismal fitness": 0.483,
+            "stability": 0.698,
         },
     }
 

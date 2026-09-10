@@ -2395,6 +2395,69 @@ fieldset {
   font-weight: 700;
 }
 
+.benchmark-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px) auto;
+  align-items: end;
+  gap: 12px;
+  margin: 12px 0 6px;
+}
+
+.benchmark-metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.benchmark-metric-tab {
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.benchmark-metric-tab.is-on {
+  border-color: #a9c8bf;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.benchmark-search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.benchmark-search input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  text-transform: none;
+}
+
+.benchmark-result-count {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
 .benchmark-dual {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2414,6 +2477,12 @@ fieldset {
 .benchmark-score-panel.is-rem2 {
   border-color: #a9c8bf;
   box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.benchmark-score-list {
+  max-height: 650px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .benchmark-panel-head {
@@ -2457,6 +2526,7 @@ fieldset {
 }
 
 .benchmark-model > strong { font-size: 14px; }
+.benchmark-model-key { color: var(--muted); font-family: var(--mono); font-size: 9px; }
 
 .benchmark-score-cell {
   display: grid;
@@ -2592,6 +2662,8 @@ fieldset {
 .benchmark-stage { grid-template-columns: minmax(0, 1fr) 45px; }
 .benchmark-stage > span { display: flex; flex-direction: column; gap: 2px; }
 .benchmark-stage small { color: var(--muted); }
+.benchmark-stage > b { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.benchmark-stage > b small { color: var(--accent); font-size: 9px; }
 .benchmark-metric:last-child,
 .benchmark-stage:last-child { border-bottom: 0; }
 
@@ -2603,11 +2675,15 @@ fieldset {
 
 @media (max-width: 980px) {
   .benchmark-board-head { grid-template-columns: 1fr; }
+  .benchmark-toolbar { grid-template-columns: 1fr minmax(220px, .6fr); }
+  .benchmark-toolbar > .btn { grid-column: 2; }
   .benchmark-dual,
   .benchmark-detail-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
+  .benchmark-toolbar { grid-template-columns: 1fr; }
+  .benchmark-toolbar > .btn { grid-column: auto; }
   .benchmark-board-head dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .benchmark-rank-row { grid-template-columns: 24px minmax(0, 1fr); }
   .benchmark-score-cell { grid-column: 2; width: 100%; }

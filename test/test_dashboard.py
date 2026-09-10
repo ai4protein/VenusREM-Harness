@@ -254,12 +254,25 @@ def test_proteingym_leaderboard(client):
     assert len(api["benchmarks"]) == 1
     benchmark = api["benchmarks"][0]
     assert benchmark["id"] == "proteingym"
-    pairs = {row["family"]: row for row in benchmark["pairs"]}
-    assert pairs["ProSST ensemble"]["base"] == 0.524
-    assert pairs["ProSST ensemble"]["enhanced"] == 0.556
-    assert pairs["ProSST ensemble"]["delta"] == 0.032
-    assert "official_reference" not in pairs["ProSST ensemble"]
-    assert "comparison" not in pairs["SaProt AF-650M"]
+    assert benchmark["model_count"] == 59
+    assert [metric["id"] for metric in benchmark["metrics"]] == [
+        "spearman", "ndcg", "auc", "mcc", "top_recall"
+    ]
+    pairs = {row["key"]: row for row in benchmark["pairs"]}
+    assert pairs["prosst_ensemble"]["base"] == 0.529
+    assert pairs["prosst_ensemble"]["enhanced"] == 0.556
+    assert pairs["prosst_ensemble"]["delta"] == 0.027
+    assert pairs["prosst_ensemble"]["metrics"]["ndcg"] == {
+        "base": 0.793, "rem2": 0.808, "delta": 0.015
+    }
+    assert pairs["esm2_650m_wt"]["enhanced"] == 0.472
+    assert "official_reference" not in pairs["prosst_ensemble"]
+    assert all(len(row["metrics"]) == 5 for row in benchmark["pairs"])
+    assert all(
+        values["delta"] == round(values["rem2"] - values["base"], 3)
+        for row in benchmark["pairs"]
+        for values in row["metrics"].values()
+    )
 
 
 def test_create_run_requires_input(client):
