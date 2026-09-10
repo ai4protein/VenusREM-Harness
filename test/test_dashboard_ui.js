@@ -58,8 +58,9 @@ this.comparisonMetricBand = comparisonMetricBand;
 this.classifyIntakeFile = classifyIntakeFile;
 this.currentBoard = currentBoard;
 this.currentBenchmark = currentBenchmark;
-this.benchmarkScorePanel = benchmarkScorePanel;
 this.benchmarkRows = benchmarkRows;
+this.benchmarkPairRow = benchmarkPairRow;
+this.benchmarkVisibleInputs = benchmarkVisibleInputs;
 `;
 
 const context = vm.createContext({
@@ -307,7 +308,7 @@ check("html flow chrome", () => {
   assert.ok(html.includes('id="btn-demo"'));
   assert.ok(!html.includes("Skip the form"));
   assert.ok(!html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
-  assert.ok(html.includes("What REM2 adds"));
+  assert.ok(html.includes("Cross-benchmark leaderboard"));
   assert.ok(html.includes("skip → α=0"));
   assert.ok(src.includes('data-delete-run="'));
   assert.ok(src.includes("refreshReviewSelection"));
@@ -374,28 +375,38 @@ check("product benchmark compares the same base with REM2", () => {
   assert.strictEqual(prosst.delta, 0.027);
   const saprot = benchmark.pairs.find((row) => row.key === "saprot_wt");
   assert.strictEqual(Object.prototype.hasOwnProperty.call(saprot, "official_reference"), false);
-  const enhanced = context.benchmarkScorePanel("With REM2", "Enhanced", benchmark.pairs, "enhanced", "Spearman");
+  context.state.benchmarkVariant = "rem2";
+  const enhanced = context.benchmarkPairRow(benchmark.pairs[1], 2, "overall");
   assert.ok(enhanced.includes("esm2_650m_wt"));
   assert.ok(enhanced.includes("+0.054"));
+  assert.ok(enhanced.includes("Evo"));
 });
 
-check("benchmark metric and model filters preserve paired rows", () => {
+check("benchmark property, input, and score mode keep one row per model", () => {
   const original = context.state.catalog;
   context.state.catalog = { default_benchmark: "proteingym", benchmarks: [{
     id: "proteingym",
     pairs: [
-      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", protocol: "paired", metrics: { ndcg: { base: 0.7, rem2: 0.8, delta: 0.1 } } },
-      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", protocol: "paired", metrics: { ndcg: { base: 0.75, rem2: 0.76, delta: 0.01 } } },
+      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", inputs: ["seq"], protocol: "paired", properties: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } } },
+      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", inputs: ["str"], protocol: "paired", properties: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } } },
     ],
   }] };
-  context.state.benchmarkMetric = "ndcg";
-  context.state.benchmarkQuery = "alpha";
-  context.state.benchmarkLimit = 12;
+  context.state.benchmarkProperty = "binding";
+  context.state.benchmarkInput = "all";
+  context.state.benchmarkVariant = "raw";
+  context.state.benchmarkQuery = "";
+  assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["beta", "alpha"]);
+  context.state.benchmarkVariant = "rem2";
+  assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["alpha", "beta"]);
+  context.state.benchmarkInput = "str";
   const rows = context.benchmarkRows(context.currentBenchmark());
   assert.strictEqual(rows.length, 1);
-  assert.strictEqual(rows[0].key, "alpha");
+  assert.strictEqual(rows[0].key, "beta");
+  assert.deepStrictEqual(context.benchmarkVisibleInputs(rows[0]), ["str", "evo"]);
   context.state.catalog = original;
-  context.state.benchmarkMetric = "spearman";
+  context.state.benchmarkProperty = "overall";
+  context.state.benchmarkInput = "all";
+  context.state.benchmarkVariant = "rem2";
   context.state.benchmarkQuery = "";
 });
 

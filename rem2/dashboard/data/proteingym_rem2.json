@@ -57,13 +57,45 @@
           "rem2": 0.266,
           "delta": 0.008
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.529,
+          "rem2": 0.556,
+          "delta": 0.027
+        },
+        "activity": {
+          "base": 0.485,
+          "rem2": 0.539,
+          "delta": 0.054
+        },
+        "binding": {
+          "base": 0.482,
+          "rem2": 0.499,
+          "delta": 0.017
+        },
+        "expression": {
+          "base": 0.543,
+          "rem2": 0.562,
+          "delta": 0.019
+        },
+        "organismal": {
+          "base": 0.45,
+          "rem2": 0.483,
+          "delta": 0.033
+        },
+        "stability": {
+          "base": 0.682,
+          "rem2": 0.698,
+          "delta": 0.016
+        }
       }
     },
     {
       "key": "prosst_k4096",
       "base_name": "ProSST (K=4096)",
       "rem2_name": "ProSST (K=4096, rem2)",
-      "notes": "ProteinGym-style ProSST (K=4096); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style ProSST (K=4096); AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.498,
@@ -89,6 +121,38 @@
           "base": 0.232,
           "rem2": 0.253,
           "delta": 0.021
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.498,
+          "rem2": 0.536,
+          "delta": 0.038
+        },
+        "activity": {
+          "base": 0.444,
+          "rem2": 0.512,
+          "delta": 0.068
+        },
+        "binding": {
+          "base": 0.472,
+          "rem2": 0.495,
+          "delta": 0.023
+        },
+        "expression": {
+          "base": 0.507,
+          "rem2": 0.541,
+          "delta": 0.034
+        },
+        "organismal": {
+          "base": 0.416,
+          "rem2": 0.458,
+          "delta": 0.042
+        },
+        "stability": {
+          "base": 0.652,
+          "rem2": 0.677,
+          "delta": 0.025
         }
       }
     },
@@ -123,13 +187,45 @@
           "rem2": 0.245,
           "delta": 0.009
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.507,
+          "rem2": 0.531,
+          "delta": 0.024
+        },
+        "activity": {
+          "base": 0.476,
+          "rem2": 0.524,
+          "delta": 0.048
+        },
+        "binding": {
+          "base": 0.445,
+          "rem2": 0.46,
+          "delta": 0.015
+        },
+        "expression": {
+          "base": 0.53,
+          "rem2": 0.542,
+          "delta": 0.012
+        },
+        "organismal": {
+          "base": 0.431,
+          "rem2": 0.46,
+          "delta": 0.029
+        },
+        "stability": {
+          "base": 0.653,
+          "rem2": 0.67,
+          "delta": 0.017
+        }
       }
     },
     {
       "key": "prosst_k1024",
       "base_name": "ProSST (K=1024)",
       "rem2_name": "ProSST (K=1024, rem2)",
-      "notes": "ProteinGym-style ProSST (K=1024); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style ProSST (K=1024); AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.485,
@@ -156,13 +252,45 @@
           "rem2": 0.248,
           "delta": 0.018
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.485,
+          "rem2": 0.527,
+          "delta": 0.042
+        },
+        "activity": {
+          "base": 0.433,
+          "rem2": 0.508,
+          "delta": 0.075
+        },
+        "binding": {
+          "base": 0.436,
+          "rem2": 0.466,
+          "delta": 0.03
+        },
+        "expression": {
+          "base": 0.499,
+          "rem2": 0.531,
+          "delta": 0.032
+        },
+        "organismal": {
+          "base": 0.414,
+          "rem2": 0.456,
+          "delta": 0.042
+        },
+        "stability": {
+          "base": 0.642,
+          "rem2": 0.676,
+          "delta": 0.034
+        }
       }
     },
     {
       "key": "prosst_k128",
       "base_name": "ProSST (K=128)",
       "rem2_name": "ProSST (K=128, rem2)",
-      "notes": "ProteinGym-style ProSST (K=128); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style ProSST (K=128); AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.469,
@@ -189,13 +317,45 @@
           "rem2": 0.251,
           "delta": 0.024
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.469,
+          "rem2": 0.52,
+          "delta": 0.051
+        },
+        "activity": {
+          "base": 0.417,
+          "rem2": 0.503,
+          "delta": 0.086
+        },
+        "binding": {
+          "base": 0.44,
+          "rem2": 0.472,
+          "delta": 0.032
+        },
+        "expression": {
+          "base": 0.473,
+          "rem2": 0.514,
+          "delta": 0.041
+        },
+        "organismal": {
+          "base": 0.387,
+          "rem2": 0.444,
+          "delta": 0.057
+        },
+        "stability": {
+          "base": 0.628,
+          "rem2": 0.666,
+          "delta": 0.038
+        }
       }
     },
     {
       "key": "prosst_k512",
       "base_name": "ProSST (K=512)",
       "rem2_name": "ProSST (K=512, rem2)",
-      "notes": "ProteinGym-style ProSST (K=512); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style ProSST (K=512); AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.471,
@@ -222,13 +382,45 @@
           "rem2": 0.246,
           "delta": 0.024
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.471,
+          "rem2": 0.52,
+          "delta": 0.049
+        },
+        "activity": {
+          "base": 0.423,
+          "rem2": 0.502,
+          "delta": 0.079
+        },
+        "binding": {
+          "base": 0.431,
+          "rem2": 0.464,
+          "delta": 0.033
+        },
+        "expression": {
+          "base": 0.479,
+          "rem2": 0.518,
+          "delta": 0.039
+        },
+        "organismal": {
+          "base": 0.394,
+          "rem2": 0.446,
+          "delta": 0.052
+        },
+        "stability": {
+          "base": 0.629,
+          "rem2": 0.669,
+          "delta": 0.04
+        }
       }
     },
     {
       "key": "prosst_k20",
       "base_name": "ProSST (K=20)",
       "rem2_name": "ProSST (K=20, rem2)",
-      "notes": "ProteinGym-style ProSST (K=20); AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style ProSST (K=20); AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.438,
@@ -254,6 +446,38 @@
           "base": 0.21,
           "rem2": 0.241,
           "delta": 0.031
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.438,
+          "rem2": 0.506,
+          "delta": 0.068
+        },
+        "activity": {
+          "base": 0.392,
+          "rem2": 0.492,
+          "delta": 0.1
+        },
+        "binding": {
+          "base": 0.41,
+          "rem2": 0.453,
+          "delta": 0.043
+        },
+        "expression": {
+          "base": 0.447,
+          "rem2": 0.506,
+          "delta": 0.059
+        },
+        "organismal": {
+          "base": 0.354,
+          "rem2": 0.43,
+          "delta": 0.076
+        },
+        "stability": {
+          "base": 0.589,
+          "rem2": 0.65,
+          "delta": 0.061
         }
       }
     },
@@ -288,6 +512,38 @@
           "rem2": 0.239,
           "delta": 0.006
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.46,
+          "rem2": 0.488,
+          "delta": 0.028
+        },
+        "activity": {
+          "base": 0.469,
+          "rem2": 0.503,
+          "delta": 0.034
+        },
+        "binding": {
+          "base": 0.365,
+          "rem2": 0.391,
+          "delta": 0.026
+        },
+        "expression": {
+          "base": 0.453,
+          "rem2": 0.478,
+          "delta": 0.025
+        },
+        "organismal": {
+          "base": 0.406,
+          "rem2": 0.435,
+          "delta": 0.029
+        },
+        "stability": {
+          "base": 0.605,
+          "rem2": 0.632,
+          "delta": 0.027
+        }
       }
     },
     {
@@ -320,6 +576,38 @@
           "base": 0.237,
           "rem2": 0.242,
           "delta": 0.005
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.466,
+          "rem2": 0.487,
+          "delta": 0.021
+        },
+        "activity": {
+          "base": 0.47,
+          "rem2": 0.496,
+          "delta": 0.026
+        },
+        "binding": {
+          "base": 0.379,
+          "rem2": 0.396,
+          "delta": 0.017
+        },
+        "expression": {
+          "base": 0.47,
+          "rem2": 0.482,
+          "delta": 0.012
+        },
+        "organismal": {
+          "base": 0.409,
+          "rem2": 0.431,
+          "delta": 0.022
+        },
+        "stability": {
+          "base": 0.601,
+          "rem2": 0.63,
+          "delta": 0.029
         }
       }
     },
@@ -354,6 +642,38 @@
           "rem2": 0.237,
           "delta": 0.009
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.442,
+          "rem2": 0.484,
+          "delta": 0.042
+        },
+        "activity": {
+          "base": 0.441,
+          "rem2": 0.486,
+          "delta": 0.045
+        },
+        "binding": {
+          "base": 0.381,
+          "rem2": 0.408,
+          "delta": 0.027
+        },
+        "expression": {
+          "base": 0.449,
+          "rem2": 0.47,
+          "delta": 0.021
+        },
+        "organismal": {
+          "base": 0.353,
+          "rem2": 0.424,
+          "delta": 0.071
+        },
+        "stability": {
+          "base": 0.586,
+          "rem2": 0.63,
+          "delta": 0.044
+        }
       }
     },
     {
@@ -387,13 +707,45 @@
           "rem2": 0.24,
           "delta": 0.006
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.457,
+          "rem2": 0.484,
+          "delta": 0.027
+        },
+        "activity": {
+          "base": 0.459,
+          "rem2": 0.488,
+          "delta": 0.029
+        },
+        "binding": {
+          "base": 0.384,
+          "rem2": 0.402,
+          "delta": 0.018
+        },
+        "expression": {
+          "base": 0.485,
+          "rem2": 0.495,
+          "delta": 0.01
+        },
+        "organismal": {
+          "base": 0.371,
+          "rem2": 0.415,
+          "delta": 0.044
+        },
+        "stability": {
+          "base": 0.588,
+          "rem2": 0.621,
+          "delta": 0.033
+        }
       }
     },
     {
       "key": "saprot650m_pdb_mask",
       "base_name": "SaProt (650M_PDB, mask)",
       "rem2_name": "SaProt (650M_PDB, mask)",
-      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=mask-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=mask-marginals; AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.463,
@@ -419,6 +771,38 @@
           "base": 0.231,
           "rem2": 0.237,
           "delta": 0.006
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.463,
+          "rem2": 0.484,
+          "delta": 0.021
+        },
+        "activity": {
+          "base": 0.464,
+          "rem2": 0.489,
+          "delta": 0.025
+        },
+        "binding": {
+          "base": 0.37,
+          "rem2": 0.384,
+          "delta": 0.014
+        },
+        "expression": {
+          "base": 0.488,
+          "rem2": 0.497,
+          "delta": 0.009
+        },
+        "organismal": {
+          "base": 0.405,
+          "rem2": 0.428,
+          "delta": 0.023
+        },
+        "stability": {
+          "base": 0.59,
+          "rem2": 0.622,
+          "delta": 0.032
         }
       }
     },
@@ -453,6 +837,38 @@
           "rem2": 0.234,
           "delta": 0.006
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.451,
+          "rem2": 0.482,
+          "delta": 0.031
+        },
+        "activity": {
+          "base": 0.467,
+          "rem2": 0.497,
+          "delta": 0.03
+        },
+        "binding": {
+          "base": 0.371,
+          "rem2": 0.402,
+          "delta": 0.031
+        },
+        "expression": {
+          "base": 0.452,
+          "rem2": 0.477,
+          "delta": 0.025
+        },
+        "organismal": {
+          "base": 0.398,
+          "rem2": 0.426,
+          "delta": 0.028
+        },
+        "stability": {
+          "base": 0.57,
+          "rem2": 0.609,
+          "delta": 0.039
+        }
       }
     },
     {
@@ -485,6 +901,38 @@
           "base": 0.214,
           "rem2": 0.227,
           "delta": 0.013
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.418,
+          "rem2": 0.472,
+          "delta": 0.054
+        },
+        "activity": {
+          "base": 0.454,
+          "rem2": 0.497,
+          "delta": 0.043
+        },
+        "binding": {
+          "base": 0.324,
+          "rem2": 0.391,
+          "delta": 0.067
+        },
+        "expression": {
+          "base": 0.412,
+          "rem2": 0.46,
+          "delta": 0.048
+        },
+        "organismal": {
+          "base": 0.356,
+          "rem2": 0.417,
+          "delta": 0.061
+        },
+        "stability": {
+          "base": 0.541,
+          "rem2": 0.594,
+          "delta": 0.053
         }
       }
     },
@@ -519,6 +967,38 @@
           "rem2": 0.224,
           "delta": 0.014
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.41,
+          "rem2": 0.465,
+          "delta": 0.055
+        },
+        "activity": {
+          "base": 0.445,
+          "rem2": 0.488,
+          "delta": 0.043
+        },
+        "binding": {
+          "base": 0.293,
+          "rem2": 0.361,
+          "delta": 0.068
+        },
+        "expression": {
+          "base": 0.43,
+          "rem2": 0.466,
+          "delta": 0.036
+        },
+        "organismal": {
+          "base": 0.381,
+          "rem2": 0.431,
+          "delta": 0.05
+        },
+        "stability": {
+          "base": 0.5,
+          "rem2": 0.576,
+          "delta": 0.076
+        }
       }
     },
     {
@@ -552,13 +1032,45 @@
           "rem2": 0.229,
           "delta": 0.012
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.415,
+          "rem2": 0.465,
+          "delta": 0.05
+        },
+        "activity": {
+          "base": 0.431,
+          "rem2": 0.492,
+          "delta": 0.061
+        },
+        "binding": {
+          "base": 0.337,
+          "rem2": 0.382,
+          "delta": 0.045
+        },
+        "expression": {
+          "base": 0.415,
+          "rem2": 0.447,
+          "delta": 0.032
+        },
+        "organismal": {
+          "base": 0.368,
+          "rem2": 0.418,
+          "delta": 0.05
+        },
+        "stability": {
+          "base": 0.523,
+          "rem2": 0.585,
+          "delta": 0.062
+        }
       }
     },
     {
       "key": "mifst",
       "base_name": "mifst",
       "rem2_name": "mifst",
-      "notes": "MIF-ST (Yang et al.); AF2 PDB; rem2 = α=0.8 + adaptive CCD + RSA/pLDDT above_mean",
+      "notes": "MIF-ST (Yang et al.); AF2 PDB; rem2 = \u03b1=0.8 + adaptive CCD + RSA/pLDDT above_mean",
       "metrics": {
         "spearman": {
           "base": 0.43,
@@ -584,6 +1096,38 @@
           "base": 0.233,
           "rem2": 0.238,
           "delta": 0.005
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.43,
+          "rem2": 0.465,
+          "delta": 0.035
+        },
+        "activity": {
+          "base": 0.41,
+          "rem2": 0.453,
+          "delta": 0.043
+        },
+        "binding": {
+          "base": 0.341,
+          "rem2": 0.379,
+          "delta": 0.038
+        },
+        "expression": {
+          "base": 0.441,
+          "rem2": 0.467,
+          "delta": 0.026
+        },
+        "organismal": {
+          "base": 0.381,
+          "rem2": 0.411,
+          "delta": 0.03
+        },
+        "stability": {
+          "base": 0.576,
+          "rem2": 0.615,
+          "delta": 0.039
         }
       }
     },
@@ -618,13 +1162,45 @@
           "rem2": 0.233,
           "delta": 0.01
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.424,
+          "rem2": 0.465,
+          "delta": 0.041
+        },
+        "activity": {
+          "base": 0.437,
+          "rem2": 0.476,
+          "delta": 0.039
+        },
+        "binding": {
+          "base": 0.343,
+          "rem2": 0.385,
+          "delta": 0.042
+        },
+        "expression": {
+          "base": 0.459,
+          "rem2": 0.479,
+          "delta": 0.02
+        },
+        "organismal": {
+          "base": 0.317,
+          "rem2": 0.38,
+          "delta": 0.063
+        },
+        "stability": {
+          "base": 0.564,
+          "rem2": 0.605,
+          "delta": 0.041
+        }
       }
     },
     {
       "key": "saprot650m_pdb_wt",
       "base_name": "SaProt (650M_PDB, wt)",
       "rem2_name": "SaProt (650M_PDB, wt)",
-      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=wt-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style SaProt (650M); weights=PDB; scoring=wt-marginals; AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.428,
@@ -650,6 +1226,38 @@
           "base": 0.221,
           "rem2": 0.229,
           "delta": 0.008
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.428,
+          "rem2": 0.462,
+          "delta": 0.034
+        },
+        "activity": {
+          "base": 0.429,
+          "rem2": 0.466,
+          "delta": 0.037
+        },
+        "binding": {
+          "base": 0.328,
+          "rem2": 0.366,
+          "delta": 0.038
+        },
+        "expression": {
+          "base": 0.458,
+          "rem2": 0.478,
+          "delta": 0.02
+        },
+        "organismal": {
+          "base": 0.355,
+          "rem2": 0.393,
+          "delta": 0.038
+        },
+        "stability": {
+          "base": 0.568,
+          "rem2": 0.609,
+          "delta": 0.041
         }
       }
     },
@@ -684,6 +1292,38 @@
           "rem2": 0.229,
           "delta": 0.019
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.393,
+          "rem2": 0.462,
+          "delta": 0.069
+        },
+        "activity": {
+          "base": 0.422,
+          "rem2": 0.479,
+          "delta": 0.057
+        },
+        "binding": {
+          "base": 0.316,
+          "rem2": 0.384,
+          "delta": 0.068
+        },
+        "expression": {
+          "base": 0.4,
+          "rem2": 0.453,
+          "delta": 0.053
+        },
+        "organismal": {
+          "base": 0.297,
+          "rem2": 0.397,
+          "delta": 0.1
+        },
+        "stability": {
+          "base": 0.528,
+          "rem2": 0.596,
+          "delta": 0.068
+        }
       }
     },
     {
@@ -716,6 +1356,38 @@
           "base": 0.211,
           "rem2": 0.222,
           "delta": 0.011
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.407,
+          "rem2": 0.461,
+          "delta": 0.054
+        },
+        "activity": {
+          "base": 0.421,
+          "rem2": 0.486,
+          "delta": 0.065
+        },
+        "binding": {
+          "base": 0.32,
+          "rem2": 0.358,
+          "delta": 0.038
+        },
+        "expression": {
+          "base": 0.429,
+          "rem2": 0.456,
+          "delta": 0.027
+        },
+        "organismal": {
+          "base": 0.386,
+          "rem2": 0.432,
+          "delta": 0.046
+        },
+        "stability": {
+          "base": 0.477,
+          "rem2": 0.572,
+          "delta": 0.095
         }
       }
     },
@@ -750,6 +1422,38 @@
           "rem2": 0.217,
           "delta": 0.012
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.407,
+          "rem2": 0.461,
+          "delta": 0.054
+        },
+        "activity": {
+          "base": 0.427,
+          "rem2": 0.485,
+          "delta": 0.058
+        },
+        "binding": {
+          "base": 0.295,
+          "rem2": 0.353,
+          "delta": 0.058
+        },
+        "expression": {
+          "base": 0.413,
+          "rem2": 0.448,
+          "delta": 0.035
+        },
+        "organismal": {
+          "base": 0.372,
+          "rem2": 0.429,
+          "delta": 0.057
+        },
+        "stability": {
+          "base": 0.528,
+          "rem2": 0.589,
+          "delta": 0.061
+        }
       }
     },
     {
@@ -782,6 +1486,38 @@
           "base": 0.213,
           "rem2": 0.224,
           "delta": 0.011
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.406,
+          "rem2": 0.461,
+          "delta": 0.055
+        },
+        "activity": {
+          "base": 0.44,
+          "rem2": 0.491,
+          "delta": 0.051
+        },
+        "binding": {
+          "base": 0.3,
+          "rem2": 0.364,
+          "delta": 0.064
+        },
+        "expression": {
+          "base": 0.404,
+          "rem2": 0.456,
+          "delta": 0.052
+        },
+        "organismal": {
+          "base": 0.366,
+          "rem2": 0.42,
+          "delta": 0.054
+        },
+        "stability": {
+          "base": 0.521,
+          "rem2": 0.576,
+          "delta": 0.055
         }
       }
     },
@@ -816,13 +1552,45 @@
           "rem2": 0.225,
           "delta": 0.012
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.407,
+          "rem2": 0.459,
+          "delta": 0.052
+        },
+        "activity": {
+          "base": 0.423,
+          "rem2": 0.49,
+          "delta": 0.067
+        },
+        "binding": {
+          "base": 0.321,
+          "rem2": 0.364,
+          "delta": 0.043
+        },
+        "expression": {
+          "base": 0.403,
+          "rem2": 0.442,
+          "delta": 0.039
+        },
+        "organismal": {
+          "base": 0.378,
+          "rem2": 0.424,
+          "delta": 0.046
+        },
+        "stability": {
+          "base": 0.509,
+          "rem2": 0.572,
+          "delta": 0.063
+        }
       }
     },
     {
       "key": "saprot35m_af2_mask",
       "base_name": "SaProt (35M_AF2, mask)",
       "rem2_name": "SaProt (35M_AF2, mask)",
-      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=mask-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=mask-marginals; AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.408,
@@ -848,6 +1616,38 @@
           "base": 0.215,
           "rem2": 0.23,
           "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.408,
+          "rem2": 0.458,
+          "delta": 0.05
+        },
+        "activity": {
+          "base": 0.369,
+          "rem2": 0.439,
+          "delta": 0.07
+        },
+        "binding": {
+          "base": 0.36,
+          "rem2": 0.379,
+          "delta": 0.019
+        },
+        "expression": {
+          "base": 0.441,
+          "rem2": 0.467,
+          "delta": 0.026
+        },
+        "organismal": {
+          "base": 0.294,
+          "rem2": 0.377,
+          "delta": 0.083
+        },
+        "stability": {
+          "base": 0.576,
+          "rem2": 0.63,
+          "delta": 0.054
         }
       }
     },
@@ -882,6 +1682,38 @@
           "rem2": 0.219,
           "delta": 0.006
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.409,
+          "rem2": 0.458,
+          "delta": 0.049
+        },
+        "activity": {
+          "base": 0.429,
+          "rem2": 0.485,
+          "delta": 0.056
+        },
+        "binding": {
+          "base": 0.32,
+          "rem2": 0.361,
+          "delta": 0.041
+        },
+        "expression": {
+          "base": 0.406,
+          "rem2": 0.435,
+          "delta": 0.029
+        },
+        "organismal": {
+          "base": 0.367,
+          "rem2": 0.423,
+          "delta": 0.056
+        },
+        "stability": {
+          "base": 0.523,
+          "rem2": 0.586,
+          "delta": 0.063
+        }
       }
     },
     {
@@ -914,6 +1746,38 @@
           "base": 0.202,
           "rem2": 0.216,
           "delta": 0.014
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.394,
+          "rem2": 0.457,
+          "delta": 0.063
+        },
+        "activity": {
+          "base": 0.428,
+          "rem2": 0.478,
+          "delta": 0.05
+        },
+        "binding": {
+          "base": 0.287,
+          "rem2": 0.364,
+          "delta": 0.077
+        },
+        "expression": {
+          "base": 0.406,
+          "rem2": 0.455,
+          "delta": 0.049
+        },
+        "organismal": {
+          "base": 0.35,
+          "rem2": 0.416,
+          "delta": 0.066
+        },
+        "stability": {
+          "base": 0.5,
+          "rem2": 0.571,
+          "delta": 0.071
         }
       }
     },
@@ -948,6 +1812,38 @@
           "rem2": 0.23,
           "delta": 0.007
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.421,
+          "rem2": 0.453,
+          "delta": 0.032
+        },
+        "activity": {
+          "base": 0.357,
+          "rem2": 0.408,
+          "delta": 0.051
+        },
+        "binding": {
+          "base": 0.382,
+          "rem2": 0.408,
+          "delta": 0.026
+        },
+        "expression": {
+          "base": 0.435,
+          "rem2": 0.452,
+          "delta": 0.017
+        },
+        "organismal": {
+          "base": 0.313,
+          "rem2": 0.355,
+          "delta": 0.042
+        },
+        "stability": {
+          "base": 0.617,
+          "rem2": 0.642,
+          "delta": 0.025
+        }
       }
     },
     {
@@ -980,6 +1876,38 @@
           "base": 0.226,
           "rem2": 0.241,
           "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.389,
+          "rem2": 0.451,
+          "delta": 0.062
+        },
+        "activity": {
+          "base": 0.316,
+          "rem2": 0.411,
+          "delta": 0.095
+        },
+        "binding": {
+          "base": 0.332,
+          "rem2": 0.387,
+          "delta": 0.055
+        },
+        "expression": {
+          "base": 0.411,
+          "rem2": 0.454,
+          "delta": 0.043
+        },
+        "organismal": {
+          "base": 0.287,
+          "rem2": 0.358,
+          "delta": 0.071
+        },
+        "stability": {
+          "base": 0.601,
+          "rem2": 0.645,
+          "delta": 0.044
         }
       }
     },
@@ -1014,6 +1942,38 @@
           "rem2": 0.219,
           "delta": 0.014
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.388,
+          "rem2": 0.448,
+          "delta": 0.06
+        },
+        "activity": {
+          "base": 0.4,
+          "rem2": 0.47,
+          "delta": 0.07
+        },
+        "binding": {
+          "base": 0.326,
+          "rem2": 0.363,
+          "delta": 0.037
+        },
+        "expression": {
+          "base": 0.402,
+          "rem2": 0.433,
+          "delta": 0.031
+        },
+        "organismal": {
+          "base": 0.304,
+          "rem2": 0.388,
+          "delta": 0.084
+        },
+        "stability": {
+          "base": 0.51,
+          "rem2": 0.588,
+          "delta": 0.078
+        }
       }
     },
     {
@@ -1046,6 +2006,38 @@
           "base": 0.202,
           "rem2": 0.213,
           "delta": 0.011
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.389,
+          "rem2": 0.448,
+          "delta": 0.059
+        },
+        "activity": {
+          "base": 0.406,
+          "rem2": 0.477,
+          "delta": 0.071
+        },
+        "binding": {
+          "base": 0.297,
+          "rem2": 0.344,
+          "delta": 0.047
+        },
+        "expression": {
+          "base": 0.409,
+          "rem2": 0.448,
+          "delta": 0.039
+        },
+        "organismal": {
+          "base": 0.354,
+          "rem2": 0.41,
+          "delta": 0.056
+        },
+        "stability": {
+          "base": 0.48,
+          "rem2": 0.562,
+          "delta": 0.082
         }
       }
     },
@@ -1080,6 +2072,38 @@
           "rem2": 0.238,
           "delta": 0.02
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.381,
+          "rem2": 0.447,
+          "delta": 0.066
+        },
+        "activity": {
+          "base": 0.309,
+          "rem2": 0.411,
+          "delta": 0.102
+        },
+        "binding": {
+          "base": 0.33,
+          "rem2": 0.378,
+          "delta": 0.048
+        },
+        "expression": {
+          "base": 0.404,
+          "rem2": 0.451,
+          "delta": 0.047
+        },
+        "organismal": {
+          "base": 0.278,
+          "rem2": 0.355,
+          "delta": 0.077
+        },
+        "stability": {
+          "base": 0.584,
+          "rem2": 0.642,
+          "delta": 0.058
+        }
       }
     },
     {
@@ -1112,6 +2136,38 @@
           "base": 0.225,
           "rem2": 0.24,
           "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.385,
+          "rem2": 0.446,
+          "delta": 0.061
+        },
+        "activity": {
+          "base": 0.316,
+          "rem2": 0.408,
+          "delta": 0.092
+        },
+        "binding": {
+          "base": 0.329,
+          "rem2": 0.38,
+          "delta": 0.051
+        },
+        "expression": {
+          "base": 0.41,
+          "rem2": 0.452,
+          "delta": 0.042
+        },
+        "organismal": {
+          "base": 0.284,
+          "rem2": 0.354,
+          "delta": 0.07
+        },
+        "stability": {
+          "base": 0.584,
+          "rem2": 0.633,
+          "delta": 0.049
         }
       }
     },
@@ -1146,13 +2202,45 @@
           "rem2": 0.22,
           "delta": 0.012
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.39,
+          "rem2": 0.445,
+          "delta": 0.055
+        },
+        "activity": {
+          "base": 0.403,
+          "rem2": 0.469,
+          "delta": 0.066
+        },
+        "binding": {
+          "base": 0.289,
+          "rem2": 0.338,
+          "delta": 0.049
+        },
+        "expression": {
+          "base": 0.401,
+          "rem2": 0.438,
+          "delta": 0.037
+        },
+        "organismal": {
+          "base": 0.372,
+          "rem2": 0.417,
+          "delta": 0.045
+        },
+        "stability": {
+          "base": 0.486,
+          "rem2": 0.565,
+          "delta": 0.079
+        }
       }
     },
     {
       "key": "saprot35m_af2_wt",
       "base_name": "SaProt (35M_AF2, wt)",
       "rem2_name": "SaProt (35M_AF2, wt)",
-      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=wt-marginals; AF2 structures; rem2=α=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
+      "notes": "ProteinGym-style SaProt (35M); weights=AF2; scoring=wt-marginals; AF2 structures; rem2=\u03b1=0.8+adaptive CCD+RSA/pLDDT above_mean, bg=0.2, wc=0",
       "metrics": {
         "spearman": {
           "base": 0.366,
@@ -1178,6 +2266,38 @@
           "base": 0.2,
           "rem2": 0.226,
           "delta": 0.026
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.366,
+          "rem2": 0.444,
+          "delta": 0.078
+        },
+        "activity": {
+          "base": 0.334,
+          "rem2": 0.428,
+          "delta": 0.094
+        },
+        "binding": {
+          "base": 0.32,
+          "rem2": 0.38,
+          "delta": 0.06
+        },
+        "expression": {
+          "base": 0.398,
+          "rem2": 0.459,
+          "delta": 0.061
+        },
+        "organismal": {
+          "base": 0.231,
+          "rem2": 0.346,
+          "delta": 0.115
+        },
+        "stability": {
+          "base": 0.545,
+          "rem2": 0.608,
+          "delta": 0.063
         }
       }
     },
@@ -1212,6 +2332,38 @@
           "rem2": 0.223,
           "delta": 0.031
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.329,
+          "rem2": 0.442,
+          "delta": 0.113
+        },
+        "activity": {
+          "base": 0.333,
+          "rem2": 0.453,
+          "delta": 0.12
+        },
+        "binding": {
+          "base": 0.282,
+          "rem2": 0.372,
+          "delta": 0.09
+        },
+        "expression": {
+          "base": 0.334,
+          "rem2": 0.429,
+          "delta": 0.095
+        },
+        "organismal": {
+          "base": 0.208,
+          "rem2": 0.372,
+          "delta": 0.164
+        },
+        "stability": {
+          "base": 0.487,
+          "rem2": 0.585,
+          "delta": 0.098
+        }
       }
     },
     {
@@ -1244,6 +2396,38 @@
           "base": 0.218,
           "rem2": 0.236,
           "delta": 0.018
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.378,
+          "rem2": 0.437,
+          "delta": 0.059
+        },
+        "activity": {
+          "base": 0.318,
+          "rem2": 0.408,
+          "delta": 0.09
+        },
+        "binding": {
+          "base": 0.312,
+          "rem2": 0.36,
+          "delta": 0.048
+        },
+        "expression": {
+          "base": 0.396,
+          "rem2": 0.441,
+          "delta": 0.045
+        },
+        "organismal": {
+          "base": 0.276,
+          "rem2": 0.347,
+          "delta": 0.071
+        },
+        "stability": {
+          "base": 0.587,
+          "rem2": 0.629,
+          "delta": 0.042
         }
       }
     },
@@ -1278,6 +2462,38 @@
           "rem2": 0.212,
           "delta": 0.014
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.351,
+          "rem2": 0.435,
+          "delta": 0.084
+        },
+        "activity": {
+          "base": 0.374,
+          "rem2": 0.461,
+          "delta": 0.087
+        },
+        "binding": {
+          "base": 0.269,
+          "rem2": 0.345,
+          "delta": 0.076
+        },
+        "expression": {
+          "base": 0.351,
+          "rem2": 0.422,
+          "delta": 0.071
+        },
+        "organismal": {
+          "base": 0.371,
+          "rem2": 0.422,
+          "delta": 0.051
+        },
+        "stability": {
+          "base": 0.387,
+          "rem2": 0.522,
+          "delta": 0.135
+        }
       }
     },
     {
@@ -1310,6 +2526,38 @@
           "base": 0.191,
           "rem2": 0.215,
           "delta": 0.024
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.337,
+          "rem2": 0.43,
+          "delta": 0.093
+        },
+        "activity": {
+          "base": 0.353,
+          "rem2": 0.46,
+          "delta": 0.107
+        },
+        "binding": {
+          "base": 0.254,
+          "rem2": 0.324,
+          "delta": 0.07
+        },
+        "expression": {
+          "base": 0.376,
+          "rem2": 0.427,
+          "delta": 0.051
+        },
+        "organismal": {
+          "base": 0.364,
+          "rem2": 0.412,
+          "delta": 0.048
+        },
+        "stability": {
+          "base": 0.339,
+          "rem2": 0.525,
+          "delta": 0.186
         }
       }
     },
@@ -1344,6 +2592,38 @@
           "rem2": 0.214,
           "delta": 0.021
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.33,
+          "rem2": 0.429,
+          "delta": 0.099
+        },
+        "activity": {
+          "base": 0.355,
+          "rem2": 0.465,
+          "delta": 0.11
+        },
+        "binding": {
+          "base": 0.242,
+          "rem2": 0.311,
+          "delta": 0.069
+        },
+        "expression": {
+          "base": 0.381,
+          "rem2": 0.432,
+          "delta": 0.051
+        },
+        "organismal": {
+          "base": 0.351,
+          "rem2": 0.413,
+          "delta": 0.062
+        },
+        "stability": {
+          "base": 0.32,
+          "rem2": 0.525,
+          "delta": 0.205
+        }
       }
     },
     {
@@ -1376,6 +2656,38 @@
           "base": 0.215,
           "rem2": 0.232,
           "delta": 0.017
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.363,
+          "rem2": 0.428,
+          "delta": 0.065
+        },
+        "activity": {
+          "base": 0.295,
+          "rem2": 0.39,
+          "delta": 0.095
+        },
+        "binding": {
+          "base": 0.317,
+          "rem2": 0.374,
+          "delta": 0.057
+        },
+        "expression": {
+          "base": 0.336,
+          "rem2": 0.389,
+          "delta": 0.053
+        },
+        "organismal": {
+          "base": 0.283,
+          "rem2": 0.354,
+          "delta": 0.071
+        },
+        "stability": {
+          "base": 0.587,
+          "rem2": 0.632,
+          "delta": 0.045
         }
       }
     },
@@ -1410,6 +2722,38 @@
           "rem2": 0.228,
           "delta": 0.013
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.361,
+          "rem2": 0.428,
+          "delta": 0.067
+        },
+        "activity": {
+          "base": 0.288,
+          "rem2": 0.389,
+          "delta": 0.101
+        },
+        "binding": {
+          "base": 0.309,
+          "rem2": 0.361,
+          "delta": 0.052
+        },
+        "expression": {
+          "base": 0.339,
+          "rem2": 0.393,
+          "delta": 0.054
+        },
+        "organismal": {
+          "base": 0.286,
+          "rem2": 0.357,
+          "delta": 0.071
+        },
+        "stability": {
+          "base": 0.585,
+          "rem2": 0.638,
+          "delta": 0.053
+        }
       }
     },
     {
@@ -1442,6 +2786,38 @@
           "base": 0.195,
           "rem2": 0.213,
           "delta": 0.018
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.331,
+          "rem2": 0.426,
+          "delta": 0.095
+        },
+        "activity": {
+          "base": 0.365,
+          "rem2": 0.456,
+          "delta": 0.091
+        },
+        "binding": {
+          "base": 0.226,
+          "rem2": 0.315,
+          "delta": 0.089
+        },
+        "expression": {
+          "base": 0.363,
+          "rem2": 0.42,
+          "delta": 0.057
+        },
+        "organismal": {
+          "base": 0.36,
+          "rem2": 0.411,
+          "delta": 0.051
+        },
+        "stability": {
+          "base": 0.34,
+          "rem2": 0.529,
+          "delta": 0.189
         }
       }
     },
@@ -1476,6 +2852,38 @@
           "rem2": 0.227,
           "delta": 0.016
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.353,
+          "rem2": 0.424,
+          "delta": 0.071
+        },
+        "activity": {
+          "base": 0.278,
+          "rem2": 0.386,
+          "delta": 0.108
+        },
+        "binding": {
+          "base": 0.312,
+          "rem2": 0.36,
+          "delta": 0.048
+        },
+        "expression": {
+          "base": 0.316,
+          "rem2": 0.38,
+          "delta": 0.064
+        },
+        "organismal": {
+          "base": 0.278,
+          "rem2": 0.355,
+          "delta": 0.077
+        },
+        "stability": {
+          "base": 0.58,
+          "rem2": 0.639,
+          "delta": 0.059
+        }
       }
     },
     {
@@ -1508,6 +2916,38 @@
           "base": 0.186,
           "rem2": 0.211,
           "delta": 0.025
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.321,
+          "rem2": 0.423,
+          "delta": 0.102
+        },
+        "activity": {
+          "base": 0.316,
+          "rem2": 0.433,
+          "delta": 0.117
+        },
+        "binding": {
+          "base": 0.291,
+          "rem2": 0.337,
+          "delta": 0.046
+        },
+        "expression": {
+          "base": 0.343,
+          "rem2": 0.403,
+          "delta": 0.06
+        },
+        "organismal": {
+          "base": 0.217,
+          "rem2": 0.361,
+          "delta": 0.144
+        },
+        "stability": {
+          "base": 0.439,
+          "rem2": 0.58,
+          "delta": 0.141
         }
       }
     },
@@ -1542,6 +2982,38 @@
           "rem2": 0.216,
           "delta": 0.024
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.327,
+          "rem2": 0.422,
+          "delta": 0.095
+        },
+        "activity": {
+          "base": 0.368,
+          "rem2": 0.459,
+          "delta": 0.091
+        },
+        "binding": {
+          "base": 0.216,
+          "rem2": 0.293,
+          "delta": 0.077
+        },
+        "expression": {
+          "base": 0.373,
+          "rem2": 0.428,
+          "delta": 0.055
+        },
+        "organismal": {
+          "base": 0.355,
+          "rem2": 0.407,
+          "delta": 0.052
+        },
+        "stability": {
+          "base": 0.323,
+          "rem2": 0.524,
+          "delta": 0.201
+        }
       }
     },
     {
@@ -1574,6 +3046,38 @@
           "base": 0.213,
           "rem2": 0.228,
           "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.357,
+          "rem2": 0.421,
+          "delta": 0.064
+        },
+        "activity": {
+          "base": 0.291,
+          "rem2": 0.388,
+          "delta": 0.097
+        },
+        "binding": {
+          "base": 0.308,
+          "rem2": 0.362,
+          "delta": 0.054
+        },
+        "expression": {
+          "base": 0.333,
+          "rem2": 0.384,
+          "delta": 0.051
+        },
+        "organismal": {
+          "base": 0.275,
+          "rem2": 0.348,
+          "delta": 0.073
+        },
+        "stability": {
+          "base": 0.577,
+          "rem2": 0.624,
+          "delta": 0.047
         }
       }
     },
@@ -1608,6 +3112,38 @@
           "rem2": 0.213,
           "delta": 0.046
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.251,
+          "rem2": 0.42,
+          "delta": 0.169
+        },
+        "activity": {
+          "base": 0.217,
+          "rem2": 0.418,
+          "delta": 0.201
+        },
+        "binding": {
+          "base": 0.244,
+          "rem2": 0.358,
+          "delta": 0.114
+        },
+        "expression": {
+          "base": 0.264,
+          "rem2": 0.416,
+          "delta": 0.152
+        },
+        "organismal": {
+          "base": 0.131,
+          "rem2": 0.349,
+          "delta": 0.218
+        },
+        "stability": {
+          "base": 0.399,
+          "rem2": 0.558,
+          "delta": 0.159
+        }
       }
     },
     {
@@ -1640,6 +3176,38 @@
           "base": 0.18,
           "rem2": 0.208,
           "delta": 0.028
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.309,
+          "rem2": 0.419,
+          "delta": 0.11
+        },
+        "activity": {
+          "base": 0.321,
+          "rem2": 0.446,
+          "delta": 0.125
+        },
+        "binding": {
+          "base": 0.252,
+          "rem2": 0.323,
+          "delta": 0.071
+        },
+        "expression": {
+          "base": 0.351,
+          "rem2": 0.414,
+          "delta": 0.063
+        },
+        "organismal": {
+          "base": 0.352,
+          "rem2": 0.407,
+          "delta": 0.055
+        },
+        "stability": {
+          "base": 0.267,
+          "rem2": 0.507,
+          "delta": 0.24
         }
       }
     },
@@ -1674,6 +3242,38 @@
           "rem2": 0.207,
           "delta": 0.028
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.305,
+          "rem2": 0.417,
+          "delta": 0.112
+        },
+        "activity": {
+          "base": 0.316,
+          "rem2": 0.441,
+          "delta": 0.125
+        },
+        "binding": {
+          "base": 0.233,
+          "rem2": 0.316,
+          "delta": 0.083
+        },
+        "expression": {
+          "base": 0.36,
+          "rem2": 0.424,
+          "delta": 0.064
+        },
+        "organismal": {
+          "base": 0.34,
+          "rem2": 0.398,
+          "delta": 0.058
+        },
+        "stability": {
+          "base": 0.277,
+          "rem2": 0.505,
+          "delta": 0.228
+        }
       }
     },
     {
@@ -1706,6 +3306,38 @@
           "base": 0.181,
           "rem2": 0.211,
           "delta": 0.03
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.304,
+          "rem2": 0.416,
+          "delta": 0.112
+        },
+        "activity": {
+          "base": 0.328,
+          "rem2": 0.445,
+          "delta": 0.117
+        },
+        "binding": {
+          "base": 0.244,
+          "rem2": 0.315,
+          "delta": 0.071
+        },
+        "expression": {
+          "base": 0.33,
+          "rem2": 0.389,
+          "delta": 0.059
+        },
+        "organismal": {
+          "base": 0.346,
+          "rem2": 0.404,
+          "delta": 0.058
+        },
+        "stability": {
+          "base": 0.274,
+          "rem2": 0.527,
+          "delta": 0.253
         }
       }
     },
@@ -1740,6 +3372,38 @@
           "rem2": 0.208,
           "delta": 0.032
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.286,
+          "rem2": 0.416,
+          "delta": 0.13
+        },
+        "activity": {
+          "base": 0.304,
+          "rem2": 0.438,
+          "delta": 0.134
+        },
+        "binding": {
+          "base": 0.28,
+          "rem2": 0.34,
+          "delta": 0.06
+        },
+        "expression": {
+          "base": 0.311,
+          "rem2": 0.384,
+          "delta": 0.073
+        },
+        "organismal": {
+          "base": 0.319,
+          "rem2": 0.392,
+          "delta": 0.073
+        },
+        "stability": {
+          "base": 0.217,
+          "rem2": 0.527,
+          "delta": 0.31
+        }
       }
     },
     {
@@ -1772,6 +3436,38 @@
           "base": 0.177,
           "rem2": 0.206,
           "delta": 0.029
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.297,
+          "rem2": 0.414,
+          "delta": 0.117
+        },
+        "activity": {
+          "base": 0.308,
+          "rem2": 0.442,
+          "delta": 0.134
+        },
+        "binding": {
+          "base": 0.251,
+          "rem2": 0.314,
+          "delta": 0.063
+        },
+        "expression": {
+          "base": 0.336,
+          "rem2": 0.397,
+          "delta": 0.061
+        },
+        "organismal": {
+          "base": 0.348,
+          "rem2": 0.4,
+          "delta": 0.052
+        },
+        "stability": {
+          "base": 0.241,
+          "rem2": 0.516,
+          "delta": 0.275
         }
       }
     },
@@ -1806,6 +3502,38 @@
           "rem2": 0.211,
           "delta": 0.02
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.32,
+          "rem2": 0.413,
+          "delta": 0.093
+        },
+        "activity": {
+          "base": 0.354,
+          "rem2": 0.446,
+          "delta": 0.092
+        },
+        "binding": {
+          "base": 0.218,
+          "rem2": 0.291,
+          "delta": 0.073
+        },
+        "expression": {
+          "base": 0.347,
+          "rem2": 0.396,
+          "delta": 0.049
+        },
+        "organismal": {
+          "base": 0.365,
+          "rem2": 0.411,
+          "delta": 0.046
+        },
+        "stability": {
+          "base": 0.318,
+          "rem2": 0.522,
+          "delta": 0.204
+        }
       }
     },
     {
@@ -1838,6 +3566,38 @@
           "base": 0.175,
           "rem2": 0.215,
           "delta": 0.04
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.264,
+          "rem2": 0.411,
+          "delta": 0.147
+        },
+        "activity": {
+          "base": 0.274,
+          "rem2": 0.427,
+          "delta": 0.153
+        },
+        "binding": {
+          "base": 0.279,
+          "rem2": 0.347,
+          "delta": 0.068
+        },
+        "expression": {
+          "base": 0.288,
+          "rem2": 0.37,
+          "delta": 0.082
+        },
+        "organismal": {
+          "base": 0.296,
+          "rem2": 0.385,
+          "delta": 0.089
+        },
+        "stability": {
+          "base": 0.185,
+          "rem2": 0.526,
+          "delta": 0.341
         }
       }
     },
@@ -1872,6 +3632,38 @@
           "rem2": 0.209,
           "delta": 0.034
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.288,
+          "rem2": 0.408,
+          "delta": 0.12
+        },
+        "activity": {
+          "base": 0.3,
+          "rem2": 0.432,
+          "delta": 0.132
+        },
+        "binding": {
+          "base": 0.272,
+          "rem2": 0.323,
+          "delta": 0.051
+        },
+        "expression": {
+          "base": 0.309,
+          "rem2": 0.38,
+          "delta": 0.071
+        },
+        "organismal": {
+          "base": 0.291,
+          "rem2": 0.378,
+          "delta": 0.087
+        },
+        "stability": {
+          "base": 0.269,
+          "rem2": 0.528,
+          "delta": 0.259
+        }
       }
     },
     {
@@ -1904,6 +3696,38 @@
           "base": 0.16,
           "rem2": 0.203,
           "delta": 0.043
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.232,
+          "rem2": 0.405,
+          "delta": 0.173
+        },
+        "activity": {
+          "base": 0.244,
+          "rem2": 0.421,
+          "delta": 0.177
+        },
+        "binding": {
+          "base": 0.26,
+          "rem2": 0.34,
+          "delta": 0.08
+        },
+        "expression": {
+          "base": 0.253,
+          "rem2": 0.362,
+          "delta": 0.109
+        },
+        "organismal": {
+          "base": 0.265,
+          "rem2": 0.374,
+          "delta": 0.109
+        },
+        "stability": {
+          "base": 0.139,
+          "rem2": 0.527,
+          "delta": 0.388
         }
       }
     },
@@ -1938,6 +3762,38 @@
           "rem2": 0.202,
           "delta": 0.032
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.254,
+          "rem2": 0.403,
+          "delta": 0.149
+        },
+        "activity": {
+          "base": 0.248,
+          "rem2": 0.424,
+          "delta": 0.176
+        },
+        "binding": {
+          "base": 0.267,
+          "rem2": 0.332,
+          "delta": 0.065
+        },
+        "expression": {
+          "base": 0.277,
+          "rem2": 0.37,
+          "delta": 0.093
+        },
+        "organismal": {
+          "base": 0.289,
+          "rem2": 0.378,
+          "delta": 0.089
+        },
+        "stability": {
+          "base": 0.19,
+          "rem2": 0.513,
+          "delta": 0.323
+        }
       }
     },
     {
@@ -1971,7 +3827,65 @@
           "rem2": 0.196,
           "delta": 0.043
         }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.223,
+          "rem2": 0.389,
+          "delta": 0.166
+        },
+        "activity": {
+          "base": 0.191,
+          "rem2": 0.389,
+          "delta": 0.198
+        },
+        "binding": {
+          "base": 0.26,
+          "rem2": 0.312,
+          "delta": 0.052
+        },
+        "expression": {
+          "base": 0.266,
+          "rem2": 0.373,
+          "delta": 0.107
+        },
+        "organismal": {
+          "base": 0.139,
+          "rem2": 0.328,
+          "delta": 0.189
+        },
+        "stability": {
+          "base": 0.262,
+          "rem2": 0.545,
+          "delta": 0.283
+        }
       }
+    }
+  ],
+  "properties": [
+    {
+      "id": "overall",
+      "label": "Overall"
+    },
+    {
+      "id": "activity",
+      "label": "Activity"
+    },
+    {
+      "id": "binding",
+      "label": "Binding"
+    },
+    {
+      "id": "expression",
+      "label": "Expression"
+    },
+    {
+      "id": "organismal",
+      "label": "Organismal fitness"
+    },
+    {
+      "id": "stability",
+      "label": "Stability"
     }
   ]
 }

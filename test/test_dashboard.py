@@ -251,19 +251,24 @@ def test_proteingym_leaderboard(client):
 
     assert api["default_benchmark"] == "proteingym"
     assert api["planned_benchmarks"] == ["VenusMutHub", "VenusViroHub"]
-    assert len(api["benchmarks"]) == 1
+    assert len(api["benchmarks"]) == 3
     benchmark = api["benchmarks"][0]
     assert benchmark["id"] == "proteingym"
     assert benchmark["model_count"] == 59
-    assert [metric["id"] for metric in benchmark["metrics"]] == [
-        "spearman", "ndcg", "auc", "mcc", "top_recall"
+    assert [item["id"] for item in benchmark["properties"]] == [
+        "overall", "activity", "binding", "expression", "organismal", "stability"
     ]
+    assert [item["status"] for item in api["benchmarks"][1:]] == ["planned", "planned"]
     pairs = {row["key"]: row for row in benchmark["pairs"]}
     assert pairs["prosst_ensemble"]["base"] == 0.529
     assert pairs["prosst_ensemble"]["enhanced"] == 0.556
     assert pairs["prosst_ensemble"]["delta"] == 0.027
     assert pairs["prosst_ensemble"]["metrics"]["ndcg"] == {
         "base": 0.793, "rem2": 0.808, "delta": 0.015
+    }
+    assert pairs["prosst_ensemble"]["inputs"] == ["seq", "str"]
+    assert pairs["prosst_ensemble"]["properties"]["activity"] == {
+        "base": 0.485, "rem2": 0.539, "delta": 0.054
     }
     assert pairs["esm2_650m_wt"]["enhanced"] == 0.472
     assert "official_reference" not in pairs["prosst_ensemble"]
@@ -351,7 +356,7 @@ def test_static_index(client):
     assert b"Skip the form" not in res.content
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
     assert b'id="pg-board"' in res.content
-    assert b"What REM2 adds" in res.content
+    assert b"Cross-benchmark leaderboard" in res.content
     assert "skip → α=0".encode() in res.content
     assert b"intake-box" in res.content
     assert b"slot-sequence" in res.content

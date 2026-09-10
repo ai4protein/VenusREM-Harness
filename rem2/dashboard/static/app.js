@@ -250,6 +250,22 @@
     ],
     function_scores: { activity: 0.539, binding: 0.499, expression: 0.562, "organismal fitness": 0.483, stability: 0.698 },
   }];
+  FALLBACK_CATALOG.benchmarks[0].properties = [
+    { id: "overall", label: "Overall" },
+    { id: "activity", label: "Activity" },
+    { id: "binding", label: "Binding" },
+    { id: "expression", label: "Expression" },
+    { id: "organismal", label: "Organismal fitness" },
+    { id: "stability", label: "Stability" },
+  ];
+  FALLBACK_CATALOG.benchmarks[0].pairs.forEach(function (pair) {
+    pair.inputs = pair.key.indexOf("prosst") >= 0 || pair.key.indexOf("saprot") >= 0 ? ["seq", "str"] : ["seq"];
+    pair.properties = { overall: { base: pair.base, rem2: pair.enhanced, delta: pair.delta } };
+  });
+  FALLBACK_CATALOG.benchmarks.push(
+    { id: "venusmuthub", label: "VenusMutHub", title: "VenusMutHub", description: "The leaderboard shell is ready; benchmark-specific properties will appear with the dataset.", status: "planned", n: null, pairs: [] },
+    { id: "venusvirohub", label: "VenusViroHub", title: "VenusViroHub", description: "The leaderboard shell is ready; benchmark-specific properties will appear with the dataset.", status: "planned", n: null, pairs: [] }
+  );
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
 
   var PIPELINE = [
@@ -271,9 +287,10 @@
     board: FALLBACK_BOARD,
     boardId: "substitutions",
     benchmarkId: "proteingym",
-    benchmarkMetric: "spearman",
+    benchmarkProperty: "overall",
+    benchmarkInput: "all",
+    benchmarkVariant: "rem2",
     benchmarkQuery: "",
-    benchmarkLimit: 12,
     features: null,
     runs: [],
     job: null,
@@ -1182,18 +1199,19 @@
 
   function benchmarkTags(inputs) {
     return (inputs || []).map(function (tag) {
-      return '<span class="board-tag">' + esc(String(tag).toUpperCase()) + "</span>";
+      var labels = { seq: "Seq", str: "Str", evo: "Evo" };
+      return '<span class="benchmark-input-tag is-' + esc(tag) + '">' + esc(labels[tag] || String(tag).toUpperCase()) + "</span>";
     }).join("");
   }
 
-  function benchmarkMetricValue(row, metric, field) {
-    var values = row.metrics && row.metrics[metric];
+  function benchmarkPropertyValue(row, property, field) {
+    var values = row.properties && row.properties[property || "overall"];
     if (values) return Number(values[field === "enhanced" ? "rem2" : field]);
     return Number(row[field]);
   }
 
-  function benchmarkMetricDelta(row, metric) {
-    var values = row.metrics && row.metrics[metric];
+  function benchmarkPropertyDelta(row, property) {
+    var values = row.properties && row.properties[property || "overall"];
     if (values) return Number(values.delta);
     return Number(row.delta);
   }
@@ -1204,103 +1222,121 @@
   }
 
   function benchmarkRows(benchmark) {
-    var metric = state.benchmarkMetric || "spearman";
+    var property = state.benchmarkProperty || "overall";
+    var input = state.benchmarkInput || "all";
+    var variant = state.benchmarkVariant || "rem2";
     var query = String(state.benchmarkQuery || "").trim().toLowerCase();
     var rows = (benchmark.pairs || []).filter(function (row) {
-      if ((!row.metrics || !row.metrics[metric]) && metric !== "spearman") return false;
+      if (!row.properties || !row.properties[property]) return false;
+      if (input !== "all" && benchmarkVisibleInputs(row).indexOf(input) < 0) return false;
       if (!query) return true;
       return [row.key, row.base_name, row.enhanced_name, row.protocol].join(" ").toLowerCase().indexOf(query) >= 0;
     }).sort(function (a, b) {
-      return benchmarkMetricValue(b, metric, "enhanced") - benchmarkMetricValue(a, metric, "enhanced");
+      return benchmarkPropertyValue(b, property, variant === "raw" ? "base" : "enhanced") -
+        benchmarkPropertyValue(a, property, variant === "raw" ? "base" : "enhanced");
     });
-    return rows.slice(0, Math.max(1, Number(state.benchmarkLimit) || 12));
+    return rows;
   }
 
-  function benchmarkScorePanel(title, kicker, rows, field, metricLabel) {
-    var metric = state.benchmarkMetric || "spearman";
-    var ranked = rows.slice().sort(function (a, b) {
-      return benchmarkMetricValue(b, metric, field) - benchmarkMetricValue(a, metric, field);
-    });
-    var body = ranked.map(function (row, i) {
-      var score = benchmarkMetricValue(row, metric, field);
-      var pct = (Math.max(0, Math.min(1, score)) * 100).toFixed(1);
-      var name = field === "base" ? row.base_name : row.enhanced_name;
-      return '<div class="benchmark-rank-row"><span class="benchmark-rank">' + (i + 1) +
-        '</span><div class="benchmark-model"><strong>' + esc(name) + '</strong><span class="benchmark-model-key">' +
-        esc(row.key || "") + '</span></div><div class="benchmark-score-cell"><strong>' +
-        score.toFixed(3) + '</strong><span class="benchmark-mini-track"><i style="width:' + pct +
-        '%"></i></span>' + (field === "enhanced" ? '<small>' + signed(benchmarkMetricDelta(row, metric), 3) + '</small>' : '') +
-        '</div></div>';
-    }).join("");
-    return '<section class="benchmark-score-panel ' + (field === "enhanced" ? "is-rem2" : "") +
-      '"><div class="benchmark-panel-head"><div><span class="section-kicker">' + esc(kicker) +
-      '</span><h2>' + esc(title) + '</h2></div><span class="benchmark-panel-unit">' + esc(metricLabel) +
-      '</span></div><div class="benchmark-score-list">' + body + '</div></section>';
+  function benchmarkVisibleInputs(row) {
+    var inputs = (row.inputs || []).slice();
+    if ((state.benchmarkVariant || "rem2") === "rem2" && inputs.indexOf("evo") < 0) inputs.push("evo");
+    return inputs;
   }
 
-  function benchmarkAuditTable(rows, metricLabel) {
-    var metric = state.benchmarkMetric || "spearman";
-    var body = rows.map(function (row) {
-      return '<tr><td><strong>' + esc(row.family) +
-        '</strong></td><td class="num">' + benchmarkMetricValue(row, metric, "base").toFixed(3) + '</td><td class="num rem2-value">' +
-        benchmarkMetricValue(row, metric, "enhanced").toFixed(3) + '</td><td class="num lift-value">' + signed(benchmarkMetricDelta(row, metric), 3) +
-        '</td><td><small class="protocol-copy">' + esc(row.protocol) + '</small></td></tr>';
+  function benchmarkInputOptions(rows) {
+    var options = [
+      { id: "all", label: "All models" },
+      { id: "seq", label: "Sequence" },
+      { id: "str", label: "Structure" },
+      { id: "evo", label: "Evolution" },
+    ];
+    return options.map(function (option) {
+      var count = option.id === "all" ? rows.length : rows.filter(function (row) {
+        return benchmarkVisibleInputs(row).indexOf(option.id) >= 0;
+      }).length;
+      return '<button type="button" class="benchmark-filter-pill' + (state.benchmarkInput === option.id ? " is-on" : "") +
+        '" data-benchmark-input="' + option.id + '"' + (count ? "" : " disabled") + '>' + esc(option.label) + ' <span>' + count + '</span></button>';
     }).join("");
-    return '<div class="benchmark-audit"><div class="benchmark-section-title"><div><span class="section-kicker">Paired results</span>' +
-      '<h2>' + esc(metricLabel) + ' · same backbone</h2></div><p>The lift is always calculated against the matching internal Base result.</p></div>' +
-      '<div class="benchmark-table-scroll"><table class="benchmark-compare-table"><thead><tr><th>Backbone</th><th>Internal base</th>' +
-      '<th>Full +REM2</th><th>Lift</th><th>Evaluation</th></tr></thead><tbody>' + body +
-      '</tbody></table></div></div>';
   }
 
-  function benchmarkDetails(benchmark) {
-    var functions = benchmark.function_scores || {};
-    var fnRows = Object.keys(functions).map(function (name) {
-      var value = Number(functions[name]);
-      return '<div class="benchmark-metric"><span>' + esc(name) + '</span><strong>' + value.toFixed(3) +
-        '</strong><i><b style="width:' + (value / 0.75 * 100).toFixed(1) + '%"></b></i></div>';
-    }).join("");
-    var ensemble = (benchmark.pairs || []).filter(function (row) { return row.key === "prosst_ensemble"; })[0];
-    var metrics = benchmark.metrics || [];
-    var metricRows = metrics.map(function (item) {
-      var values = ensemble && ensemble.metrics && ensemble.metrics[item.id];
-      if (!values) return "";
-      return '<div class="benchmark-stage"><span><strong>' + esc(item.label) + '</strong><small>Base ' +
-        Number(values.base).toFixed(3) + '</small></span><b>' + Number(values.rem2).toFixed(3) +
-        '<small>' + signed(Number(values.delta), 3) + '</small></b></div>';
-    }).join("");
-    return '<div class="benchmark-detail-grid"><section><div class="benchmark-panel-head"><div><span class="section-kicker">VenusREM2</span>' +
-      '<h2>Performance by function</h2></div></div>' + fnRows + '</section><section><div class="benchmark-panel-head"><div>' +
-      '<span class="section-kicker">Metric coverage</span><h2>ProSST ensemble · Base to REM2</h2></div></div>' + metricRows + '</section></div>';
+  function benchmarkBar(score, variant) {
+    var pct = Math.max(0, Math.min(100, Number(score) / 0.75 * 100)).toFixed(1);
+    return '<span class="benchmark-chart-bar is-' + variant + '"><i style="width:' + pct + '%"></i></span>';
+  }
+
+  function benchmarkFeaturedRow(benchmark, property) {
+    var row = (benchmark.pairs || []).filter(function (item) { return item.key === "prosst_ensemble"; })[0];
+    if (!row) return "";
+    var score = benchmarkPropertyValue(row, property, "enhanced");
+    return '<div class="benchmark-chart-row is-featured"><span class="benchmark-chart-rank">—</span>' +
+      '<strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
+      benchmarkBar(score, "rem2") + '</div><div class="benchmark-chart-model"><strong>VenusREM2 <em>ours</em></strong>' +
+      '<span>ProSST ensemble + REM2</span></div><div class="benchmark-chart-inputs">' + benchmarkTags(["seq", "str", "evo"]) + '</div></div>';
+  }
+
+  function benchmarkPairRow(row, rank, property) {
+    var base = benchmarkPropertyValue(row, property, "base");
+    var rem2 = benchmarkPropertyValue(row, property, "enhanced");
+    var delta = benchmarkPropertyDelta(row, property);
+    var variant = state.benchmarkVariant || "rem2";
+    var score = variant === "raw" ? base : rem2;
+    var sub = variant === "raw" ? "Foundation model" : signed(delta, 3) + " vs Raw";
+    return '<div class="benchmark-chart-row"><span class="benchmark-chart-rank">' + rank +
+      '</span><strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
+      benchmarkBar(score, variant) + '</div><div class="benchmark-chart-model"><strong>' + esc(row.family) +
+      '</strong><span>' + esc(sub) + '</span></div><div class="benchmark-chart-inputs">' +
+      benchmarkTags(benchmarkVisibleInputs(row)) + '</div></div>';
   }
 
   function renderProductBenchmark(host, benchmark, catalog) {
     var tabs = (catalog.benchmarks || []).map(function (item) {
       return '<button type="button" class="benchmark-tab' + (item.id === benchmark.id ? " is-on" : "") +
-        '" data-benchmark="' + esc(item.id) + '">' + esc(item.label || item.title) + '</button>';
+        '" data-benchmark="' + esc(item.id) + '">' + esc(item.label || item.title) +
+        (item.status === "planned" ? '<span>Data pending</span>' : '<span>' + esc(item.n) + ' assays</span>') + '</button>';
     }).join("");
+    if (benchmark.status === "planned") {
+      host.innerHTML = '<div class="benchmark-tabs" role="tablist" aria-label="Benchmark dataset">' + tabs + '</div>' +
+        '<section class="benchmark-empty"><span class="section-kicker">Schema ready</span><h2>' + esc(benchmark.title) +
+        '</h2><p>' + esc(benchmark.description) + '</p><div><span>Properties</span><strong>Defined by incoming benchmark</strong></div>' +
+        '<div><span>Comparison</span><strong>Raw model · +REM2</strong></div></section>';
+      return;
+    }
     var allPairs = benchmark.pairs || [];
     var pairs = benchmarkRows(benchmark);
-    var metrics = benchmark.metrics || [{ id: "spearman", label: "Spearman" }];
-    var activeMetric = metrics.filter(function (item) { return item.id === state.benchmarkMetric; })[0] || metrics[0];
-    var metricTabs = metrics.map(function (item) {
-      return '<button type="button" class="benchmark-metric-tab' + (item.id === activeMetric.id ? " is-on" : "") +
-        '" data-benchmark-metric="' + esc(item.id) + '">' + esc(item.label) + '</button>';
+    var properties = benchmark.properties || [{ id: "overall", label: "Overall" }];
+    var property = state.benchmarkProperty || "overall";
+    var activeProperty = properties.filter(function (item) { return item.id === property; })[0] || properties[0];
+    property = activeProperty.id;
+    var propertyTabs = properties.map(function (item) {
+      return '<button type="button" class="benchmark-filter-pill' + (item.id === property ? " is-on" : "") +
+        '" data-benchmark-property="' + esc(item.id) + '">' + esc(item.label) + '</button>';
     }).join("");
-    var showingAll = Number(state.benchmarkLimit) >= allPairs.length;
-    host.innerHTML = '<div class="benchmark-tabs" id="benchmark-tabs" role="tablist" aria-label="Benchmark dataset">' + tabs +
-      '</div><header class="benchmark-board-head"><div><span class="section-kicker">Benchmark</span><h2>' +
-      esc(benchmark.title) + '</h2><p>' + esc(benchmark.description || "") + '</p></div><dl><div><dt>Assays</dt><dd>' +
-      esc(benchmark.n) + '</dd></div><div><dt>Setting</dt><dd>' + esc(benchmark.setting) + '</dd></div><div><dt>Metric</dt><dd>' +
-      esc(benchmark.metric) + '</dd></div></dl></header><div class="benchmark-source-line"><span>Source</span> ' +
-      esc(benchmark.source || "") + '</div><div class="benchmark-toolbar"><div class="benchmark-metric-tabs" role="tablist" aria-label="Metric">' +
-      metricTabs + '</div><label class="benchmark-search"><span>Search models</span><input type="search" data-benchmark-query value="' +
-      esc(state.benchmarkQuery || "") + '" placeholder="ESM, ProSST, SaProt…"></label><button type="button" class="btn btn-quiet" data-benchmark-limit>' +
-      (showingAll ? "Show top 12" : "Show all " + allPairs.length) + '</button></div><p class="benchmark-result-count">Showing ' +
-      pairs.length + ' of ' + allPairs.length + ' paired models · ranked by REM2 ' + esc(activeMetric.label) + '</p><div class="benchmark-dual">' +
-      benchmarkScorePanel("Foundation models", "Base", pairs, "base", activeMetric.label) +
-      benchmarkScorePanel("With REM2", "Enhanced", pairs, "enhanced", activeMetric.label) + '</div>' +
-      benchmarkAuditTable(pairs, activeMetric.label) + benchmarkDetails(benchmark);
+    var variant = state.benchmarkVariant || "rem2";
+    var variantTabs = [
+      { id: "raw", label: "Raw" },
+      { id: "rem2", label: "+ REM2" },
+    ].map(function (item) {
+      return '<button type="button" class="benchmark-filter-pill benchmark-variant-pill' + (item.id === variant ? " is-on" : "") +
+        '" data-benchmark-variant="' + item.id + '">' + item.label + '</button>';
+    }).join("");
+    var body = pairs.map(function (row, index) { return benchmarkPairRow(row, index + 1, property); }).join("");
+    host.innerHTML = '<header class="benchmark-cross-head"><div><span class="section-kicker">Cross-benchmark leaderboard</span><h2>REM2 benchmark evidence</h2>' +
+      '<p>Scores are mean Spearman across ProteinGym assays. Switch Raw and +REM2 to compare the same 59 models.</p></div>' +
+      '<dl><div><dt>Models</dt><dd>' + allPairs.length + '</dd></div><div><dt>Assays</dt><dd>' + esc(benchmark.n) +
+      '</dd></div></dl></header><div class="benchmark-filter-stack"><div class="benchmark-filter-row"><span>Benchmark</span><div class="benchmark-tabs">' +
+      tabs + '</div></div><div class="benchmark-filter-row"><span>Property</span><div>' + propertyTabs +
+      '</div></div><div class="benchmark-filter-row"><span>Model input</span><div>' + benchmarkInputOptions(allPairs) +
+      '</div></div><div class="benchmark-filter-row"><span>Score</span><div>' + variantTabs +
+      '</div></div></div><div class="benchmark-list-tools"><p><strong>' + pairs.length + '</strong> of ' + allPairs.length +
+      ' models · ranked by ' + (variant === "raw" ? "Raw " : "+REM2 ") + esc(activeProperty.label) + '</p><label class="benchmark-search"><span>Find model</span>' +
+      '<input type="search" data-benchmark-query value="' + esc(state.benchmarkQuery || "") +
+      '" placeholder="ESM, ProSST, SaProt…"></label></div><section class="benchmark-chart"><div class="benchmark-chart-header">' +
+      '<span>Rank</span><span>Score</span><span>Average Spearman</span><span>Model</span><span>Inputs</span></div>' +
+      benchmarkFeaturedRow(benchmark, property) + '<div class="benchmark-chart-divider"><span>Foundation models</span><span>' +
+      (variant === "raw" ? "Raw" : "+REM2") + ' scores</span></div>' +
+      (body || '<p class="benchmark-no-results">No models match these filters.</p>') + '</section><p class="benchmark-source-line"><span>Source</span> ' +
+      esc(benchmark.source || "") + ' · <a href="' + esc(benchmark.source_url || catalog.url) + '" target="_blank" rel="noreferrer">ProteinGym</a></p>';
   }
 
   function renderLeaderboard() {
@@ -4181,27 +4217,34 @@
     var benchmarkHost = $("pg-board");
     if (benchmarkHost) {
       benchmarkHost.addEventListener("click", function (ev) {
-        var metricBtn = ev.target.closest("[data-benchmark-metric]");
-        if (metricBtn) {
-          state.benchmarkMetric = metricBtn.getAttribute("data-benchmark-metric");
+        var propertyBtn = ev.target.closest("[data-benchmark-property]");
+        if (propertyBtn) {
+          state.benchmarkProperty = propertyBtn.getAttribute("data-benchmark-property");
           renderLeaderboard();
           return;
         }
-        var limitBtn = ev.target.closest("[data-benchmark-limit]");
-        if (limitBtn) {
-          var benchmark = currentBenchmark();
-          var count = (benchmark && benchmark.pairs || []).length;
-          state.benchmarkLimit = Number(state.benchmarkLimit) >= count ? 12 : count;
+        var inputBtn = ev.target.closest("[data-benchmark-input]");
+        if (inputBtn) {
+          state.benchmarkInput = inputBtn.getAttribute("data-benchmark-input");
+          renderLeaderboard();
+          return;
+        }
+        var variantBtn = ev.target.closest("[data-benchmark-variant]");
+        if (variantBtn) {
+          state.benchmarkVariant = variantBtn.getAttribute("data-benchmark-variant");
+          if (state.benchmarkVariant === "raw" && state.benchmarkInput === "evo") state.benchmarkInput = "all";
           renderLeaderboard();
           return;
         }
         var benchmarkBtn = ev.target.closest("[data-benchmark]");
         if (benchmarkBtn) {
           state.benchmarkId = benchmarkBtn.getAttribute("data-benchmark");
-          state.benchmarkMetric = "spearman";
+          state.benchmarkProperty = "overall";
+          state.benchmarkInput = "all";
+          state.benchmarkVariant = "rem2";
           state.benchmarkQuery = "";
-          state.benchmarkLimit = 12;
           renderLeaderboard();
+          return;
         }
       });
       var benchmarkSearchTimer = null;

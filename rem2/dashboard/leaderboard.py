@@ -209,6 +209,16 @@ _VENUSREM2_STAGES = [
 _PROTEINGYM_REM2_DATA = Path(__file__).with_name("data") / "proteingym_rem2.json"
 
 
+def _benchmark_inputs(model_key: str) -> list[str]:
+    """Return the foundation model inputs; REM2 adds evolutionary evidence."""
+    key = model_key.lower()
+    if key.startswith(("proteinmpnn", "pmpnn_")) or key == "esmif":
+        return ["str"]
+    if key.startswith(("prosst", "saprot", "s3f")) or key in {"protssn", "mifst"}:
+        return ["seq", "str"]
+    return ["seq"]
+
+
 def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     raw_data = json.loads(_PROTEINGYM_REM2_DATA.read_text(encoding="utf-8"))
     pairs = []
@@ -225,13 +235,15 @@ def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
                 "delta": spearman["delta"],
                 "protocol": raw["notes"],
                 "metrics": raw["metrics"],
+                "properties": raw["properties"],
+                "inputs": _benchmark_inputs(raw["key"]),
             }
         )
-    return pairs, raw_data["metrics"]
+    return pairs, raw_data["properties"]
 
 
 def _proteingym_product_benchmark() -> dict[str, Any]:
-    pairs, metrics = _proteingym_pairs()
+    pairs, properties = _proteingym_pairs()
     return {
         "id": "proteingym",
         "label": "ProteinGym",
@@ -240,11 +252,11 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "status": "ready",
         "n": 217,
         "setting": "Zero-shot · substitutions",
-        "metric": "Five paired metrics",
+        "metric": "Average Spearman",
         "source": "PG_Raw_vs_REM2 · Feishu revision 461",
         "source_url": "https://proteingym.org/benchmarks",
         "model_count": len(pairs),
-        "metrics": metrics,
+        "properties": properties,
         "pairs": pairs,
         "function_scores": {
             "activity": 0.539,
@@ -253,6 +265,21 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
             "organismal fitness": 0.483,
             "stability": 0.698,
         },
+    }
+
+
+def _planned_product_benchmark(benchmark_id: str, label: str) -> dict[str, Any]:
+    return {
+        "id": benchmark_id,
+        "label": label,
+        "title": label,
+        "description": "Benchmark schema is ready; paired Raw and +REM2 results will be added after validation.",
+        "status": "planned",
+        "n": "—",
+        "setting": "Awaiting data",
+        "metric": "—",
+        "properties": [],
+        "pairs": [],
     }
 
 _CATEGORY_BOARDS = [
@@ -351,7 +378,11 @@ def proteingym_catalog() -> dict[str, Any]:
         "url": "https://proteingym.org/benchmarks",
         "metric": "Mean Spearman",
         "default_benchmark": "proteingym",
-        "benchmarks": [_proteingym_product_benchmark()],
+        "benchmarks": [
+            _proteingym_product_benchmark(),
+            _planned_product_benchmark("venusmuthub", "VenusMutHub"),
+            _planned_product_benchmark("venusvirohub", "VenusViroHub"),
+        ],
         "planned_benchmarks": ["VenusMutHub", "VenusViroHub"],
         "boards": boards,
     }
