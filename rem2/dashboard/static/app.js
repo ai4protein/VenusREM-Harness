@@ -233,13 +233,13 @@
     n: 217,
     setting: "Zero-shot · substitutions",
     metric: "Mean Spearman",
-    source: "REM2 paper results; ProteinGym v1.3 values shown as reference only",
+    source: "REM2 paired evaluation on 217 ProteinGym substitution assays",
     source_url: "https://proteingym.org/benchmarks",
     pairs: [
-      { family: "ProSST ensemble", base_name: "ProSST ensemble", enhanced_name: "VenusREM2", inputs: ["seq", "str", "evo"], base: 0.524, enhanced: 0.556, delta: 0.032, official_reference: null, official_name: "No matching ensemble row", official_gap: null, protocol: "Six ProSST checkpoints · same internal pipeline", comparison: "direct" },
-      { family: "ESM-2 650M", base_name: "ESM-2 650M", enhanced_name: "ESM-2 650M + REM2", inputs: ["seq", "evo"], base: 0.418, enhanced: 0.468, delta: 0.050, official_reference: 0.414, official_name: "ESM2 (650M)", official_gap: 0.004, protocol: "wt-marginals · same internal pipeline", comparison: "direct" },
-      { family: "SaProt AF-650M", base_name: "SaProt AF-650M", enhanced_name: "SaProt AF-650M + REM2", inputs: ["seq", "str", "evo"], base: 0.424, enhanced: 0.454, delta: 0.030, official_reference: 0.457, official_name: "SaProt (650M)", official_gap: -0.033, protocol: "Internal: wt-marginals · ProteinGym: masked mutant positions", comparison: "protocol_mismatch" },
-      { family: "ESM-1v ensemble", base_name: "ESM-1v 5-seed ensemble", enhanced_name: "ESM-1v ensemble + REM2", inputs: ["seq", "evo"], base: 0.410, enhanced: 0.457, delta: 0.047, official_reference: 0.407, official_name: "ESM-1v (ensemble)", official_gap: 0.003, protocol: "wt-marginals · same internal pipeline", comparison: "direct" },
+      { family: "ProSST ensemble", base_name: "ProSST ensemble", enhanced_name: "VenusREM2", inputs: ["seq", "str", "evo"], base: 0.524, enhanced: 0.556, delta: 0.032, protocol: "Six ProSST checkpoints · same internal pipeline" },
+      { family: "ESM-2 650M", base_name: "ESM-2 650M", enhanced_name: "ESM-2 650M + REM2", inputs: ["seq", "evo"], base: 0.418, enhanced: 0.468, delta: 0.050, protocol: "wt-marginals · same internal pipeline" },
+      { family: "SaProt AF-650M", base_name: "SaProt AF-650M", enhanced_name: "SaProt AF-650M + REM2", inputs: ["seq", "str", "evo"], base: 0.424, enhanced: 0.454, delta: 0.030, protocol: "wt-marginals · same internal pipeline" },
+      { family: "ESM-1v ensemble", base_name: "ESM-1v 5-seed ensemble", enhanced_name: "ESM-1v ensemble + REM2", inputs: ["seq", "evo"], base: 0.410, enhanced: 0.457, delta: 0.047, protocol: "wt-marginals · same internal pipeline" },
     ],
     stages: [
       { name: "VenusREM2 · rem2", score: 0.556, note: "+ pLDDT (full)", highlight: true },
@@ -249,7 +249,6 @@
       { name: "VenusREM2 · raw", score: 0.524, note: "uncalibrated ProSST ensemble" },
     ],
     function_scores: { activity: 0.541, binding: 0.495, expression: 0.557, "organismal fitness": 0.494, stability: 0.691 },
-    prior_method: { name: "VenusREM", score: 0.518, base_name: "ProSST (K=2048)", base_score: 0.507, note: "Official ProteinGym row; fixed-method predecessor, not the ProSST ensemble used by VenusREM2." },
   }];
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
 
@@ -1205,21 +1204,15 @@
 
   function benchmarkAuditTable(rows) {
     var body = rows.map(function (row) {
-      var official = row.official_reference == null ? "—" : Number(row.official_reference).toFixed(3);
-      var gap = row.official_gap == null ? "" : (Number(row.official_gap) >= 0 ? "+" : "") + Number(row.official_gap).toFixed(3);
-      var warning = row.comparison === "protocol_mismatch";
-      return '<tr class="' + (warning ? "has-warning" : "") + '"><td><strong>' + esc(row.family) +
+      return '<tr><td><strong>' + esc(row.family) +
         '</strong></td><td class="num">' + Number(row.base).toFixed(3) + '</td><td class="num rem2-value">' +
         Number(row.enhanced).toFixed(3) + '</td><td class="num lift-value">+' + Number(row.delta).toFixed(3) +
-        '</td><td class="num">' + official + (gap ? '<small class="official-gap">' + gap + '</small>' : '') +
-        '</td><td><span class="protocol-state ' + (warning ? "is-warning" : "is-ok") + '">' +
-        (warning ? "Protocol mismatch" : "Comparable") + '</span><small class="protocol-copy">' +
-        esc(row.protocol) + '</small></td></tr>';
+        '</td><td><small class="protocol-copy">' + esc(row.protocol) + '</small></td></tr>';
     }).join("");
-    return '<div class="benchmark-audit"><div class="benchmark-section-title"><div><span class="section-kicker">Data provenance</span>' +
-      '<h2>Paired comparison and public reference</h2></div><p>Base and +REM2 use the same internal pipeline. The official column is context, not the subtraction baseline.</p></div>' +
+    return '<div class="benchmark-audit"><div class="benchmark-section-title"><div><span class="section-kicker">Paired results</span>' +
+      '<h2>Same backbone, one evaluation pipeline</h2></div><p>The lift is always calculated against the matching internal Base result.</p></div>' +
       '<div class="benchmark-table-scroll"><table class="benchmark-compare-table"><thead><tr><th>Backbone</th><th>Internal base</th>' +
-      '<th>Full +REM2</th><th>Lift</th><th>PG official</th><th>Protocol check</th></tr></thead><tbody>' + body +
+      '<th>Full +REM2</th><th>Lift</th><th>Evaluation</th></tr></thead><tbody>' + body +
       '</tbody></table></div></div>';
   }
 
@@ -1234,14 +1227,9 @@
       return '<div class="benchmark-stage"><span><strong>' + esc(row.name) + '</strong><small>' + esc(row.note || "") +
         '</small></span><b>' + Number(row.score).toFixed(3) + '</b></div>';
     }).join("");
-    var prior = benchmark.prior_method || {};
     return '<div class="benchmark-detail-grid"><section><div class="benchmark-panel-head"><div><span class="section-kicker">VenusREM2</span>' +
       '<h2>Performance by function</h2></div></div>' + fnRows + '</section><section><div class="benchmark-panel-head"><div>' +
-      '<span class="section-kicker">Recipe evidence</span><h2>ProSST ensemble ablation</h2></div></div>' + stages + '</section>' +
-      '<aside class="benchmark-prior"><span class="section-kicker">Prior method</span><h2>' + esc(prior.name || "VenusREM") +
-      '</h2><div><strong>' + (prior.base_score != null ? Number(prior.base_score).toFixed(3) : "—") +
-      '</strong><span>to</span><strong>' + (prior.score != null ? Number(prior.score).toFixed(3) : "—") +
-      '</strong></div><p>' + esc(prior.note || "") + '</p></aside></div>';
+      '<span class="section-kicker">Recipe evidence</span><h2>ProSST ensemble ablation</h2></div></div>' + stages + '</section></div>';
   }
 
   function renderProductBenchmark(host, benchmark, catalog) {
@@ -1255,8 +1243,7 @@
       esc(benchmark.title) + '</h2><p>' + esc(benchmark.description || "") + '</p></div><dl><div><dt>Assays</dt><dd>' +
       esc(benchmark.n) + '</dd></div><div><dt>Setting</dt><dd>' + esc(benchmark.setting) + '</dd></div><div><dt>Metric</dt><dd>' +
       esc(benchmark.metric) + '</dd></div></dl></header><div class="benchmark-source-line"><span>Source</span> ' +
-      esc(benchmark.source || "") + ' · <a href="' + esc(benchmark.source_url || catalog.url) +
-      '" target="_blank" rel="noreferrer">ProteinGym reference</a></div><div class="benchmark-dual">' +
+      esc(benchmark.source || "") + '</div><div class="benchmark-dual">' +
       benchmarkScorePanel("Foundation models", "Base", pairs, "base") +
       benchmarkScorePanel("With REM2", "Enhanced", pairs, "enhanced") + '</div>' +
       benchmarkAuditTable(pairs) + benchmarkDetails(benchmark);

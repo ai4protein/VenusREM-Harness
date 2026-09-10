@@ -258,9 +258,8 @@ def test_proteingym_leaderboard(client):
     assert pairs["ProSST ensemble"]["base"] == 0.524
     assert pairs["ProSST ensemble"]["enhanced"] == 0.556
     assert pairs["ProSST ensemble"]["delta"] == 0.032
-    assert pairs["ProSST ensemble"]["official_reference"] is None
-    assert pairs["SaProt AF-650M"]["comparison"] == "protocol_mismatch"
-    assert pairs["SaProt AF-650M"]["official_gap"] == -0.033
+    assert "official_reference" not in pairs["ProSST ensemble"]
+    assert "comparison" not in pairs["SaProt AF-650M"]
 
 
 def test_create_run_requires_input(client):

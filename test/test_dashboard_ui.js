@@ -371,10 +371,8 @@ check("product benchmark compares the same base with REM2", () => {
   assert.strictEqual(prosst.base, 0.524);
   assert.strictEqual(prosst.enhanced, 0.556);
   assert.strictEqual(prosst.delta, 0.032);
-  assert.strictEqual(prosst.official_reference, null);
   const saprot = benchmark.pairs.find((row) => row.family === "SaProt AF-650M");
-  assert.strictEqual(saprot.comparison, "protocol_mismatch");
-  assert.strictEqual(saprot.official_gap, -0.033);
+  assert.strictEqual(Object.prototype.hasOwnProperty.call(saprot, "official_reference"), false);
   const enhanced = context.benchmarkScorePanel("With REM2", "Enhanced", benchmark.pairs, "enhanced");
   assert.ok(enhanced.includes("ESM-2 650M + REM2"));
   assert.ok(enhanced.includes("+0.050"));

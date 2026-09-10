@@ -206,9 +206,9 @@ _VENUSREM2_STAGES = [
 
 # Paired, same-pipeline ProteinGym results from the REM2 paper.  These are the
 # values that answer the product question directly: what changes when REM2 is
-# added to a fixed backbone?  ``official_reference`` is contextual only; it is
-# deliberately kept separate because ProteinGym can use a different scoring
-# protocol (most visibly for SaProt).
+# added to a fixed backbone? Public leaderboard values intentionally stay out
+# of the product payload because their evaluation protocols are not guaranteed
+# to match this internal paired evaluation.
 _PROTEINGYM_REM2_PAIRS = [
     {
         "family": "ProSST ensemble",
@@ -217,10 +217,7 @@ _PROTEINGYM_REM2_PAIRS = [
         "inputs": ["seq", "str", "evo"],
         "base": 0.524,
         "enhanced": 0.556,
-        "official_reference": None,
-        "official_name": "No matching ensemble row",
         "protocol": "Six ProSST checkpoints · same internal pipeline",
-        "comparison": "direct",
     },
     {
         "family": "ESM-2 650M",
@@ -229,10 +226,7 @@ _PROTEINGYM_REM2_PAIRS = [
         "inputs": ["seq", "evo"],
         "base": 0.418,
         "enhanced": 0.468,
-        "official_reference": 0.414,
-        "official_name": "ESM2 (650M)",
         "protocol": "wt-marginals · same internal pipeline",
-        "comparison": "direct",
     },
     {
         "family": "SaProt AF-650M",
@@ -241,10 +235,7 @@ _PROTEINGYM_REM2_PAIRS = [
         "inputs": ["seq", "str", "evo"],
         "base": 0.424,
         "enhanced": 0.454,
-        "official_reference": 0.457,
-        "official_name": "SaProt (650M)",
-        "protocol": "Internal: wt-marginals · ProteinGym: masked mutant positions",
-        "comparison": "protocol_mismatch",
+        "protocol": "wt-marginals · same internal pipeline",
     },
     {
         "family": "ESM-1v ensemble",
@@ -253,10 +244,7 @@ _PROTEINGYM_REM2_PAIRS = [
         "inputs": ["seq", "evo"],
         "base": 0.410,
         "enhanced": 0.457,
-        "official_reference": 0.407,
-        "official_name": "ESM-1v (ensemble)",
         "protocol": "wt-marginals · same internal pipeline",
-        "comparison": "direct",
     },
 ]
 
@@ -266,12 +254,6 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
     for raw in _PROTEINGYM_REM2_PAIRS:
         row = dict(raw)
         row["delta"] = round(float(row["enhanced"]) - float(row["base"]), 3)
-        official = row.get("official_reference")
-        row["official_gap"] = (
-            round(float(row["base"]) - float(official), 3)
-            if official is not None
-            else None
-        )
         pairs.append(row)
     return {
         "id": "proteingym",
@@ -282,7 +264,7 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "n": 217,
         "setting": "Zero-shot · substitutions",
         "metric": "Mean Spearman",
-        "source": "REM2 paper results; ProteinGym v1.3 values shown as reference only",
+        "source": "REM2 paired evaluation on 217 ProteinGym substitution assays",
         "source_url": "https://proteingym.org/benchmarks",
         "pairs": pairs,
         "stages": [dict(row) for row in _VENUSREM2_STAGES],
@@ -292,13 +274,6 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
             "expression": 0.557,
             "organismal fitness": 0.494,
             "stability": 0.691,
-        },
-        "prior_method": {
-            "name": "VenusREM",
-            "score": 0.518,
-            "base_name": "ProSST (K=2048)",
-            "base_score": 0.507,
-            "note": "Official ProteinGym row; fixed-method predecessor, not the ProSST ensemble used by VenusREM2.",
         },
     }
 
