@@ -49,6 +49,7 @@ dependencies = [
 # tyang816/ProSST on first --model prosst / venusrem2 use.
 prosst = [
   "torch-geometric>=2.4",
+  "torch-scatter>=2.1",
   "pathos>=0.3",
   "biotite>=0.40",
 ]

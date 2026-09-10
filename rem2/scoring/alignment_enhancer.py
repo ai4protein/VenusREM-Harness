@@ -10,20 +10,27 @@ from tqdm import tqdm
 def read_multi_fasta(file_path):
     sequences = {}
     current_sequence = ""
+    header = None
     with open(file_path, "r", encoding="utf-8") as file:
         for line in file:
             line = line.strip()
+            if not line or line.startswith("#"):
+                continue
             if line.startswith(">"):
-                if current_sequence:
+                if current_sequence and header is not None:
                     sequences[header] = (
-                        current_sequence.upper().replace("-", "<pad>").replace(".", "<pad>")
+                        "".join(c for c in current_sequence if not c.islower())
+                        .upper().replace("-", "<pad>").replace(".", "<pad>")
                     )
                     current_sequence = ""
                 header = line
             else:
                 current_sequence += line
-        if current_sequence:
-            sequences[header] = current_sequence
+        if current_sequence and header is not None:
+            sequences[header] = (
+                "".join(c for c in current_sequence if not c.islower())
+                .upper().replace("-", "<pad>").replace(".", "<pad>")
+            )
     return sequences
 
 
@@ -75,18 +82,22 @@ def _fast_count_matrix(file_path, tokenizer, logger=None, protein_name=None):
 
     with open(file_path, "r") as f:
         cur_len = 0
+        seen_header = False
         for line in f:
             line = line.rstrip("\n")
+            if not line or line.startswith("#"):
+                continue
             if line.startswith(">"):
-                if cur_len > 0:
+                if seen_header:
                     max_len = max(max_len, cur_len)
                     n_seqs += 1
-                    cur_len = 0
+                cur_len = 0
+                seen_header = True
                 if first_header is None:
                     first_header = line
-            else:
-                cur_len += len(line)
-        if cur_len > 0:
+            elif seen_header:
+                cur_len += sum(1 for char in line if not char.islower())
+        if seen_header:
             max_len = max(max_len, cur_len)
             n_seqs += 1
 
@@ -118,13 +129,14 @@ def _fast_count_matrix(file_path, tokenizer, logger=None, protein_name=None):
 
     with open(file_path, "r") as f:
         cur_chars = bytearray()
+        seen_header = False
         for line in f:
             line = line.rstrip("\n")
+            if not line or line.startswith("#"):
+                continue
             if line.startswith(">"):
-                if cur_chars:
+                if seen_header:
                     arr = np.frombuffer(bytes(cur_chars), dtype=np.uint8).copy()
-                    mask = (arr >= 97) & (arr <= 122)
-                    arr[mask] -= 32
                     ids = lut[np.clip(arr, 0, 127)]
                     slen = len(ids)
                     batch_buf[bi, :slen] = ids
@@ -136,12 +148,12 @@ def _fast_count_matrix(file_path, tokenizer, logger=None, protein_name=None):
                         batch_buf[:] = pad_idx
                         bi = 0
                     cur_chars = bytearray()
-            else:
-                cur_chars.extend(line.encode("ascii", errors="replace"))
-        if cur_chars:
+                seen_header = True
+            elif seen_header:
+                aligned = "".join(char for char in line if not char.islower())
+                cur_chars.extend(aligned.encode("ascii", errors="replace"))
+        if seen_header:
             arr = np.frombuffer(bytes(cur_chars), dtype=np.uint8).copy()
-            mask = (arr >= 97) & (arr <= 122)
-            arr[mask] -= 32
             ids = lut[np.clip(arr, 0, 127)]
             slen = len(ids)
             batch_buf[bi, :slen] = ids

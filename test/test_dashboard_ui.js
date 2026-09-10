@@ -194,6 +194,10 @@ check("residue bar sits on the review page", () => {
   assert.ok(strip.includes('data-pos="3"'));
   assert.ok(strip.includes("is-pick"));
   assert.ok(strip.includes("is-mut"));
+  context.state.picked = { resi: 239, resn: "S", chain: "A" };
+  const longStrip = context.aaStripHtml("A".repeat(250), [239]);
+  assert.ok(longStrip.includes('<span class="aa-num is-on">239</span>'));
+  assert.ok(longStrip.includes('<span class="aa-num">240</span>'));
   const nav = context.aaNavHtml("ACDEY");
   assert.ok(nav.includes('id="aa-jump"'));
   assert.ok(nav.includes("data-aa=\"prev\""));
@@ -378,6 +382,12 @@ check("css protein pane is at least half", () => {
   assert.ok(css.includes(".input-slot"));
   assert.ok(css.includes(".review-seq"));
   assert.ok(css.includes(".board-score-bar"));
+});
+
+check("experiment tray exposes only the real CSV action", () => {
+  assert.ok(src.includes(">Add to CSV</button>"));
+  assert.ok(!src.includes("Add to experiment"));
+  assert.ok(!src.includes("btn-add-experiment"));
 });
 
 console.log("dashboard ui logic: ok");

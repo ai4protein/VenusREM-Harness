@@ -37,6 +37,13 @@ _HF_CONFIRM_TYPES = frozenset(
 _ESM_TOKENIZER_TYPES = frozenset({"protein_mpnn", "esm_if", "mifst", "mif_st", "carp", "protssn"})
 
 
+def should_trust_remote_code(model_name: str, args: Any) -> bool:
+    """Trust only an explicit opt-in or the official ProSST model family."""
+    if bool(getattr(args, "trust_remote_code", False)):
+        return True
+    return str(model_name or "").lower().startswith("ai4protein/prosst-")
+
+
 def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineState:
     from rem2.models.hf import confirm_hf_repo
 
@@ -295,7 +302,7 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
 
     else:
         # auto: standard HuggingFace model. Custom repo code is opt-in.
-        trust_remote_code = bool(getattr(args, "trust_remote_code", False))
+        trust_remote_code = should_trust_remote_code(model_name, args)
         model = AutoModelForMaskedLM.from_pretrained(
             model_name, trust_remote_code=trust_remote_code
         )

@@ -76,8 +76,20 @@ def test_default_model_and_list_order(store_client):
     _wait(client, second.json()["id"])
 
 
-def test_pdb_upload_mutants_and_limits(store_client):
+def test_pdb_only_run_preserves_upload_name_after_enrichment(store_client):
     _store, _runner, client = store_client
+    response = client.post(
+        "/api/runs",
+        data={"model": "esm2-8m", "recipe": "full", "fetch_structure": "none"},
+        files={"pdb": ("5A71_kcat.pdb", _AF.encode(), "chemical/x-pdb")},
+    )
+    assert response.status_code == 200
+    job = _wait(client, response.json()["id"])
+    assert job["protein"] == "5A71_kcat"
+
+
+def test_pdb_upload_mutants_and_limits(store_client):
+    store, _runner, client = store_client
     res = client.post(
         "/api/runs",
         data={
@@ -106,6 +118,7 @@ def test_pdb_upload_mutants_and_limits(store_client):
     assert "--max_mutants" in job["argv"]
     assert "--aa_seq_aln_dir" in job["argv"]
     assert "50" in argv
+    assert (store.inputs_dir(job["id"]) / "msa" / "query.a2m").is_file()
 
 
 def test_fetch_none_does_not_call_network(store_client, monkeypatch):

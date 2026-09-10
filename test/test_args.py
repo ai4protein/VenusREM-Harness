@@ -76,6 +76,17 @@ def test_trust_remote_code_defaults_off():
     assert args.trust_remote_code is True
 
 
+def test_official_prosst_models_enable_their_required_remote_code():
+    from types import SimpleNamespace
+
+    from rem2.backbone.baseline_dispatch import should_trust_remote_code
+
+    args = SimpleNamespace(trust_remote_code=False)
+    assert should_trust_remote_code("AI4Protein/ProSST-20", args) is True
+    assert should_trust_remote_code("AI4Protein/ProSST-4096", args) is True
+    assert should_trust_remote_code("third-party/custom-model", args) is False
+
+
 def test_out_scores_dir_defaults_to_result():
     args = _parse("--model", "esm2", "--base_dir", "data/foo")
     assert args.out_scores_dir == "result"

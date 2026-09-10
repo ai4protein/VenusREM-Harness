@@ -250,7 +250,6 @@
     top: null,
     selectedRow: null,
     experimentRows: {},
-    experimentReady: false,
     evidenceMode: "evidence",
     activeRunId: sessionStorage.getItem(STORE_RUN) || "",
     lastPoll: null,
@@ -1602,7 +1601,10 @@
         cls += " is-range";
       }
       if (picked === pos) cls += " is-pick";
-      var showNum = pos === 1 || pos % 10 === 0 || picked === pos;
+      // A picked residue gets its own label. Suppress the neighbouring decade
+      // tick so labels such as 239 and 240 do not collide in the compact strip.
+      var showDecade = pos % 10 === 0 && (!picked || Math.abs(pos - picked) > 1);
+      var showNum = pos === 1 || showDecade || picked === pos;
       html +=
         '<button type="button" class="' +
         cls +
@@ -1935,7 +1937,6 @@
     if (!mut) return;
     if (checked) state.experimentRows[mut] = row;
     else delete state.experimentRows[mut];
-    state.experimentReady = false;
   }
 
   function featureAt(name, pos) {
@@ -2096,13 +2097,11 @@
     if (rows.length > 6) chips += '<span class="more-selected">+' + (rows.length - 6) + ' more</span>';
     return (
       '<footer class="experiment-tray"><div class="experiment-count"><strong>' + rows.length + ' / 24 selected</strong><span>' +
-      (state.experimentReady ? "Experiment batch ready" : "Choose variants for experimental validation") +
+      'Build a CSV shortlist for downstream validation' +
       '</span></div><div class="experiment-chips">' + (chips || '<span class="tray-empty">No candidates selected yet</span>') +
-      '</div><div class="experiment-actions"><button type="button" class="btn" id="btn-export-experiment"' +
+      '</div><div class="experiment-actions"><button type="button" class="btn btn-primary" id="btn-export-experiment"' +
       (!rows.length ? " disabled" : "") +
-      '>Export CSV</button><button type="button" class="btn btn-primary" id="btn-add-experiment"' +
-      (!rows.length ? " disabled" : "") +
-      '>' + (state.experimentReady ? "Experiment ready" : "Add to experiment") + '</button></div></footer>'
+      '>Add to CSV</button></div></footer>'
     );
   }
 
@@ -2322,7 +2321,6 @@
       var remove = ev.target.closest("[data-remove-experiment]");
       if (remove && host.contains(remove)) {
         delete state.experimentRows[remove.getAttribute("data-remove-experiment")];
-        state.experimentReady = false;
         rerenderReview();
         return;
       }
@@ -2356,12 +2354,6 @@
         copySelected();
       } else if (id === "btn-export-experiment") {
         downloadExperimentCsv();
-      } else if (id === "btn-add-experiment") {
-        if (experimentRows().length) {
-          state.experimentReady = true;
-          flash(experimentRows().length + " candidates prepared for experimental validation.");
-          rerenderReview();
-        }
       } else if (id === "btn-cancel") {
         cancelJob(state.job && state.job.id);
       }
@@ -3234,7 +3226,6 @@
     if (state.job && state.job.id !== id) {
       teardownViewer();
       state.experimentRows = {};
-      state.experimentReady = false;
       state.evidenceMode = "evidence";
       state.pdbText = null;
       state.structureSource = "";

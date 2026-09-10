@@ -99,6 +99,8 @@ def generate_struc_seq_from_pdbs(items, dest_dir, vocab_sizes):
             continue
         predictor = SSTPredictor(
             structure_vocab_size=vocab,
+            # One means sequential preprocessing and in-process DataLoader
+            # collation; see get_sst_seq.graph_conventer.
             num_processes=1,
             num_threads=1,
         )

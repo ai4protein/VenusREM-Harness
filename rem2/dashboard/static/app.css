@@ -1867,6 +1867,12 @@ body.is-splitting canvas {
   opacity: 1;
 }
 
+/* The selected residue owns the nearby position label in the compact strip. */
+.aa-cell.is-pick + .aa-cell .aa-num,
+.aa-cell:has(+ .aa-cell.is-pick) .aa-num {
+  opacity: 0;
+}
+
 .aa-letter {
   display: block;
   min-width: 14px;

@@ -319,7 +319,11 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
                 mutants_path = str(_save_upload(mutants, inputs / "mutants.csv"))
             if msa is not None and msa.filename:
                 suffix = Path(msa.filename).suffix or ".a2m"
-                msa_path = inputs / "msa" / f"{protein}{suffix}"
+                # PDB-only single-protein runs are materialized as `query`,
+                # regardless of the original upload filename. Keep the MSA
+                # stem aligned so entropy-alpha can actually discover it.
+                msa_stem = "query" if pdb_path and not fasta_path else protein
+                msa_path = inputs / "msa" / f"{msa_stem}{suffix}"
                 _save_upload(msa, msa_path)
                 msa_dir = str(msa_path.parent)
             if not fasta_path and not pdb_path and not pdb_id and not uniprot_id and not seq_id:

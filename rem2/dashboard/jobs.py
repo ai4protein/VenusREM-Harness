@@ -233,8 +233,11 @@ def enrich_job(job: dict[str, Any], store: RunStore) -> dict[str, Any]:
         if fasta is None:
             fasta = _first_file(result / "_inputs" / "aa_seq", (".fasta", ".fa", ".faa"))
         if fasta is not None:
-            protein, sequence = _read_fasta_sequence(fasta)
-            protein = protein or fasta.stem
+            artifact_protein, sequence = _read_fasta_sequence(fasta)
+            # PDB-only runs generate an internal FASTA headed `query`. Keep the
+            # meaningful upload name already recorded on the dashboard job.
+            if not protein or protein == "protein":
+                protein = artifact_protein or fasta.stem
     job["sequence"] = sequence
     if protein:
         job["protein"] = protein

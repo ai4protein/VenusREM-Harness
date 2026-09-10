@@ -17,6 +17,8 @@ from pathos.threading import ThreadPool
 from pathlib import Path
 
 def iter_parallel_map(func, data, workers: int = 2):
+    if workers <= 1:
+        return map(func, data)
     pool = Pool(workers)
     return pool.imap(func, data)
 
@@ -209,7 +211,9 @@ def graph_conventer(
 
     data_loader = DataLoader(
         dataset,
-        num_workers=num_processes,
+        # A single requested worker means in-process collation. Forking after
+        # SSTPredictor has initialized CUDA can deadlock subsequent vocabs.
+        num_workers=0 if num_processes <= 1 else num_processes,
         batch_sampler=BatchSampler(node_counts, max_batch_nodes, shuffle=False),
         collate_fn=collate_fn,
     )
@@ -530,4 +534,3 @@ class SSTPredictor:
             start = end
             
         return results
-
