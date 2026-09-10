@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>REM2 Dashboard</title>
-  <link rel="stylesheet" href="app.css?v=20260910c">
+  <link rel="stylesheet" href="app.css?v=20260910d">
 </head>
 <body>
   <div id="app">
@@ -177,21 +177,11 @@
 
       <section id="page-benchmarks" class="page" hidden>
         <div class="benchmark-page-head">
-          <p class="section-kicker">Model evidence</p>
-          <h1>Protein fitness benchmarks</h1>
-          <p>Compare zero-shot variant-effect models across ProteinGym assay groups. Scores are mean Spearman correlation; higher is better.</p>
+          <p class="section-kicker">Benchmark evidence</p>
+          <h1>What REM2 adds</h1>
+          <p>Compare each foundation model with the same backbone enhanced by REM2. Public benchmark values remain visible as a separate reference.</p>
         </div>
-        <div class="panel board-panel" id="pg-board">
-          <div class="board-head">
-            <h2 id="board-title">ProteinGym substitutions</h2>
-            <p class="muted" id="board-sub">217 proteins · mean Spearman · <a href="https://proteingym.org/benchmarks" target="_blank" rel="noreferrer">proteingym.org</a></p>
-          </div>
-          <div class="board-filters" id="board-filters" role="tablist" aria-label="Leaderboard filters"></div>
-          <div class="board-table-wrap">
-            <table class="board-table" id="leaderboard-body"></table>
-          </div>
-          <p class="board-note" id="leaderboard-note"></p>
-        </div>
+        <div class="panel board-panel" id="pg-board" aria-live="polite">Loading benchmark evidence…</div>
       </section>
 
       <section id="page-workspace" class="page" hidden>
@@ -222,6 +212,6 @@
   <noscript>
     <p class="noscript">REM2 Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260910c"></script>
+  <script src="app.js?v=20260910d"></script>
 </body>
 </html>

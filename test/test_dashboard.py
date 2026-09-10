@@ -249,6 +249,19 @@ def test_proteingym_leaderboard(client):
     assert boards["ablations"]["rows"][0]["score"] == 0.556
     assert boards["ablations"]["rows"][-1]["score"] == 0.524
 
+    assert api["default_benchmark"] == "proteingym"
+    assert api["planned_benchmarks"] == ["VenusMutHub", "VenusViroHub"]
+    assert len(api["benchmarks"]) == 1
+    benchmark = api["benchmarks"][0]
+    assert benchmark["id"] == "proteingym"
+    pairs = {row["family"]: row for row in benchmark["pairs"]}
+    assert pairs["ProSST ensemble"]["base"] == 0.524
+    assert pairs["ProSST ensemble"]["enhanced"] == 0.556
+    assert pairs["ProSST ensemble"]["delta"] == 0.032
+    assert pairs["ProSST ensemble"]["official_reference"] is None
+    assert pairs["SaProt AF-650M"]["comparison"] == "protocol_mismatch"
+    assert pairs["SaProt AF-650M"]["official_gap"] == -0.033
+
 
 def test_create_run_requires_input(client):
     res = client.post("/api/runs", data={"model": "esm2", "recipe": "full"})
@@ -325,9 +338,9 @@ def test_static_index(client):
     assert b'id="btn-demo"' in res.content
     assert b"Skip the form" not in res.content
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
-    assert b"leaderboard-body" in res.content
+    assert b'id="pg-board"' in res.content
+    assert b"What REM2 adds" in res.content
     assert "skip → α=0".encode() in res.content
-    assert b"board-filters" in res.content
     assert b"intake-box" in res.content
     assert b"slot-sequence" in res.content
     assert b"slot-structure" in res.content

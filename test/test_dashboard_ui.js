@@ -57,6 +57,8 @@ this.selectionResis = selectionResis;
 this.comparisonMetricBand = comparisonMetricBand;
 this.classifyIntakeFile = classifyIntakeFile;
 this.currentBoard = currentBoard;
+this.currentBenchmark = currentBenchmark;
+this.benchmarkScorePanel = benchmarkScorePanel;
 `;
 
 const context = vm.createContext({
@@ -299,12 +301,12 @@ check("html flow chrome", () => {
   assert.ok(!html.includes('id="file-bundle"'));
   assert.ok(html.includes('id="model-series"'));
   assert.ok(html.includes('id="model-select"') && html.includes('name="model"'));
-  assert.ok(html.includes('id="board-filters"'));
+  assert.ok(html.includes('id="pg-board"'));
   assert.ok(html.includes('value="auto" selected'));
   assert.ok(html.includes('id="btn-demo"'));
   assert.ok(!html.includes("Skip the form"));
   assert.ok(!html.includes("Full ProteinGym-level scoring needs at least a PDB and an MSA"));
-  assert.ok(html.includes('id="leaderboard-body"'));
+  assert.ok(html.includes("What REM2 adds"));
   assert.ok(html.includes("skip → α=0"));
   assert.ok(src.includes('data-delete-run="'));
   assert.ok(src.includes("refreshReviewSelection"));
@@ -359,6 +361,23 @@ check("leaderboard catalog has filter boards", () => {
   context.state.boardId = "ablations";
   assert.strictEqual(context.currentBoard().id, "ablations");
   assert.strictEqual(context.currentBoard().rows[0].score, 0.556);
+});
+
+check("product benchmark compares the same base with REM2", () => {
+  const benchmark = context.currentBenchmark();
+  assert.strictEqual(benchmark.id, "proteingym");
+  assert.strictEqual(benchmark.pairs.length, 4);
+  const prosst = benchmark.pairs.find((row) => row.family === "ProSST ensemble");
+  assert.strictEqual(prosst.base, 0.524);
+  assert.strictEqual(prosst.enhanced, 0.556);
+  assert.strictEqual(prosst.delta, 0.032);
+  assert.strictEqual(prosst.official_reference, null);
+  const saprot = benchmark.pairs.find((row) => row.family === "SaProt AF-650M");
+  assert.strictEqual(saprot.comparison, "protocol_mismatch");
+  assert.strictEqual(saprot.official_gap, -0.033);
+  const enhanced = context.benchmarkScorePanel("With REM2", "Enhanced", benchmark.pairs, "enhanced");
+  assert.ok(enhanced.includes("ESM-2 650M + REM2"));
+  assert.ok(enhanced.includes("+0.050"));
 });
 
 check("model picker groups by series", () => {
