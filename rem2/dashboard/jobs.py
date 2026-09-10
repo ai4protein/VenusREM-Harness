@@ -127,10 +127,19 @@ def resolve_pdb_artifact(
     return None
 
 
+def job_base_dir(job: dict[str, Any]) -> Optional[Path]:
+    """Return a run's dataset directory when it was scored with --base_dir."""
+    value = str((job.get("argv_spec") or {}).get("base_dir") or "").strip()
+    return Path(value).expanduser() if value else None
+
+
 def attach_structure_meta(job: dict[str, Any], store: RunStore) -> dict[str, Any]:
     run_id = job["id"]
     result = Path(job.get("out_dir") or store.result_dir(run_id))
     info = collect_structures(store.inputs_dir(run_id), result / "_inputs" / "pdbs")
+    base_dir = job_base_dir(job)
+    if not info["has_pdb"] and base_dir is not None:
+        info = collect_structures(store.inputs_dir(run_id), base_dir / "pdbs")
     job["has_pdb"] = bool(info["has_pdb"] or job.get("has_pdb"))
     job["has_plddt"] = bool(info["has_plddt"])
     job["pdb_origin"] = info["pdb_origin"] or job.get("pdb_origin")
@@ -335,10 +344,15 @@ def residue_features(job: dict[str, Any], store: RunStore) -> dict[str, Any]:
     run_id = job["id"]
     inputs = store.inputs_dir(run_id)
     result = Path(job.get("out_dir") or store.result_dir(run_id))
+    base_dir = job_base_dir(job)
     fasta = existing_fasta(inputs) or _first_file(result / "_inputs" / "aa_seq", (".fasta", ".fa", ".faa"))
+    if fasta is None and base_dir is not None:
+        fasta = _first_file(base_dir / "aa_seq", (".fasta", ".fa", ".faa"))
     _name, sequence = _read_fasta_sequence(Path(fasta)) if fasta else ("", job.get("sequence") or "")
     sequence = sequence or str(job.get("sequence") or "")
     pdb = resolve_pdb_artifact(inputs, result / "_inputs" / "pdbs")
+    if pdb is None and base_dir is not None:
+        pdb = resolve_pdb_artifact(inputs, base_dir / "pdbs")
     plddt: list[float] = []
     rsa: list[float] = []
     has_plddt = False

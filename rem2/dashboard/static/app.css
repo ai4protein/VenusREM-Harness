@@ -2529,6 +2529,8 @@ table.candidate-table tbody tr.is-sel:hover { background: var(--review-violet-so
 .sequence-label span { color: #7a8290; font-family: var(--mono); }
 .sequence-panel .aa-strip { min-height: 40px; padding-bottom: 6px; }
 .sequence-panel .aa-cell { color: #30405a; }
+.sequence-panel .aa-cell { min-width: 13px; padding-left: 0; padding-right: 0; }
+.sequence-panel .aa-letter { min-width: 12px; font-size: 11px; }
 .sequence-panel .aa-num { color: #8993a1; }
 .sequence-panel .aa-cell.is-mut .aa-letter { background: #e7f2ef; color: #226c5e; }
 .sequence-panel .aa-cell.is-pick .aa-letter {
@@ -2591,6 +2593,28 @@ table.candidate-table tbody tr.is-sel:hover { background: var(--review-violet-so
 .metric { position: relative; display: block; height: 5px; border-radius: 99px; background: #e8ebe9; }
 .metric b { display: block; height: 100%; border-radius: 99px; background: #6b9fba; }
 .metric em { position: absolute; top: -6px; right: 0; padding-left: 3px; background: #fff; color: #4e5868; font-family: var(--mono); font-size: 9px; font-style: normal; }
+.metric--rank-high b, .comparison-legend .rank-high { background: #2f9f83; }
+.metric--rank-mid b, .comparison-legend .rank-mid { background: #d59a3a; }
+.metric--rank-low b, .comparison-legend .rank-low { background: #df7b62; }
+.metric--plddt-very-high b, .comparison-legend .plddt-very-high { background: #0053d6; }
+.metric--plddt-confident b, .comparison-legend .plddt-confident { background: #65cbf3; }
+.metric--plddt-low b, .comparison-legend .plddt-low { background: #ffdb13; }
+.metric--plddt-very-low b, .comparison-legend .plddt-very-low { background: #ff7d45; }
+.metric--rsa-buried b, .comparison-legend .rsa-buried { background: #7b61c9; }
+.metric--rsa-partial b, .comparison-legend .rsa-partial { background: #6b9fba; }
+.metric--rsa-exposed b, .comparison-legend .rsa-exposed { background: #4ea99b; }
+.metric--na b { background: #c7ceca; }
+.comparison-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 9px;
+  margin-top: 5px;
+  color: #697282;
+  font-size: 8px;
+  line-height: 1.25;
+}
+.comparison-legend span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.comparison-legend i { width: 6px; height: 6px; border-radius: 50%; }
 .comparison-note { margin: 5px 0 0; color: #7a8290; font-size: 9px; }
 .review-empty { display: grid; min-height: 130px; place-items: center; color: #7a8290; font-size: 12px; }
 

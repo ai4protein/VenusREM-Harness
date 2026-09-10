@@ -1558,9 +1558,7 @@
   }
 
   function currentMutPositions() {
-    var fromRow = parseMutants(mutantField(state.selectedRow)).map(function (m) {
-      return m.pos;
-    });
+    var fromRow = selectionResis();
     if (fromRow.length) return fromRow;
     var ranged = rangePositions();
     if (ranged.length) return ranged;
@@ -1821,6 +1819,7 @@
   function scoreTableHtml(job, payload) {
     var rows = (payload && payload.rows) || [];
     var total = (payload && payload.total) || rows.length;
+    var rankingTotal = (job && (job.n_mutants != null ? job.n_mutants : job.n_rows)) || total;
     var offset = (payload && payload.offset) != null ? payload.offset : state.offset;
     var primary = primaryScore(job, payload);
     var selMut = mutantField(state.selectedRow);
@@ -1839,7 +1838,7 @@
         var rank = row.rank != null ? row.rank : offset + i + 1;
         var sel = mut && mut === selMut ? " is-sel" : "";
         var checked = !!state.experimentRows[mut];
-        var percentile = total ? Math.max(0, Math.min(100, 100 - ((rank - 1) / total) * 100)) : 0;
+        var percentile = rankingTotal ? Math.max(0, Math.min(100, 100 - ((rank - 1) / rankingTotal) * 100)) : 0;
         var score = rowScore(row, primary);
         return (
           '<tr class="' +
@@ -1946,7 +1945,8 @@
   }
 
   function percentileFor(row) {
-    var total = (state.scores && state.scores.total) || 0;
+    var total = (state.job && (state.job.n_mutants != null ? state.job.n_mutants : state.job.n_rows)) ||
+      (state.scores && state.scores.total) || 0;
     var rank = row && row.rank != null ? Number(row.rank) : 0;
     if (!total || !rank) return 0;
     return Math.max(0, Math.min(100, 100 - ((rank - 1) / total) * 100));
@@ -1959,6 +1959,36 @@
     if (!isFinite(value)) return 0;
     if (!isFinite(lo) || !isFinite(hi) || hi === lo) return Math.max(0, Math.min(100, 50 + value * 10));
     return Math.max(0, Math.min(100, ((value - lo) / (hi - lo)) * 100));
+  }
+
+  function comparisonMetricBand(metric, value) {
+    if (value == null || value === "") return "na";
+    value = Number(value);
+    if (!isFinite(value)) return "na";
+    if (metric === "rank") {
+      if (value >= 90) return "rank-high";
+      if (value >= 70) return "rank-mid";
+      return "rank-low";
+    }
+    if (metric === "plddt") {
+      if (value >= 90) return "plddt-very-high";
+      if (value >= 70) return "plddt-confident";
+      if (value >= 50) return "plddt-low";
+      return "plddt-very-low";
+    }
+    if (metric === "rsa") {
+      if (value <= 0.2) return "rsa-buried";
+      if (value <= 0.5) return "rsa-partial";
+      return "rsa-exposed";
+    }
+    return "na";
+  }
+
+  function comparisonMetricHtml(metric, width, value, label, title) {
+    var band = comparisonMetricBand(metric, value);
+    return '<span class="metric metric--' + band + '" title="' + esc(title) + '">' +
+      '<b style="width:' + Math.max(0, Math.min(100, width)).toFixed(1) + '%"></b>' +
+      '<em>' + esc(label) + '</em></span>';
   }
 
   function reviewModeTabsHtml() {
@@ -2012,20 +2042,33 @@
       var m = parseMutants(mut)[0] || {};
       var plddt = featureAt("plddt", m.pos);
       var rsa = featureAt("rsa", m.pos);
+      var percentile = percentileFor(row);
       var plddtPct = plddt == null ? 0 : Math.max(0, Math.min(100, plddt));
       var rsaPct = rsa == null ? 0 : Math.max(0, Math.min(100, rsa * 100));
       return (
         '<div class="comparison-row"><strong><i style="--series:' + index + '"></i>' + esc(mut) + '</strong>' +
-        '<span class="metric"><b style="width:' + normalizedScore(row).toFixed(1) + '%"></b><em>' + fmtScore(rowScore(row, primaryScore(state.job, state.scores))) + '</em></span>' +
-        '<span class="metric"><b style="width:' + percentileFor(row).toFixed(1) + '%"></b><em>' + percentileFor(row).toFixed(0) + '%</em></span>' +
-        '<span class="metric"><b style="width:' + plddtPct.toFixed(1) + '%"></b><em>' + (plddt == null ? "n/a" : plddt.toFixed(0)) + '</em></span>' +
-        '<span class="metric"><b style="width:' + rsaPct.toFixed(1) + '%"></b><em>' + (rsa == null ? "n/a" : rsa.toFixed(2)) + '</em></span></div>'
+        comparisonMetricHtml("rank", normalizedScore(row), percentile, fmtScore(rowScore(row, primaryScore(state.job, state.scores))), "Ranking band follows rank percentile") +
+        comparisonMetricHtml("rank", percentile, percentile, percentile.toFixed(0) + "%", "High ≥90 · medium 70–89 · low <70") +
+        comparisonMetricHtml("plddt", plddtPct, plddt, plddt == null ? "n/a" : plddt.toFixed(0), "pLDDT: very high ≥90 · confident 70–89 · low 50–69 · very low <50") +
+        comparisonMetricHtml("rsa", rsaPct, rsa, rsa == null ? "n/a" : rsa.toFixed(2), "RSA: buried ≤0.20 · partial 0.21–0.50 · exposed >0.50") + '</div>'
       );
     }).join("");
+    var uniquePositions = experimentMutationPositions();
+    var structureNote = rows.length > 1
+      ? rows.length + " candidates map to " + uniquePositions.length + " unique structure position" + (uniquePositions.length === 1 ? "" : "s") + "."
+      : "";
+    var plddtNote = state.features && state.features.has_pdb && !state.features.has_plddt
+      ? " Experimental structure: pLDDT is unavailable; RSA is calculated from the PDB."
+      : "";
     return (
       '<div class="comparison-grid"><div class="comparison-head"><span>Mutation</span><span>Score</span><span>Percentile</span><span>pLDDT</span><span>RSA</span></div>' +
       body +
-      (experimentRows().length > 6 ? '<p class="comparison-note">Showing the first 6 selected candidates.</p>' : "") +
+      '<div class="comparison-legend" aria-label="Metric color thresholds">' +
+      '<span><i class="rank-high"></i>Rank ≥90</span><span><i class="rank-mid"></i>70–89</span><span><i class="rank-low"></i>&lt;70</span>' +
+      '<span><i class="plddt-very-high"></i>pLDDT ≥90</span><span><i class="plddt-confident"></i>70–89</span><span><i class="plddt-low"></i>50–69</span><span><i class="plddt-very-low"></i>&lt;50</span>' +
+      '<span><i class="rsa-buried"></i>RSA buried</span><span><i class="rsa-partial"></i>partial</span><span><i class="rsa-exposed"></i>exposed</span></div>' +
+      '<p class="comparison-note">' + esc(structureNote + plddtNote) +
+      (experimentRows().length > 6 ? " Showing the first 6 selected candidates." : "") + '</p>' +
       '</div>'
     );
   }
@@ -2136,8 +2179,13 @@
     }
     var hasCoord = !!(job.has_pdb || currentSourceKey(job));
     var seq = jobSequence(job);
-    var total = (state.scores && state.scores.total) || nMut || 0;
+    var total = nMut || (state.scores && state.scores.total) || 0;
     var selectedMut = mutantField(state.selectedRow) || "—";
+    var selectedRows = experimentRows();
+    var selectedPositions = experimentMutationPositions();
+    var structureSelection = selectedRows.length
+      ? selectedRows.length + " candidates · " + selectedPositions.length + " positions"
+      : selectedMut;
     var header =
       '<header class="review-context"><div><div class="review-title-row"><h1>' +
       esc(job.protein || job.id) +
@@ -2161,7 +2209,7 @@
       '</section>';
     var structure =
       '<section class="structure-pane"><div class="review-section-head structure-head"><div><span class="section-kicker">Molecular context</span><h2>Structure <small>' +
-      esc(selectedMut) +
+      esc(structureSelection) +
       '</small></h2></div></div>' +
       (hasCoord
         ? molPanelHtml("bench")
@@ -2256,6 +2304,11 @@
       if (experimentInput && host.contains(experimentInput)) {
         var experimentIndex = parseInt(experimentInput.closest("tr").getAttribute("data-i"), 10);
         var experimentRow = ((state.scores && state.scores.rows) || [])[experimentIndex];
+        state.selectedRow = experimentRow || state.selectedRow;
+        var experimentMutation = parseMutants(mutantField(experimentRow))[0];
+        state.picked = experimentMutation
+          ? { chain: "", resi: experimentMutation.pos, resn: experimentMutation.wt, b: null }
+          : null;
         toggleExperimentRow(experimentRow, experimentInput.checked);
         rerenderReview();
         return;
@@ -2283,6 +2336,10 @@
         var i = parseInt(tr.getAttribute("data-i"), 10);
         var rows = (state.scores && state.scores.rows) || [];
         state.selectedRow = rows[i] || null;
+        var rowMutation = parseMutants(mutantField(state.selectedRow))[0];
+        state.picked = rowMutation
+          ? { chain: "", resi: rowMutation.pos, resn: rowMutation.wt, b: null }
+          : null;
         rerenderReview();
         return;
       }
@@ -2594,8 +2651,23 @@
     });
   }
 
+  function experimentMutationPositions() {
+    var set = {};
+    experimentRows().forEach(function (row) {
+      parseMutants(mutantField(row)).forEach(function (m) {
+        if (m.pos) set[m.pos] = true;
+      });
+    });
+    return Object.keys(set).map(function (pos) { return parseInt(pos, 10); }).sort(function (a, b) { return a - b; });
+  }
+
   function selectionResis() {
-    var pos = mutationPositions();
+    var seen = {};
+    var pos = experimentMutationPositions().concat(mutationPositions()).filter(function (resi) {
+      if (!resi || seen[resi]) return false;
+      seen[resi] = true;
+      return true;
+    });
     if (state.picked && state.picked.resi && pos.indexOf(state.picked.resi) < 0) {
       pos = pos.concat([state.picked.resi]);
     }
@@ -2783,14 +2855,25 @@
     if (mode === "hydrophobic") {
       return "<span>Kyte–Doolittle: blue hydrophilic → red hydrophobic</span>";
     }
-    return "<span>Click a residue to inspect. Mutants from the table stay highlighted.</span>";
+    var candidates = experimentRows();
+    var positions = experimentMutationPositions();
+    if (candidates.length) {
+      return "<span>Experiment selection: " + candidates.length + " candidates across " + positions.length + " highlighted positions.</span>";
+    }
+    return "<span>Click a residue or select candidates in the table to inspect the structure.</span>";
   }
 
   function pickHtml() {
     var p = state.picked;
-    if (!p) return "No residue selected.";
+    if (!p) {
+      var selected = experimentRows();
+      var positions = experimentMutationPositions();
+      if (selected.length) return positions.length + " selected positions: " + positions.join(", ");
+      var current = parseMutants(mutantField(state.selectedRow))[0];
+      return current ? mutantField(state.selectedRow) + " · residue " + current.pos : "No residue selected.";
+    }
     var aa = RESN_TO_AA[p.resn] || "";
-    var mut = mutationPositions().indexOf(p.resi) >= 0 ? "  ·  in selected mutant" : "";
+    var mut = selectionResis().indexOf(p.resi) >= 0 ? "  ·  linked to selection" : "";
     return (
       (p.chain ? p.chain + "/" : "") +
       (aa || p.resn) +
@@ -2813,6 +2896,10 @@
     var mol = window.$3Dmol;
     var style = colorStyle();
     var selPos = selectionResis();
+    var experimentPos = experimentMutationPositions();
+    var inspectedPos = mutationPositions().filter(function (pos) {
+      return experimentPos.indexOf(pos) < 0;
+    });
     try {
       viewer.setBackgroundColor(bgColor());
       viewer.removeAllSurfaces();
@@ -2846,10 +2933,16 @@
       } else if (side === "selection" && selPos.length) {
         viewer.addStyle({ resi: selPos }, { stick: { radius: 0.16, color: "#8769e8" } });
       }
-      if (selPos.length) {
+      if (experimentPos.length) {
         viewer.addStyle(
-          { resi: selPos },
+          { resi: experimentPos },
           { cartoon: { color: "#8769e8", thickness: 0.5 } }
+        );
+      }
+      if (inspectedPos.length) {
+        viewer.addStyle(
+          { resi: inspectedPos },
+          { cartoon: { color: "#168676", thickness: 0.5 } }
         );
       }
       if (state.view.hetero) {

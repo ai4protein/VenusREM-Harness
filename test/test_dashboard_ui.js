@@ -52,6 +52,9 @@ this.inferModelSeries = inferModelSeries;
 this.groupModelSeries = groupModelSeries;
 this.inputGateMessage = inputGateMessage;
 this.highlightPositions = highlightPositions;
+this.experimentMutationPositions = experimentMutationPositions;
+this.selectionResis = selectionResis;
+this.comparisonMetricBand = comparisonMetricBand;
 this.classifyIntakeFile = classifyIntakeFile;
 this.currentBoard = currentBoard;
 `;
@@ -237,6 +240,18 @@ check("activeJob prefers state.job then runs list", () => {
   assert.strictEqual(context.activeJob(), null);
 });
 
+check("experiment selections drive molecular positions", () => {
+  context.state.experimentRows = {
+    V1M: { mutant: "V1M" },
+    K20A: { mutant: "K20A" },
+    K20C: { mutant: "K20C" },
+  };
+  context.state.selectedRow = { mutant: "S40A" };
+  context.state.picked = null;
+  assert.deepStrictEqual(Array.from(context.experimentMutationPositions()), [1, 20]);
+  assert.deepStrictEqual(Array.from(context.selectionResis()), [1, 20, 40]);
+});
+
 const html = fs.readFileSync(htmlPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
 
@@ -296,6 +311,21 @@ check("default highlight uses top mutants", () => {
   context.state.top = { rows: [{ mutant: "A1C" }, { mutant: "V10A" }], k: 30 };
   const pos = context.highlightPositions().map(Number).sort((a, b) => a - b);
   assert.strictEqual(pos.join(","), "1,10");
+});
+
+check("comparison metric thresholds preserve scientific meaning", () => {
+  assert.strictEqual(context.comparisonMetricBand("rank", 90), "rank-high");
+  assert.strictEqual(context.comparisonMetricBand("rank", 89.9), "rank-mid");
+  assert.strictEqual(context.comparisonMetricBand("rank", 69.9), "rank-low");
+  assert.strictEqual(context.comparisonMetricBand("plddt", 90), "plddt-very-high");
+  assert.strictEqual(context.comparisonMetricBand("plddt", 70), "plddt-confident");
+  assert.strictEqual(context.comparisonMetricBand("plddt", 50), "plddt-low");
+  assert.strictEqual(context.comparisonMetricBand("plddt", 49.9), "plddt-very-low");
+  assert.strictEqual(context.comparisonMetricBand("rsa", 0.2), "rsa-buried");
+  assert.strictEqual(context.comparisonMetricBand("rsa", 0.5), "rsa-partial");
+  assert.strictEqual(context.comparisonMetricBand("rsa", 0.51), "rsa-exposed");
+  assert.strictEqual(context.comparisonMetricBand("rsa", null), "na");
+  assert.strictEqual(context.comparisonMetricBand("rsa", undefined), "na");
 });
 
 check("leaderboard catalog has filter boards", () => {

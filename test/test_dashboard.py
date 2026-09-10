@@ -191,6 +191,27 @@ def test_artifacts_fall_back_to_base_dir(tmp_path):
     assert "MODEL" in pdb.text
 
 
+def test_features_fall_back_to_base_dir(tmp_path):
+    base = Path(__file__).parent / "fixtures" / "trp_cage"
+    store = RunStore(tmp_path / "dashboard")
+    store.write_job(
+        {
+            "id": "base-dir-features",
+            "status": "done",
+            "protein": "trp_cage",
+            "out_dir": str(store.result_dir("base-dir-features")),
+            "argv_spec": {"base_dir": str(base)},
+        }
+    )
+    app = create_app(tmp_path / "dashboard", runner=JobRunner(store, execute=_fake_execute))
+    with TestClient(app) as test_client:
+        features = test_client.get("/api/runs/base-dir-features/features").json()
+
+    assert features["sequence"]
+    assert features["has_pdb"] is True
+    assert len(features["rsa"]) == len(features["sequence"])
+
+
 def test_proteingym_leaderboard(client):
     from rem2.dashboard.leaderboard import proteingym_board
 
