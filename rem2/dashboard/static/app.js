@@ -3825,7 +3825,7 @@
   async function onRoute() {
     flash("");
     var route = parseHash();
-    if (route.page !== "workspace" && route.page !== "review") setBenchMode(false);
+    var isWorkbenchRoute = route.page === "workspace" || route.page === "review";
     if (route.page === "review" && !route.id) {
       if (state.activeRunId) {
         go("#/review/" + encodeURIComponent(state.activeRunId));
@@ -3834,6 +3834,10 @@
       go("#/runs");
       return;
     }
+    // Lock the page geometry before any route data is requested. Previously
+    // Review inherited the centered page layout until renderWorkspace() ran,
+    // which made the populated workbench visibly jump to full width.
+    setBenchMode(isWorkbenchRoute);
     state.route = route;
     setTabs(route.page);
     if (route.page !== "workspace" && route.page !== "review") teardownViewer();

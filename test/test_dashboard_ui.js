@@ -186,6 +186,14 @@ check("parseHash routes", () => {
   assert.strictEqual(context.parseHash().page, "runs");
 });
 
+check("review geometry is locked before route loading", () => {
+  const routeStart = src.indexOf("async function onRoute()");
+  const routeEnd = src.indexOf("function patchOverview", routeStart);
+  const routeSource = src.slice(routeStart, routeEnd);
+  assert.ok(routeSource.includes("setBenchMode(isWorkbenchRoute)"));
+  assert.ok(routeSource.indexOf("setBenchMode(isWorkbenchRoute)") < routeSource.indexOf("await loadWorkspace(route.id)"));
+});
+
 check("residue bar sits on the review page", () => {
   context.state.job = { sequence: "ACDEY" };
   context.state.picked = { resi: 3, resn: "D", chain: "A" };
