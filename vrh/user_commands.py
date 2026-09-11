@@ -9,7 +9,7 @@ from typing import Optional
 
 
 GETTING_STARTED = """\
-vrh — calibrate a protein language model for variant effect prediction
+vrh / remharness — calibrate a protein language model for variant effect prediction
 
   vrh doctor              check install (torch, extras, cache)
   vrh demo                ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q + ESM-2 8M

@@ -1,4 +1,4 @@
-"""vrh / VenusREM2: training-free PLM calibration for variant-effect scoring."""
+"""VenusREM-Harness (vrh): training-free PLM calibration for variant-effect scoring."""
 
 from __future__ import annotations
 

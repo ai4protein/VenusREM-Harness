@@ -25,7 +25,7 @@ REPO = Path(__file__).resolve().parents[2]
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
 DASHBOARD_DATA = REPO / "vrh" / "dashboard" / "data"
 CATALOG_PATH = DASHBOARD_DATA / "venusmuthub_catalog.json"
-REM2_PATH = DASHBOARD_DATA / "venusmuthub_vrh.json"
+VRH_PATH = DASHBOARD_DATA / "venusmuthub_vrh.json"
 
 METRICS = [
     {"id": "spearman", "label": "Spearman"},
@@ -281,7 +281,7 @@ def main() -> None:
     compare = find_paired_compare(REPO)
     if compare is not None:
         payload = vrh_snapshot(rows, compare, args.manifest)
-        out = args.out or REM2_PATH
+        out = args.out or VRH_PATH
         write_json(out, payload)
         print(f"wrote ready snapshot ({len(payload['pairs'])} pairs) to {out}")
         print(f"paired table: {compare}")

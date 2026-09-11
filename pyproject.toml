@@ -11,7 +11,7 @@ license = "LicenseRef-VenusREM2-Academic"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [{ name = "Yang Tan", email = "ty_ang@163.com" }]
-keywords = ["protein", "PLM", "variant-effect", "DMS", "VenusREM2", "VenusREM"]
+keywords = ["protein", "PLM", "variant-effect", "DMS", "vrh", "VenusREM-Harness", "VenusREM2", "VenusREM"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",

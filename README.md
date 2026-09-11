@@ -7,7 +7,7 @@
 
 From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction
 
-**vrh** is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
+**VenusREM-Harness** (`vrh` / `remharness`) is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
 - Calibrate any frozen PLM (ESM-2, SaProt, ProSST, ProteinMPNN, …).
 - Score substitution mutants from FASTA, PDB, or a dataset directory.
@@ -27,7 +27,7 @@ Python import: `vrh`. Default backbone: ESM-2 650M.
 ## News
 
 - **2026.09** Local dashboard preview (`vrh dashboard`) at http://127.0.0.1:8765.
-- **2026.09** Package and CLI released as `vrh`.
+- **2026.09** Package and CLI released as `vrh` (`remharness` is the same command).
 - **2026.07** VenusREM frozen on `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
 - **2025.04** Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
@@ -36,12 +36,12 @@ Python import: `vrh`. Default backbone: ESM-2 650M.
 
 Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `vrh demo` (ESM-2 8M) can run on CPU.
 
-`pip install vrh` is CLI + dashboard. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
+`pip install vrh` is CLI + dashboard (`remharness` is an alias). Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
 pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
-vrh doctor
+vrh doctor          # or: remharness doctor
 vrh demo
 vrh dashboard
 ```
@@ -155,7 +155,7 @@ data/my_assay/
   struc_seq/             # optional; built from pdbs/ if missing
 ```
 
-**Downloads.** Data: [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/vrh/weights`.
+**Downloads.** Hugging Face data stay at [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2) (not this Git repo). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/vrh/weights` or `$VRH_CACHE`.
 
 ```bash
 vrh download                 # ProteinGym → data/proteingym_v1

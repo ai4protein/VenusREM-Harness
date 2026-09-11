@@ -32,6 +32,19 @@ def test_virohub_catalog_ready():
     assert "VenusViroHub" not in catalog["planned_benchmarks"]
 
 
+def test_virohub_public_recipe_labels_hide_rem2_suffix():
+    from vrh.dashboard.leaderboard import _public_recipe_label
+
+    assert _public_recipe_label("ESM-IF (REM2)") == "ESM-IF (VRH)"
+    assert _public_recipe_label("SaProt (650M_PDB, mask, REM2)") == "SaProt (650M_PDB, mask, VRH)"
+    assert _public_recipe_label("VenusREM2") == "VenusREM2"
+    for pair in _virohub()["pairs"]:
+        name = pair.get("enhanced_name") or ""
+        assert "REM2)" not in name
+        assert "rem2)" not in name
+        assert "VenusVRH2" not in name
+
+
 def test_virohub_pair_keys_and_spearman():
     pairs = {row["key"]: row for row in _virohub()["pairs"]}
     assert "prosst_ensemble" in pairs

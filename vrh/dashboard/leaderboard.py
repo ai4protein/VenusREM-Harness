@@ -207,7 +207,7 @@ _VENUSREM2_STAGES = [
 ]
 
 def _benchmark_inputs(model_key: str) -> list[str]:
-    """Return the foundation model inputs; REM2 adds evolutionary evidence."""
+    """Return the foundation model inputs; VRH adds evolutionary evidence."""
     key = model_key.lower()
     if key.startswith(("proteinmpnn", "pmpnn_")) or key == "esmif":
         return ["str"]
@@ -290,6 +290,18 @@ def _public_score_tree(obj: Any) -> Any:
     return {key: _public_score_tree(value) for key, value in obj.items()}
 
 
+def _public_recipe_label(name: Any) -> str:
+    text = str(name or "")
+    return (
+        text.replace(", rem2)", ", vrh)")
+        .replace(", REM2)", ", VRH)")
+        .replace("(rem2)", "(vrh)")
+        .replace("(REM2)", "(VRH)")
+        .replace(" rem2", " vrh")
+        .replace(" REM2", " VRH")
+    )
+
+
 def _pairs_from_raw(raw_pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     pairs = []
     for raw in raw_pairs:
@@ -309,7 +321,9 @@ def _pairs_from_raw(raw_pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "key": raw["key"],
                 "family": raw.get("family") or raw.get("base_name"),
                 "base_name": raw.get("base_name") or raw.get("family"),
-                "enhanced_name": raw.get("enhanced_name") or raw.get("vrh_name") or raw.get("rem2_name"),
+                "enhanced_name": _public_recipe_label(
+                    raw.get("enhanced_name") or raw.get("vrh_name") or raw.get("rem2_name")
+                ),
                 "base": base,
                 "enhanced": enhanced,
                 "delta": delta,
