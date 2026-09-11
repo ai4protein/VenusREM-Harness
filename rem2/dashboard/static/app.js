@@ -223,7 +223,7 @@
     ],
   };
   FALLBACK_CATALOG.default_benchmark = "proteingym";
-  FALLBACK_CATALOG.planned_benchmarks = ["VenusMutHub", "VenusViroHub"];
+  FALLBACK_CATALOG.planned_benchmarks = [];
   FALLBACK_CATALOG.benchmarks = [{
     id: "proteingym",
     label: "ProteinGym",
@@ -267,8 +267,56 @@
     });
   });
   FALLBACK_CATALOG.benchmarks.push(
-    { id: "venusmuthub", label: "VenusMutHub", title: "VenusMutHub", description: "The leaderboard shell is ready; benchmark-specific properties will appear with the dataset.", status: "planned", n: null, pairs: [] },
-    { id: "venusvirohub", label: "VenusViroHub", title: "VenusViroHub", description: "The leaderboard shell is ready; benchmark-specific properties will appear with the dataset.", status: "planned", n: null, pairs: [] }
+    {
+      id: "venusmuthub",
+      label: "VenusMutHub",
+      title: "VenusMutHub substitutions",
+      description: "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +REM2 model scores will appear after the evaluation snapshot is packaged.",
+      status: "catalog",
+      n: 905,
+      properties: [
+        { id: "overall", label: "Overall", n: 905 },
+        { id: "stability", label: "Stability", n: 540 },
+        { id: "activity", label: "Activity", n: 175 },
+        { id: "ppi_binding", label: "PPI binding", n: 100 },
+        { id: "selectivity", label: "Selectivity", n: 47 },
+        { id: "dti_binding", label: "DTI binding", n: 43 },
+      ],
+      metrics: [
+        { id: "spearman", label: "Spearman" },
+        { id: "ndcg", label: "NDCG" },
+        { id: "auc", label: "AUC" },
+        { id: "mcc", label: "MCC" },
+        { id: "top_recall", label: "Top recall" },
+      ],
+      pairs: [],
+    },
+    {
+      id: "venusvirohub",
+      label: "VenusViroHub",
+      title: "VenusViroHub substitutions",
+      description: "89 viral DMS substitution assays with zero ProteinGym overlap, covering immune escape, cell entry, and receptor binding. Leaderboard unavailable offline — reconnect to load paired scores.",
+      status: "offline",
+      n: 89,
+      properties: [
+        { id: "overall", label: "Overall", n: 89 },
+        { id: "activity", label: "Activity", n: 1 },
+        { id: "binding", label: "Binding", n: 17 },
+        { id: "cell_entry", label: "Cell entry", n: 18 },
+        { id: "expression", label: "Expression", n: 15 },
+        { id: "fitness", label: "Fitness", n: 15 },
+        { id: "immune_escape", label: "Immune escape", n: 21 },
+        { id: "stability", label: "Stability", n: 2 },
+      ],
+      metrics: [
+        { id: "spearman", label: "Spearman" },
+        { id: "ndcg", label: "NDCG" },
+        { id: "auc", label: "AUC" },
+        { id: "mcc", label: "MCC" },
+        { id: "top_recall", label: "Top recall" },
+      ],
+      pairs: [],
+    }
   );
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
 
@@ -335,7 +383,22 @@
       review: 56,
       structure: 64,
     },
+    exampleId: "",
+    examplePrefillDone: false,
   };
+
+  var EXAMPLE_PRESETS = {
+    sequence: ["fasta"],
+    structure: ["fasta", "pdb"],
+    full: ["fasta", "pdb", "msa"],
+  };
+  var EXAMPLE_FILE_NAMES = {
+    fasta: "HCP_LAMBD_Tsuboyama_2023_2L6Q.fasta",
+    pdb: "HCP_LAMBD_Tsuboyama_2023_2L6Q.pdb",
+    msa: "HCP_LAMBD_Tsuboyama_2023_2L6Q.a2m",
+    mutants: "HCP_LAMBD_Tsuboyama_2023_2L6Q.csv",
+  };
+  var exampleFileCache = {};
 
   var els = {};
   var pollTimer = null;
@@ -882,7 +945,13 @@
     if (!raw || raw === "/") return { page: "runs" };
     var parts = raw.split("/").filter(Boolean);
     if (parts[0] === "predict") return { page: "predict" };
-    if (parts[0] === "benchmarks") return { page: "benchmarks" };
+    if (parts[0] === "benchmarks") {
+      var hub = parts[1] ? decodeURIComponent(parts[1]) : "";
+      if (hub && /^(proteingym|venusmuthub|venusvirohub)$/.test(hub)) {
+        return { page: "benchmarks", benchmark: hub };
+      }
+      return { page: "benchmarks", benchmark: "proteingym" };
+    }
     if (parts[0] === "review" || parts[0] === "select" || parts[0] === "structure") {
       if (parts[1]) return { page: "review", id: decodeURIComponent(parts[1]) };
       return { page: "review" };
@@ -945,6 +1014,35 @@
 
   var openModelSeries = "";
   var modelSeriesBound = false;
+
+  var FAMILY_COLORS = {
+    venusrem2: "#145246",
+    esm: "#242424",
+    prosst: "#D97757",
+    saprot: "#60B481",
+    proteinmpnn: "#7A74ED",
+    progen: "#D4B069",
+    rita: "#3B7EED",
+    s3f: "#C45C7A",
+    protssn: "#2A6F6A",
+    carp: "#586D95",
+    mifst: "#B4552B",
+    other: "#6B7280",
+  };
+  var FAMILY_LABELS = {
+    venusrem2: "VenusREM2",
+    esm: "ESM",
+    prosst: "ProSST",
+    saprot: "SaProt",
+    proteinmpnn: "ProteinMPNN",
+    progen: "ProGen",
+    rita: "RITA",
+    s3f: "S3F",
+    protssn: "ProtSSN",
+    carp: "CARP",
+    mifst: "MIF-ST",
+    other: "Other",
+  };
 
   function inferModelSeries(name) {
     var raw = String(name || "").toLowerCase();
@@ -1234,23 +1332,72 @@
     return (number >= 0 ? "+" : "") + number.toFixed(digits == null ? 3 : digits);
   }
 
-  function benchmarkRows(benchmark) {
-    var property = state.benchmarkProperty || "overall";
-    var input = state.benchmarkInput || "all";
-    var variant = state.benchmarkVariant || "rem2";
-    var query = String(state.benchmarkQuery || "").trim().toLowerCase();
-    var rows = (benchmark.pairs || []).filter(function (row) {
-      var metric = state.benchmarkMetric || "spearman";
-      var metricProperties = row.properties_by_metric && row.properties_by_metric[metric];
-      if ((!metricProperties || !metricProperties[property]) && !(metric === "spearman" && row.properties && row.properties[property])) return false;
-      if (input !== "all" && benchmarkVisibleInputs(row).indexOf(input) < 0) return false;
-      if (!query) return true;
-      return [row.key, row.base_name, row.enhanced_name, row.protocol].join(" ").toLowerCase().indexOf(query) >= 0;
-    }).sort(function (a, b) {
-      return benchmarkPropertyValue(b, property, variant === "raw" ? "base" : "enhanced") -
-        benchmarkPropertyValue(a, property, variant === "raw" ? "base" : "enhanced");
+  function isVenusrem2Pair(row) {
+    return !!(row && row.key === "prosst_ensemble");
+  }
+
+  function catalogPairs(benchmark) {
+    return (benchmark.pairs || []).filter(function (row) {
+      return !isVenusrem2Pair(row);
     });
-    return rows;
+  }
+
+  function pairMatchesFilters(row, property) {
+    property = property || activeBenchmarkProperty(currentBenchmark());
+    var input = state.benchmarkInput || "all";
+    var query = String(state.benchmarkQuery || "").trim().toLowerCase();
+    var metric = state.benchmarkMetric || "spearman";
+    var metricProperties = row.properties_by_metric && row.properties_by_metric[metric];
+    var hasProperty = (metricProperties && metricProperties[property]) ||
+      (metric === "spearman" && row.properties && row.properties[property]) ||
+      (property === "overall" && (row.base != null || row.enhanced != null));
+    if (!hasProperty) return false;
+    if (input !== "all" && benchmarkVisibleInputs(row).indexOf(input) < 0) return false;
+    if (!query) return true;
+    var hay = [row.key, row.family, row.base_name, row.enhanced_name, row.protocol];
+    if (isVenusrem2Pair(row)) hay.push("VenusREM2", "ours");
+    return hay.join(" ").toLowerCase().indexOf(query) >= 0;
+  }
+
+  function activeBenchmarkProperty(benchmark) {
+    var properties = (benchmark && benchmark.properties) || [];
+    var property = state.benchmarkProperty || "overall";
+    if (!properties.length) return property;
+    for (var i = 0; i < properties.length; i++) {
+      if (properties[i].id === property) return property;
+    }
+    return properties[0].id;
+  }
+
+  function pairScore(row, property, variant) {
+    return benchmarkPropertyValue(row, property, (variant || "rem2") === "raw" ? "base" : "enhanced");
+  }
+
+  function benchmarkRows(benchmark) {
+    var property = activeBenchmarkProperty(benchmark);
+    var variant = state.benchmarkVariant || "rem2";
+    return catalogPairs(benchmark).filter(function (row) {
+      return pairMatchesFilters(row, property);
+    }).sort(function (a, b) {
+      return pairScore(b, property, variant) - pairScore(a, property, variant);
+    });
+  }
+
+  function featuredPair(benchmark) {
+    var row = (benchmark.pairs || []).filter(isVenusrem2Pair)[0];
+    if (!row || !pairMatchesFilters(row, activeBenchmarkProperty(benchmark))) return null;
+    return row;
+  }
+
+  function featuredRank(benchmark, row) {
+    if (!row) return null;
+    var property = activeBenchmarkProperty(benchmark);
+    var variant = state.benchmarkVariant || "rem2";
+    var score = pairScore(row, property, variant);
+    var better = (benchmark.pairs || []).filter(function (other) {
+      return pairMatchesFilters(other, property) && pairScore(other, property, variant) > score;
+    }).length;
+    return better + 1;
   }
 
   function benchmarkVisibleInputs(row) {
@@ -1275,50 +1422,141 @@
     }).join("");
   }
 
-  function benchmarkBar(score, variant, scale) {
-    var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100)).toFixed(1);
-    return '<span class="benchmark-chart-bar is-' + variant + '"><i style="width:' + pct + '%"></i></span>';
+  function benchmarkFamily(row, featured) {
+    if (featured || isVenusrem2Pair(row)) return "venusrem2";
+    var raw = String((row && (row.key || row.family || row.base_name)) || "")
+      .toLowerCase()
+      .replace(/-/g, "_");
+    if (raw.indexOf("prosst") === 0) return "prosst";
+    if (raw.indexOf("saprot") === 0) return "saprot";
+    if (raw.indexOf("progen") === 0) return "progen";
+    if (raw.indexOf("proteinmpnn") === 0 || raw.indexOf("protein_mpnn") === 0 || raw.indexOf("pmpnn") === 0) {
+      return "proteinmpnn";
+    }
+    if (raw.indexOf("rita") === 0) return "rita";
+    if (raw.indexOf("esm") === 0) return "esm";
+    if (raw.indexOf("s3f") === 0 || raw.indexOf("s2f") === 0) return "s3f";
+    if (raw.indexOf("protssn") === 0) return "protssn";
+    if (raw.indexOf("carp") === 0) return "carp";
+    if (raw.indexOf("mifst") === 0) return "mifst";
+    return inferModelSeries(raw);
   }
 
-  function benchmarkFeaturedRow(benchmark, property, scale) {
-    var row = (benchmark.pairs || []).filter(function (item) { return item.key === "prosst_ensemble"; })[0];
-    if (!row) return "";
-    var score = benchmarkPropertyValue(row, property, "enhanced");
-    return '<div class="benchmark-chart-row is-featured"><span class="benchmark-chart-rank">—</span>' +
-      '<strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
-      benchmarkBar(score, "rem2", scale) + '</div><div class="benchmark-chart-model"><strong>VenusREM2 <em>ours</em></strong>' +
-      '<span>ProSST ensemble + REM2</span></div><div class="benchmark-chart-inputs">' + benchmarkTags(["seq", "str", "evo"]) + '</div></div>';
+  function familyColor(family) {
+    return FAMILY_COLORS[family] || FAMILY_COLORS.other;
   }
 
-  function benchmarkPairRow(row, rank, property, scale) {
+  function benchmarkTip(name, family, base, rem2, delta, inputs) {
+    return '<div class="bbio-tip-card"><div class="bbio-tip-name"><i></i>' + esc(name) +
+      "</div><dl><div><dt>+REM2</dt><dd>" + Number(rem2).toFixed(3) + "</dd></div><div><dt>Raw</dt><dd>" +
+      Number(base).toFixed(3) + "</dd></div><div><dt>Δ</dt><dd>" + signed(delta, 3) +
+      "</dd></div></dl><div class=\"bbio-tip-tags\">" + benchmarkTags(inputs) + "</div></div>";
+  }
+
+  function benchmarkAxis(scale) {
+    var ticks = [0, 0.25, 0.5, 0.75, 1].map(function (part) {
+      return '<span>' + (Number(scale || 1) * part).toFixed(2).replace(/\.00$/, "") + "</span>";
+    }).join("");
+    return '<div class="bbio-axis">' + ticks + "</div>";
+  }
+
+  function benchmarkLegend(pairs, featured) {
+    var seen = {};
+    var order = ["venusrem2", "esm", "prosst", "saprot", "proteinmpnn", "progen", "rita", "s3f", "protssn", "carp", "mifst", "other"];
+    if (featured) seen.venusrem2 = true;
+    (pairs || []).forEach(function (row) {
+      seen[benchmarkFamily(row, false)] = true;
+    });
+    return '<footer class="bbio-legend">' + order.filter(function (id) { return seen[id]; }).map(function (id) {
+      return '<span class="bbio-legend-item" style="--bbio:' + familyColor(id) + '"><i></i>' +
+        esc(FAMILY_LABELS[id] || id) + "</span>";
+    }).join("") + "</footer>";
+  }
+
+  function benchmarkPairRow(row, rank, property, scale, opts) {
+    opts = opts || {};
+    var featured = !!opts.featured || isVenusrem2Pair(row);
+    var family = benchmarkFamily(row, featured);
+    var color = familyColor(family);
     var base = benchmarkPropertyValue(row, property, "base");
     var rem2 = benchmarkPropertyValue(row, property, "enhanced");
     var delta = benchmarkPropertyDelta(row, property);
-    var variant = state.benchmarkVariant || "rem2";
+    var variant = featured ? "rem2" : (state.benchmarkVariant || "rem2");
     var score = variant === "raw" ? base : rem2;
-    var sub = variant === "raw" ? "" : signed(delta, 3) + " vs Raw";
-    return '<div class="benchmark-chart-row"><span class="benchmark-chart-rank">' + rank +
-      '</span><strong class="benchmark-chart-score">' + score.toFixed(3) + '</strong><div class="benchmark-chart-plot">' +
-      benchmarkBar(score, variant, scale) + '</div><div class="benchmark-chart-model"><strong>' + esc(row.family) +
-      '</strong>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div><div class="benchmark-chart-inputs">' +
-      benchmarkTags(benchmarkVisibleInputs(row)) + '</div></div>';
+    if (featured) score = rem2;
+    var name = featured ? "VenusREM2" : row.family;
+    var sub = featured ? "ProSST ensemble + REM2" : variant === "raw" ? "" : signed(delta, 3) + " vs Raw";
+    var inputs = featured ? ["seq", "str", "evo"] : benchmarkVisibleInputs(row);
+    var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100));
+    var tipPos = pct < 18 ? "is-start" : pct > 82 ? "is-end" : "";
+    return '<article class="bbio-row' + (featured ? " is-ours" : "") + " is-" + family +
+      '" style="--bbio:' + color + '" data-family="' + esc(family) + '">' +
+      '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
+      '<div class="bbio-id"><b><i class="bbio-swatch"></i>' + esc(name) + (featured ? " <em>ours</em>" : "") + "</b>" +
+      (sub ? "<span>" + esc(sub) + "</span>" : "") + "</div>" +
+      '<div class="bbio-meta">' + benchmarkTags(inputs) + "</div></div>" +
+      '<div class="bbio-plot"><div class="bbio-bar" aria-hidden="true"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+      '<div class="bbio-tip' + (tipPos ? " " + tipPos : "") + '" style="left:' + pct.toFixed(1) + '%">' +
+      benchmarkTip(name, family, base, rem2, delta, inputs) + "</div></div></article>";
+  }
+
+  function benchmarkTabMeta(item) {
+    if (item.status === "offline" && (item.n == null || item.n === "" || item.n === "—")) return "Offline";
+    if (item.n != null && item.n !== "" && item.n !== "—") return esc(item.n) + " assays";
+    if (item.status === "planned") return "Data pending";
+    if (item.status === "catalog") return "Catalog";
+    if (item.status === "offline") return "Offline";
+    return "Ready";
+  }
+
+  function renderCatalogAwaiting(benchmark) {
+    var properties = benchmark.properties || [];
+    var offline = benchmark.status === "offline";
+    var chips = properties.filter(function (item) { return item.id !== "overall"; }).map(function (item) {
+      return '<div><span>' + esc(item.label) + '</span><strong>' + (item.n != null ? esc(item.n) : "—") + '</strong></div>';
+    }).join("");
+    var copy = offline
+      ? "Leaderboard unavailable offline. Reconnect to load paired scores."
+      : "Paired Raw / +REM2 model scores are not packaged for this benchmark yet.";
+    return '<section class="benchmark-awaiting' + (offline ? " is-offline" : "") + '"><p>' + copy + "</p>" +
+      (chips ? '<div class="benchmark-awaiting-grid">' + chips + "</div>" : "") + "</section>";
+  }
+
+  function benchmarkFeaturedHtml(row, property, scale, rank, total) {
+    var variant = state.benchmarkVariant || "rem2";
+    var base = benchmarkPropertyValue(row, property, "base");
+    var rem2 = benchmarkPropertyValue(row, property, "enhanced");
+    var delta = benchmarkPropertyDelta(row, property);
+    var score = variant === "raw" ? base : rem2;
+    var color = familyColor("venusrem2");
+    var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100));
+    var tipPos = pct < 18 ? "is-start" : pct > 82 ? "is-end" : "";
+    var rankNote = rank && total
+      ? (rank === 1 ? "Leads this slice" : "Rank " + rank + " of " + total + " on this slice")
+      : "Official ProSST ensemble";
+    var mode = variant === "raw" ? "Raw" : "+REM2";
+    return '<aside class="bbio-callout is-ours" style="--bbio:' + color + '">' +
+      '<p class="bbio-callout-kicker">Official model · ' + esc(rankNote) + " · " + mode + "</p>" +
+      '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
+      '<div class="bbio-id"><b><i class="bbio-swatch"></i>VenusREM2 <em>ours</em></b>' +
+      "<span>" + (variant === "raw" ? "Uncalibrated ProSST ensemble" : signed(delta, 3) + " vs Raw") +
+      "</span></div><div class=\"bbio-meta\">" + benchmarkTags(["seq", "str", "evo"]) + "</div></div>" +
+      '<div class="bbio-plot"><div class="bbio-bar" aria-hidden="true"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+      '<div class="bbio-tip' + (tipPos ? " " + tipPos : "") + '" style="left:' + pct.toFixed(1) + '%">' +
+      benchmarkTip("VenusREM2", "venusrem2", base, rem2, delta, ["seq", "str", "evo"]) +
+      "</div></div></aside>";
   }
 
   function renderProductBenchmark(host, benchmark, catalog) {
     var tabs = (catalog.benchmarks || []).map(function (item) {
       return '<button type="button" class="benchmark-tab' + (item.id === benchmark.id ? " is-on" : "") +
         '" data-benchmark="' + esc(item.id) + '">' + esc(item.label || item.title) +
-        (item.status === "planned" ? '<span>Data pending</span>' : '<span>' + esc(item.n) + ' assays</span>') + '</button>';
+        '<span>' + benchmarkTabMeta(item) + '</span></button>';
     }).join("");
-    if (benchmark.status === "planned") {
-      host.innerHTML = '<div class="benchmark-tabs" role="tablist" aria-label="Benchmark dataset">' + tabs + '</div>' +
-        '<section class="benchmark-empty"><span class="section-kicker">Schema ready</span><h2>' + esc(benchmark.title) +
-        '</h2><p>' + esc(benchmark.description) + '</p><div><span>Properties</span><strong>Defined by incoming benchmark</strong></div>' +
-        '<div><span>Comparison</span><strong>Raw model · +REM2</strong></div></section>';
-      return;
-    }
-    var allPairs = benchmark.pairs || [];
-    var pairs = benchmarkRows(benchmark);
+    var hasScores = (benchmark.pairs || []).length > 0;
+    var allPairs = catalogPairs(benchmark);
+    var pairs = hasScores ? benchmarkRows(benchmark) : [];
+    var featured = hasScores ? featuredPair(benchmark) : null;
     var properties = benchmark.properties || [{ id: "overall", label: "Overall" }];
     var metrics = benchmark.metrics || [{ id: "spearman", label: "Spearman" }];
     var metric = state.benchmarkMetric || "spearman";
@@ -1326,14 +1564,15 @@
     metric = activeMetric.id;
     var metricTabs = metrics.map(function (item) {
       return '<button type="button" class="benchmark-filter-pill' + (item.id === metric ? " is-on" : "") +
-        '" data-benchmark-metric="' + esc(item.id) + '">' + esc(item.label) + '</button>';
+        '" data-benchmark-metric="' + esc(item.id) + '"' + (hasScores ? "" : " disabled") + '>' + esc(item.label) + '</button>';
     }).join("");
-    var property = state.benchmarkProperty || "overall";
+    var property = activeBenchmarkProperty(benchmark);
     var activeProperty = properties.filter(function (item) { return item.id === property; })[0] || properties[0];
     property = activeProperty.id;
     var propertyTabs = properties.map(function (item) {
       return '<button type="button" class="benchmark-filter-pill' + (item.id === property ? " is-on" : "") +
-        '" data-benchmark-property="' + esc(item.id) + '">' + esc(item.label) + '</button>';
+        '" data-benchmark-property="' + esc(item.id) + '">' + esc(item.label) +
+        (item.n != null ? ' <span>' + esc(item.n) + "</span>" : "") + '</button>';
     }).join("");
     var variant = state.benchmarkVariant || "rem2";
     var variantTabs = [
@@ -1341,31 +1580,51 @@
       { id: "rem2", label: "+ REM2" },
     ].map(function (item) {
       return '<button type="button" class="benchmark-filter-pill benchmark-variant-pill' + (item.id === variant ? " is-on" : "") +
-        '" data-benchmark-variant="' + item.id + '">' + item.label + '</button>';
+        '" data-benchmark-variant="' + item.id + '"' + (hasScores ? "" : " disabled") + '>' + item.label + '</button>';
     }).join("");
-    var scaleScores = pairs.map(function (row) {
-      return benchmarkPropertyValue(row, property, variant === "raw" ? "base" : "enhanced");
+    var scale = 1;
+    var pool = (benchmark.pairs || []).filter(function (row) {
+      return pairMatchesFilters(row, property);
     });
-    var featured = (benchmark.pairs || []).filter(function (item) { return item.key === "prosst_ensemble"; })[0];
-    if (featured) scaleScores.push(benchmarkPropertyValue(featured, property, "enhanced"));
-    var scale = Math.min(1, Math.max(0.1, Math.ceil(Math.max.apply(Math, scaleScores) * 10) / 10));
-    var body = pairs.map(function (row, index) { return benchmarkPairRow(row, index + 1, property, scale); }).join("");
-    host.innerHTML = '<header class="benchmark-cross-head"><div><span class="section-kicker">Cross-benchmark leaderboard</span><h2>REM2 benchmark evidence</h2>' +
-      '<p>Switch evaluation metric, protein property, and Raw or +REM2 while keeping the same 59-model comparison.</p></div>' +
-      '<dl><div><dt>Models</dt><dd>' + allPairs.length + '</dd></div><div><dt>Assays</dt><dd>' + esc(benchmark.n) +
-      '</dd></div></dl></header><div class="benchmark-filter-stack"><div class="benchmark-filter-row"><span>Benchmark</span><div class="benchmark-tabs">' +
-      tabs + '</div></div><div class="benchmark-filter-row"><span>Metric</span><div>' + metricTabs +
-      '</div></div><div class="benchmark-filter-row"><span>Property</span><div>' + propertyTabs +
-      '</div></div><div class="benchmark-filter-row"><span>Model input</span><div>' + benchmarkInputOptions(allPairs) +
-      '</div></div><div class="benchmark-filter-row"><span>Score</span><div>' + variantTabs +
-      '</div></div></div><div class="benchmark-list-tools"><p><strong>' + pairs.length + '</strong> of ' + allPairs.length +
-      ' models · ranked by ' + (variant === "raw" ? "Raw " : "+REM2 ") + esc(activeMetric.label) + ' · ' + esc(activeProperty.label) + '</p><label class="benchmark-search"><span>Find model</span>' +
+    var total = pool.length;
+    var rank = featured ? featuredRank(benchmark, featured) : null;
+    var body = pairs.map(function (row, index) {
+      return benchmarkPairRow(row, index + 1, property, scale);
+    }).join("");
+    var featuredHtml = featured ? benchmarkFeaturedHtml(featured, property, scale, rank, total) : "";
+    var chart = !hasScores
+      ? renderCatalogAwaiting(benchmark)
+      : featuredHtml +
+        (body || '<p class="benchmark-no-results">No models match these filters.</p>') +
+        (body ? benchmarkAxis(scale) : "") +
+        (body ? benchmarkLegend(pairs, featured) : "");
+    var summary = !hasScores
+      ? (benchmark.status === "offline"
+        ? "Leaderboard unavailable offline · reconnect to load paired scores"
+        : "Assay taxonomy only · paired Raw / +REM2 scores are not packaged yet")
+      : "<strong>" + total + "</strong> models · " +
+        (variant === "raw" ? "Raw " : "+REM2 ") + esc(activeMetric.label) + " · " + esc(activeProperty.label) +
+        (featured && rank ? " · VenusREM2 is rank " + rank : "");
+    var inputPills = benchmarkInputOptions(pool.length ? pool : allPairs);
+    host.innerHTML = '<header class="benchmark-cross-head"><div><span class="section-kicker">Cross-benchmark leaderboard</span><h2>' +
+      esc(benchmark.title || "REM2 benchmark evidence") + '</h2><p>' +
+      esc(benchmark.description || "Switch evaluation metric, protein property, and Raw or +REM2.") +
+      '</p></div><dl><div><dt>Models</dt><dd>' + (hasScores ? total : "—") +
+      '</dd></div><div><dt>Assays</dt><dd>' + esc(benchmark.n) +
+      '</dd></div></dl></header><div class="benchmark-filter-stack">' +
+      '<div class="benchmark-filter-row benchmark-filter-primary">' +
+      '<div class="benchmark-tabs">' + tabs + '</div>' +
+      '<div class="benchmark-variant-group">' + variantTabs + '</div></div>' +
+      '<div class="benchmark-filter-row benchmark-filter-secondary">' +
+      '<div class="benchmark-filter-group is-metric">' + metricTabs + '</div>' +
+      '<div class="benchmark-filter-group is-property">' + propertyTabs + '</div></div></div>' +
+      '<div class="benchmark-list-tools"><p>' + summary + '</p>' +
+      '<div class="benchmark-list-tools-cluster">' +
+      '<div class="benchmark-input-pills">' + inputPills + '</div>' +
+      '<label class="benchmark-search"><span class="sr-only">Find model</span>' +
       '<input type="search" data-benchmark-query value="' + esc(state.benchmarkQuery || "") +
-      '" placeholder="ESM, ProSST, SaProt…"></label></div><section class="benchmark-chart"><div class="benchmark-chart-header">' +
-      '<span>Rank</span><span>Score</span><span>' + esc(activeMetric.label) + '</span><span>Model</span><span>Inputs</span></div>' +
-      benchmarkFeaturedRow(benchmark, property, scale) + '<div class="benchmark-chart-divider"><span>Models</span><span>' +
-      (variant === "raw" ? "Raw" : "+REM2") + ' scores</span></div>' +
-      (body || '<p class="benchmark-no-results">No models match these filters.</p>') + '</section>';
+      '" placeholder="ESM, ProSST, SaProt…"' + (hasScores ? "" : " disabled") + '></label></div></div>' +
+      '<section class="benchmark-chart">' + chart + "</section>";
   }
 
   function renderLeaderboard() {
@@ -1498,6 +1757,94 @@
       input.files = dt.files;
     } catch (err) {
       /* browsers without DataTransfer keep the original picker */
+    }
+  }
+
+  function clearInputFile(input) {
+    if (!input) return;
+    try {
+      input.value = "";
+    } catch (err) {
+      /* ignore */
+    }
+  }
+
+  function exampleInputFor(kind) {
+    if (kind === "fasta") return $("file-fasta");
+    if (kind === "pdb") return $("file-pdb");
+    if (kind === "msa") return $("file-msa");
+    if (kind === "mutants") return $("file-mutants");
+    return null;
+  }
+
+  function markExampleButtons() {
+    var buttons = document.querySelectorAll("#example-row [data-example]");
+    for (var i = 0; i < buttons.length; i++) {
+      var id = buttons[i].getAttribute("data-example");
+      buttons[i].classList.toggle("is-on", id === state.exampleId);
+    }
+  }
+
+  function formIsEmpty() {
+    var snap = formSnapshot();
+    return !snap.fasta && !snap.pdb && !snap.msa && !snap.seq_id && !snap.mutants;
+  }
+
+  async function fetchExampleFile(kind) {
+    if (exampleFileCache[kind]) return exampleFileCache[kind];
+    var res = await api("/api/examples/demo/" + encodeURIComponent(kind));
+    var blob = await res.blob();
+    var name = EXAMPLE_FILE_NAMES[kind] || ("demo." + kind);
+    var header = res.headers.get("content-disposition") || "";
+    var match = /filename\*?=(?:UTF-8''|")?([^";]+)"?/i.exec(header);
+    if (match) {
+      try {
+        name = decodeURIComponent(match[1]);
+      } catch (err) {
+        name = match[1];
+      }
+    }
+    var file = new File([blob], name, { type: blob.type || "text/plain" });
+    exampleFileCache[kind] = file;
+    return file;
+  }
+
+  async function loadExamplePreset(presetId) {
+    var files = EXAMPLE_PRESETS[presetId] || EXAMPLE_PRESETS.full;
+    var target = $("f-seq-id");
+    if (target) target.value = "";
+    var hiddenPdb = $("f-pdb-id");
+    var hiddenUni = $("f-uniprot");
+    if (hiddenPdb) hiddenPdb.value = "";
+    if (hiddenUni) hiddenUni.value = "";
+    clearInputFile($("file-fasta"));
+    clearInputFile($("file-pdb"));
+    clearInputFile($("file-msa"));
+    clearInputFile($("file-mutants"));
+    var i;
+    for (i = 0; i < files.length; i++) {
+      setInputFile(exampleInputFor(files[i]), await fetchExampleFile(files[i]));
+    }
+    state.exampleId = presetId;
+    state.examplePrefillDone = true;
+    markExampleButtons();
+    updateFileLabels();
+    renderIntakeFiles();
+    fillModels();
+    updateCli();
+  }
+
+  async function maybePrefillDemo() {
+    if (state.examplePrefillDone) return;
+    if (!formIsEmpty()) {
+      state.examplePrefillDone = true;
+      return;
+    }
+    try {
+      await loadExamplePreset("full");
+    } catch (err) {
+      state.examplePrefillDone = true;
+      flash(err.message || "Could not load the demo example.");
     }
   }
 
@@ -3896,7 +4243,8 @@
   }
 
   function setBusy(busy) {
-    if (els.btnDemo) els.btnDemo.disabled = busy;
+    var buttons = document.querySelectorAll("#example-row [data-example]");
+    for (var i = 0; i < buttons.length; i++) buttons[i].disabled = busy;
     if (els.btnSubmit) {
       els.btnSubmit.disabled = busy;
       els.btnSubmit.textContent = busy ? "Starting…" : "Start scoring";
@@ -4091,7 +4439,17 @@
       showPage("page-predict");
       fillModels();
       updateCli();
+      maybePrefillDemo();
     } else if (route.page === "benchmarks") {
+      var nextBench = route.benchmark || "proteingym";
+      if (nextBench !== state.benchmarkId) {
+        state.benchmarkId = nextBench;
+        state.benchmarkProperty = "overall";
+        state.benchmarkMetric = "spearman";
+        state.benchmarkInput = "all";
+        state.benchmarkVariant = "rem2";
+        state.benchmarkQuery = "";
+      }
       showPage("page-benchmarks");
       renderLeaderboard();
     } else if (route.page === "workspace" || route.page === "review") {
@@ -4227,9 +4585,14 @@
       ev.preventDefault();
       submitJob(false);
     });
-    if (els.btnDemo) {
-      els.btnDemo.addEventListener("click", function () {
-        submitJob(true);
+    var exampleRow = $("example-row");
+    if (exampleRow) {
+      exampleRow.addEventListener("click", function (ev) {
+        var btn = ev.target.closest("[data-example]");
+        if (!btn || btn.disabled) return;
+        loadExamplePreset(btn.getAttribute("data-example")).catch(function (err) {
+          showFormError(err.message || "Could not load the demo example.");
+        });
       });
     }
     var seriesHost = $("model-series");
@@ -4273,13 +4636,7 @@
         }
         var benchmarkBtn = ev.target.closest("[data-benchmark]");
         if (benchmarkBtn) {
-          state.benchmarkId = benchmarkBtn.getAttribute("data-benchmark");
-          state.benchmarkProperty = "overall";
-          state.benchmarkMetric = "spearman";
-          state.benchmarkInput = "all";
-          state.benchmarkVariant = "rem2";
-          state.benchmarkQuery = "";
-          renderLeaderboard();
+          go("#/benchmarks/" + encodeURIComponent(benchmarkBtn.getAttribute("data-benchmark")));
           return;
         }
       });
@@ -4410,7 +4767,6 @@
     els.form = $("predict-form");
     els.modelSelect = $("model-select");
     els.cli = $("cli-preview");
-    els.btnDemo = $("btn-demo");
     els.btnSubmit = $("btn-submit");
     els.drawerRoot = $("drawer-root");
     els.drawerBackdrop = $("drawer-backdrop");

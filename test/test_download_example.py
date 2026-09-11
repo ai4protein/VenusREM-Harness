@@ -9,6 +9,7 @@ from rem2.download.example import (
     bundled_example_dir,
     ensure_demo_dataset,
 )
+from rem2.examples import demo_example_payload, demo_file_path
 
 
 def test_example_dry_run(capsys):
@@ -52,6 +53,16 @@ def test_ensure_demo_uses_bundled_without_dest(tmp_path, monkeypatch):
     )
     got = ensure_demo_dataset(log=lambda *_: None)
     assert got == bundled
+
+
+def test_demo_example_payload_lists_bundled_files():
+    payload = demo_example_payload()
+    assert payload["id"] == "demo"
+    assert payload["default_preset"] == "full"
+    assert payload["files"]["fasta"].endswith(".fasta")
+    assert demo_file_path("fasta").is_file()
+    assert demo_file_path("pdb").is_file()
+    assert demo_file_path("msa").is_file()
 
 
 def test_ensure_demo_falls_back_to_bundled(tmp_path, monkeypatch):

@@ -159,6 +159,7 @@ script/**/*ablation*
 script/compute_fitness_advance.sh
 script/compute_fitness_calibrated.sh
 script/compare_backbone_scoring.sh
+script/upload_venusrem2_hf.py
 
 # Legacy code trees (pre-package layout)
 src/

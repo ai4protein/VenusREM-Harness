@@ -219,28 +219,134 @@ def _benchmark_inputs(model_key: str) -> list[str]:
     return ["seq"]
 
 
-def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    raw_data = json.loads(_PROTEINGYM_REM2_DATA.read_text(encoding="utf-8"))
+_DASHBOARD_DATA = Path(__file__).with_name("data")
+_DEFAULT_METRICS = [
+    {"id": "spearman", "label": "Spearman"},
+    {"id": "ndcg", "label": "NDCG"},
+    {"id": "auc", "label": "AUC"},
+    {"id": "mcc", "label": "MCC"},
+    {"id": "top_recall", "label": "Top recall"},
+]
+_MUTHUB_DEFAULT = {
+    "id": "venusmuthub",
+    "label": "VenusMutHub",
+    "title": "VenusMutHub substitutions",
+    "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +REM2 model scores will appear after the evaluation snapshot is packaged.",
+    "status": "catalog",
+    "n": 905,
+    "setting": "Zero-shot · substitutions",
+    "metric": "Average Spearman",
+    "source": "VenusMutHub assay_manifest.csv",
+    "properties": [
+        {"id": "overall", "label": "Overall", "n": 905},
+        {"id": "stability", "label": "Stability", "n": 540},
+        {"id": "activity", "label": "Activity", "n": 175},
+        {"id": "ppi_binding", "label": "PPI binding", "n": 100},
+        {"id": "selectivity", "label": "Selectivity", "n": 47},
+        {"id": "dti_binding", "label": "DTI binding", "n": 43},
+    ],
+    "metrics": list(_DEFAULT_METRICS),
+    "pairs": [],
+}
+_VIROHUB_DEFAULT = {
+    "id": "venusvirohub",
+    "label": "VenusViroHub",
+    "title": "VenusViroHub substitutions",
+    "description": "89 viral DMS substitution assays with zero ProteinGym overlap, covering immune escape, cell entry, and receptor binding.",
+    "status": "catalog",
+    "n": 89,
+    "setting": "Zero-shot · substitutions",
+    "metric": "Average Spearman",
+    "source": "VenusViroHub · 89 viral DMS assays",
+    "properties": [
+        {"id": "overall", "label": "Overall", "n": 89},
+        {"id": "activity", "label": "Activity", "n": 1},
+        {"id": "binding", "label": "Binding", "n": 17},
+        {"id": "cell_entry", "label": "Cell entry", "n": 18},
+        {"id": "expression", "label": "Expression", "n": 15},
+        {"id": "fitness", "label": "Fitness", "n": 15},
+        {"id": "immune_escape", "label": "Immune escape", "n": 21},
+        {"id": "stability", "label": "Stability", "n": 2},
+    ],
+    "metrics": list(_DEFAULT_METRICS),
+    "pairs": [],
+}
+
+
+def _pairs_from_raw(raw_pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     pairs = []
-    for raw in raw_data["pairs"]:
-        spearman = raw["metrics"]["spearman"]
+    for raw in raw_pairs:
+        metrics = raw.get("metrics") or {}
+        spearman = metrics.get("spearman") or {}
+        base = raw.get("base", spearman.get("base"))
+        enhanced = raw.get("enhanced", spearman.get("rem2"))
+        delta = raw.get("delta", spearman.get("delta"))
+        if delta is None and base is not None and enhanced is not None:
+            delta = round(float(enhanced) - float(base), 3)
         pairs.append(
             {
                 "key": raw["key"],
-                "family": raw["base_name"],
-                "base_name": raw["base_name"],
-                "enhanced_name": raw["rem2_name"],
-                "base": spearman["base"],
-                "enhanced": spearman["rem2"],
-                "delta": spearman["delta"],
-                "protocol": raw["notes"],
-                "metrics": raw["metrics"],
-                "properties": raw["properties"],
-                "properties_by_metric": raw["properties_by_metric"],
-                "inputs": _benchmark_inputs(raw["key"]),
+                "family": raw.get("family") or raw.get("base_name"),
+                "base_name": raw.get("base_name") or raw.get("family"),
+                "enhanced_name": raw.get("enhanced_name") or raw.get("rem2_name"),
+                "base": base,
+                "enhanced": enhanced,
+                "delta": delta,
+                "protocol": raw.get("protocol") or raw.get("notes") or "",
+                "metrics": metrics,
+                "properties": raw.get("properties") or {},
+                "properties_by_metric": raw.get("properties_by_metric") or {},
+                "inputs": list(raw.get("inputs") or _benchmark_inputs(raw["key"])),
             }
         )
-    return pairs, raw_data["properties"]
+    return pairs
+
+
+def _load_hub_snapshot(hub_id: str) -> dict[str, Any]:
+    rem2_path = _DASHBOARD_DATA / f"{hub_id}_rem2.json"
+    catalog_path = _DASHBOARD_DATA / f"{hub_id}_catalog.json"
+    if rem2_path.is_file():
+        return json.loads(rem2_path.read_text(encoding="utf-8"))
+    if catalog_path.is_file():
+        return json.loads(catalog_path.read_text(encoding="utf-8"))
+    return {}
+
+
+def _hub_product_benchmark(default: dict[str, Any]) -> dict[str, Any]:
+    raw = _load_hub_snapshot(default["id"])
+    merged = dict(default)
+    for key in (
+        "id",
+        "label",
+        "title",
+        "description",
+        "status",
+        "setting",
+        "metric",
+        "source",
+        "source_url",
+        "properties",
+        "metrics",
+    ):
+        if raw.get(key) not in (None, ""):
+            merged[key] = raw[key]
+    if raw.get("n") not in (None, ""):
+        merged["n"] = raw["n"]
+    elif raw.get("assays") not in (None, ""):
+        merged["n"] = raw["assays"]
+    pairs = _pairs_from_raw(raw.get("pairs") or [])
+    merged["pairs"] = pairs
+    merged["model_count"] = len(pairs)
+    if pairs and merged.get("status") != "ready":
+        merged["status"] = "ready"
+    elif not pairs and not merged.get("status"):
+        merged["status"] = "catalog"
+    return merged
+
+
+def _proteingym_pairs() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    raw_data = json.loads(_PROTEINGYM_REM2_DATA.read_text(encoding="utf-8"))
+    return _pairs_from_raw(raw_data["pairs"]), raw_data["properties"]
 
 
 def _proteingym_product_benchmark() -> dict[str, Any]:
@@ -376,16 +482,19 @@ def proteingym_catalog() -> dict[str, Any]:
             ),
         }
     )
+    product_benchmarks = [
+        _proteingym_product_benchmark(),
+        _hub_product_benchmark(_MUTHUB_DEFAULT),
+        _hub_product_benchmark(_VIROHUB_DEFAULT),
+    ]
     return {
         "default": "substitutions",
         "url": "https://proteingym.org/benchmarks",
         "metric": "Mean Spearman",
         "default_benchmark": "proteingym",
-        "benchmarks": [
-            _proteingym_product_benchmark(),
-            _planned_product_benchmark("venusmuthub", "VenusMutHub"),
-            _planned_product_benchmark("venusvirohub", "VenusViroHub"),
+        "benchmarks": product_benchmarks,
+        "planned_benchmarks": [
+            item["label"] for item in product_benchmarks if item.get("status") == "planned"
         ],
-        "planned_benchmarks": ["VenusMutHub", "VenusViroHub"],
         "boards": boards,
     }

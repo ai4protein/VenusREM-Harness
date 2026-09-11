@@ -105,6 +105,34 @@ def test_health_and_models(client):
     assert isinstance(doctor["extras"], list)
 
 
+def test_examples_serve_bundled_demo(client):
+    catalog = client.get("/api/examples").json()
+    assert catalog["default"] == "full"
+    demo = catalog["examples"][0]
+    assert demo["id"] == "demo"
+    assert demo["pdb_id"] == "2L6Q"
+    assert {row["id"] for row in demo["presets"]} == {"sequence", "structure", "full"}
+    assert "fasta" in demo["files"]
+    assert "pdb" in demo["files"]
+    assert "msa" in demo["files"]
+
+    fasta = client.get("/api/examples/demo/fasta")
+    assert fasta.status_code == 200
+    assert fasta.text.startswith(">")
+    assert "HCP_LAMBD" in fasta.text or "VRQEEL" in fasta.text
+
+    pdb = client.get("/api/examples/2l6q/pdb")
+    assert pdb.status_code == 200
+    assert "ATOM" in pdb.text
+
+    msa = client.get("/api/examples/demo/msa")
+    assert msa.status_code == 200
+    assert msa.text.startswith(">")
+
+    missing = client.get("/api/examples/unknown/fasta")
+    assert missing.status_code == 404
+
+
 def test_create_run_scores_and_top(client):
     files = {"fasta": ("prot.fasta", b">p\nACDE\n", "text/plain")}
     data = {
@@ -250,7 +278,9 @@ def test_proteingym_leaderboard(client):
     assert boards["ablations"]["rows"][-1]["score"] == 0.524
 
     assert api["default_benchmark"] == "proteingym"
-    assert api["planned_benchmarks"] == ["VenusMutHub", "VenusViroHub"]
+    assert [item["id"] for item in api["benchmarks"]] == [
+        "proteingym", "venusmuthub", "venusvirohub"
+    ]
     assert len(api["benchmarks"]) == 3
     benchmark = api["benchmarks"][0]
     assert benchmark["id"] == "proteingym"
@@ -261,7 +291,18 @@ def test_proteingym_leaderboard(client):
     assert [item["id"] for item in benchmark["metrics"]] == [
         "spearman", "ndcg", "auc", "mcc", "top_recall"
     ]
-    assert [item["status"] for item in api["benchmarks"][1:]] == ["planned", "planned"]
+    muthub = api["benchmarks"][1]
+    virohub = api["benchmarks"][2]
+    assert muthub["n"] == 905
+    assert muthub["status"] in {"catalog", "ready"}
+    assert [item["id"] for item in muthub["properties"]][:3] == ["overall", "stability", "activity"]
+    assert virohub["n"] == 89
+    assert virohub["status"] in {"catalog", "ready"}
+    assert "cell_entry" in [item["id"] for item in virohub["properties"]]
+    assert "immune_escape" in [item["id"] for item in virohub["properties"]]
+    assert api["planned_benchmarks"] == [
+        item["label"] for item in api["benchmarks"] if item["status"] == "planned"
+    ]
     pairs = {row["key"]: row for row in benchmark["pairs"]}
     assert pairs["prosst_ensemble"]["base"] == 0.529
     assert pairs["prosst_ensemble"]["enhanced"] == 0.556
@@ -358,11 +399,21 @@ def test_static_index(client):
     assert "MSA optional (none → α=0)".encode() in js.content
     assert b"progress-bar" in js.content
     assert b"Start scoring" in res.content
-    assert b'id="btn-demo"' in res.content
+    assert b'id="example-row"' in res.content
+    assert b'data-example="sequence"' in res.content
+    assert b'data-example="structure"' in res.content
+    assert b'data-example="full"' in res.content
+    assert b'id="btn-demo"' not in res.content
     assert b"Skip the form" not in res.content
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
     assert b'id="pg-board"' in res.content
     assert b"Cross-benchmark leaderboard" in res.content
+    assert b"bbio-bar" in js.content
+    assert b"bbio-tip" in js.content
+    css = client.get("/app.css")
+    assert css.status_code == 200
+    assert b"benchmark-chart:hover .bbio-row" in css.content
+    assert b"bbio-legend" in css.content
     assert "skip → α=0".encode() in res.content
     assert b"intake-box" in res.content
     assert b"slot-sequence" in res.content

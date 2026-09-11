@@ -86,6 +86,33 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
     def leaderboard():
         return proteingym_catalog()
 
+    @app.get("/api/examples")
+    def examples():
+        from rem2.examples import demo_example_payload
+
+        demo = demo_example_payload()
+        return {"default": demo.get("default_preset") or "full", "examples": [demo]}
+
+    @app.get("/api/examples/{example_id}/{kind}")
+    def example_file(example_id: str, kind: str):
+        from rem2.examples import DEMO_ASSAY, DEMO_FILE_KINDS, demo_file_path
+
+        alias = str(example_id or "").strip().lower()
+        if alias not in {"demo", "2l6q", DEMO_ASSAY.lower()}:
+            raise HTTPException(404, "example not found")
+        if kind not in DEMO_FILE_KINDS:
+            raise HTTPException(404, "example file not found")
+        path = demo_file_path(kind)
+        if path is None:
+            raise HTTPException(404, "example file not found")
+        media = {
+            "fasta": "text/plain",
+            "pdb": "chemical/x-pdb",
+            "msa": "text/plain",
+            "mutants": "text/csv",
+        }.get(kind, "application/octet-stream")
+        return FileResponse(path, media_type=media, filename=path.name)
+
     @app.get("/api/runs")
     def list_runs():
         return {"runs": store.list_jobs()}

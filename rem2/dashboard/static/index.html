@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>REM2 Dashboard</title>
-  <link rel="stylesheet" href="app.css?v=20260910f">
+  <link rel="stylesheet" href="app.css?v=20260911f">
 </head>
 <body>
   <div id="app">
@@ -49,7 +49,12 @@
             <h1>New prediction</h1>
             <p class="muted">Define the target, choose evidence, then score candidates for review.</p>
           </div>
-          <button type="button" id="btn-demo" class="btn-link demo-panel">Demo assay</button>
+          <div class="example-row" id="example-row" role="group" aria-label="Load a demo">
+            <span class="example-label">Examples</span>
+            <button type="button" class="example-btn" data-example="sequence">Sequence</button>
+            <button type="button" class="example-btn" data-example="structure">+ Structure</button>
+            <button type="button" class="example-btn" data-example="full">Full rem2</button>
+          </div>
         </div>
 
         <div class="workflow-rail" aria-label="Prediction workflow">
@@ -212,6 +217,6 @@
   <noscript>
     <p class="noscript">REM2 Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260910f"></script>
+  <script src="app.js?v=20260911f"></script>
 </body>
 </html>
