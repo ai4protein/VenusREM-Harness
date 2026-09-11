@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the VenusMutHub dashboard snapshot from the assay manifest.
 
-A ProteinGym/ViroHub-style packaged Raw/+REM2 ``Leaderboard_Compare.csv``
-(Spearman / NDCG / AUC / MCC / Top_recall, ``*_raw`` + ``*_rem2`` columns)
+A ProteinGym/ViroHub-style packaged Raw/+VRH ``Leaderboard_Compare.csv``
+(Spearman / NDCG / AUC / MCC / Top_recall, ``*_raw`` + ``*_vrh`` columns)
 was not found. An older Orbit hub at
 ``experiments/hubs/venusmuthub_raw_vs_orbit/tables/Leaderboard_Compare.csv``
 uses Spearman / NDCG / Accuracy / F1 and is not treated as dashboard scores.
@@ -23,9 +23,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
-DASHBOARD_DATA = REPO / "rem2" / "dashboard" / "data"
+DASHBOARD_DATA = REPO / "vrh" / "dashboard" / "data"
 CATALOG_PATH = DASHBOARD_DATA / "venusmuthub_catalog.json"
-REM2_PATH = DASHBOARD_DATA / "venusmuthub_rem2.json"
+REM2_PATH = DASHBOARD_DATA / "venusmuthub_vrh.json"
 
 METRICS = [
     {"id": "spearman", "label": "Spearman"},
@@ -113,7 +113,7 @@ def catalog_snapshot(rows: list[dict[str, str]], source: Path) -> dict[str, obje
         task_phrase = ", ".join(task_labels[:-1]) + f", and {task_labels[-1]}"
     description = (
         f"{n_assays} substitution assays across {task_phrase}. "
-        "Paired Raw / +REM2 model scores will appear after the evaluation "
+        "Paired Raw / +VRH model scores will appear after the evaluation "
         "snapshot is packaged."
     )
     return {
@@ -147,19 +147,20 @@ def _has_pg_compare_schema(fieldnames: list[str] | None) -> bool:
         return False
     for metric in PG_COMPARE_METRICS:
         raw = f"{metric}_raw".lower()
-        rem2 = f"{metric}_rem2".lower()
-        if raw not in headers or rem2 not in headers:
+        recipe = f"{metric}_vrh".lower() if f"{metric}_vrh".lower() in headers else f"{metric}_rem2".lower()
+        if raw not in headers or recipe not in headers:
             return False
     return True
 
 
 def find_paired_compare(repo: Path) -> Path | None:
-    """Return a packaged Raw/+REM2 compare table, or None.
+    """Return a packaged Raw/+VRH compare table, or None.
 
     Only a ProteinGym/ViroHub ``Leaderboard_Compare`` schema qualifies.
     Orbit-era Accuracy/F1 tables and figure caches are ignored.
     """
     candidates = [
+        repo / "experiments" / "hubs" / "venusmuthub_raw_vs_vrh" / "tables" / "Leaderboard_Compare.csv",
         repo / "experiments" / "hubs" / "venusmuthub_raw_vs_rem2" / "tables" / "Leaderboard_Compare.csv",
         *sorted((repo / "experiments" / "hubs").glob("*/tables/Leaderboard_Compare.csv")),
         repo / "data" / "VenusMutHub" / "Leaderboard_Compare.csv",
@@ -181,7 +182,10 @@ def find_paired_compare(repo: Path) -> Path | None:
 
 
 def _metric_cell(row: dict[str, str], headers: dict[str, str], metric: str, side: str) -> float:
-    return float(row[headers[f"{metric}_{side}".lower()]])
+    key = f"{metric}_{side}".lower()
+    if key not in headers and side == "vrh":
+        key = f"{metric}_rem2".lower()
+    return float(row[headers[key]])
 
 
 def pairs_from_compare(path: Path) -> list[dict[str, object]]:
@@ -202,26 +206,30 @@ def pairs_from_compare(path: Path) -> list[dict[str, object]]:
                 ("top_recall", "Top_recall"),
             ):
                 base = _metric_cell(row, headers, column, "raw")
-                rem2 = _metric_cell(row, headers, column, "rem2")
+                vrh = _metric_cell(row, headers, column, "vrh")
                 delta_key = f"{column}_delta".lower()
                 if delta_key in headers and row.get(headers[delta_key], "").strip():
                     delta = float(row[headers[delta_key]])
                 else:
-                    delta = round(rem2 - base, 3)
-                metrics[metric_id] = {"base": base, "rem2": rem2, "delta": delta}
+                    delta = round(vrh - base, 3)
+                metrics[metric_id] = {"base": base, "vrh": vrh, "delta": delta}
             base_name = (
                 row.get(headers.get("raw_name", ""), "")
                 or row.get(headers.get("display_name", ""), "")
                 or key
             )
-            rem2_name = row.get(headers.get("rem2_name", ""), "") or f"{base_name}, rem2"
+            vrh_name = (
+                row.get(headers.get("vrh_name", ""), "")
+                or row.get(headers.get("rem2_name", ""), "")
+                or f"{base_name}, vrh"
+            )
             pairs.append(
                 {
                     "key": key,
                     "family": row.get(headers.get("category", ""), "")
                     or row.get(headers.get("family", ""), ""),
                     "base_name": base_name,
-                    "rem2_name": rem2_name,
+                    "vrh_name": vrh_name,
                     "notes": row.get(headers.get("notes", ""), ""),
                     "metrics": metrics,
                     "properties": {"overall": dict(metrics["spearman"])},
@@ -233,7 +241,7 @@ def pairs_from_compare(path: Path) -> list[dict[str, object]]:
     return pairs
 
 
-def rem2_snapshot(rows: list[dict[str, str]], compare: Path, source: Path) -> dict[str, object]:
+def vrh_snapshot(rows: list[dict[str, str]], compare: Path, source: Path) -> dict[str, object]:
     catalog = catalog_snapshot(rows, source)
     pairs = pairs_from_compare(compare)
     catalog["status"] = "ready"
@@ -242,7 +250,7 @@ def rem2_snapshot(rows: list[dict[str, str]], compare: Path, source: Path) -> di
     catalog["paired_score_table"] = catalog["source"]
     catalog["description"] = (
         f"{len(rows)} substitution assays across stability, activity, PPI binding, "
-        "selectivity, and DTI binding. Paired Raw / +REM2 scores from the packaged "
+        "selectivity, and DTI binding. Paired Raw / +VRH scores from the packaged "
         "evaluation snapshot."
     )
     return catalog
@@ -272,7 +280,7 @@ def main() -> None:
 
     compare = find_paired_compare(REPO)
     if compare is not None:
-        payload = rem2_snapshot(rows, compare, args.manifest)
+        payload = vrh_snapshot(rows, compare, args.manifest)
         out = args.out or REM2_PATH
         write_json(out, payload)
         print(f"wrote ready snapshot ({len(payload['pairs'])} pairs) to {out}")

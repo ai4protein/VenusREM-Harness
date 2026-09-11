@@ -3,9 +3,9 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rem2"
+name = "vrh"
 version = "0.1.0"
-description = "VenusREM2: training-free calibration for protein language models on variant effect prediction"
+description = "VenusREM-Harness (vrh): training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
 license = "LicenseRef-VenusREM2-Academic"
 license-files = ["LICENSE"]
@@ -128,18 +128,18 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tyang816/VenusREM2"
-Repository = "https://github.com/tyang816/VenusREM2"
-Issues = "https://github.com/tyang816/VenusREM2/issues"
-Changelog = "https://github.com/tyang816/VenusREM2/releases"
+Homepage = "https://github.com/tyang816/VenusREM-Harness"
+Repository = "https://github.com/tyang816/VenusREM-Harness"
+Issues = "https://github.com/tyang816/VenusREM-Harness/issues"
+Changelog = "https://github.com/tyang816/VenusREM-Harness/releases"
 
 [project.scripts]
-rem2 = "rem2.cli:main"
-venusrem2 = "rem2.cli:main"
-venusrem-score = "rem2.cli:main"
+vrh = "vrh.cli:main"
+remharness = "vrh.cli:main"
 # Third-party packages register ModelAdapter subclasses here, e.g.:
 #   my_plm = "mypkg.adapters:MyAdapter"
-# Built-ins register via rem2.models.builtins on import.
+# Built-ins register via vrh.models.builtins on import.
+[project.entry-points."vrh.models"]
 [project.entry-points."rem2.models"]
 [project.entry-points."venusrem2.models"]
 
@@ -149,11 +149,11 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["rem2*"]
-exclude = ["rem2.legacy*"]
+include = ["vrh*"]
+exclude = ["vrh.legacy*"]
 
 [tool.setuptools.package-data]
-rem2 = [
+vrh = [
   "baseline/protssn/protssn_config/**/*",
   "baseline/progen2/tokenizer.json",
   "baseline/progen3/tokenizer.json",
@@ -165,7 +165,7 @@ rem2 = [
 ]
 
 [tool.setuptools.exclude-package-data]
-rem2 = [
+vrh = [
   "**/__pycache__/*",
   "**/*.py[cod]",
   "baseline/prosst/static/**",

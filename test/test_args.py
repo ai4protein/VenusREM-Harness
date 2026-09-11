@@ -4,54 +4,54 @@ from __future__ import annotations
 
 import pytest
 
-from rem2.config import create_parser, postprocess_args
+from vrh.config import create_parser, postprocess_args
 
 
 def _parse(*argv):
     return postprocess_args(create_parser().parse_args(list(argv)))
 
 
-def test_cli_prog_is_rem2():
-    assert create_parser().prog == "rem2"
+def test_cli_prog_is_vrh():
+    assert create_parser().prog == "vrh"
 
 
 def test_package_version_matches_pyproject():
-    import rem2
+    import vrh
     from pathlib import Path
 
     text = Path(__file__).resolve().parents[1].joinpath("pyproject.toml").read_text()
     line = next(item for item in text.splitlines() if item.startswith("version = "))
-    assert rem2.__version__ == line.split("=", 1)[1].strip().strip('"')
+    assert vrh.__version__ == line.split("=", 1)[1].strip().strip('"')
 
 
 def test_help_shows_short_usage_and_examples():
     help_text = create_parser().format_help()
-    assert "usage: rem2 [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE)" in help_text
-    assert "rem2 --model esm2 --base_dir data/proteingym_v1" in help_text
-    assert "rem2 --model venusrem2 --base_dir data/proteingym_v1" in help_text
-    assert "rem2 --model prosst-4096 --base_dir data/proteingym_v1" in help_text
-    assert "rem2 --model saprot --base_dir data/proteingym_v1" in help_text
-    assert "rem2 --model proteinmpnn-020 --base_dir data/proteingym_v1" in help_text
+    assert "usage: vrh [--model MODEL] (--base_dir DIR | --fasta FILE | --pdb FILE)" in help_text
+    assert "vrh --model esm2 --base_dir data/proteingym_v1" in help_text
+    assert "vrh --model venusrem2 --base_dir data/proteingym_v1" in help_text
+    assert "vrh --model prosst-4096 --base_dir data/proteingym_v1" in help_text
+    assert "vrh --model saprot --base_dir data/proteingym_v1" in help_text
+    assert "vrh --model proteinmpnn-020 --base_dir data/proteingym_v1" in help_text
     assert "--scoring_strategy  wt (default) | mask | tf" in help_text
     assert "Missing checkpoint" in help_text
     assert "Missing data" in help_text
-    assert "rem2 --model esm2 --fasta prot.fasta" in help_text
-    assert "rem2 --list-models" in help_text
-    assert "rem2 demo" in help_text
-    assert "rem2 doctor" in help_text
-    assert "rem2 dashboard" in help_text
-    assert "rem2 download" in help_text
+    assert "vrh --model esm2 --fasta prot.fasta" in help_text
+    assert "vrh --list-models" in help_text
+    assert "vrh demo" in help_text
+    assert "vrh doctor" in help_text
+    assert "vrh dashboard" in help_text
+    assert "vrh download" in help_text
     assert "common:" in help_text
     assert "dataset (--base_dir):" in help_text
     assert "single protein (--fasta / --pdb):" in help_text
-    assert "rem2 --model saprot --pdb prot.pdb" in help_text
-    assert "rem2 --model prosst-2048 --pdb prot.pdb" in help_text
-    assert "rem2 scoring:" in help_text
+    assert "vrh --model saprot --pdb prot.pdb" in help_text
+    assert "vrh --model prosst-2048 --pdb prot.pdb" in help_text
+    assert "vrh scoring:" in help_text
     assert "per-protein entropy-α" in help_text
     assert "wt-marginals" in help_text
-    assert "{backbone}__rem2" in help_text
+    assert "{backbone}__vrh" in help_text
     assert "other names are ablations" in help_text
-    assert "Give rem2 the least you have" in help_text
+    assert "Give vrh the least you have" in help_text
     assert "aa_seq/ is optional" in help_text
     assert "coherence gate" in help_text
 
@@ -79,7 +79,7 @@ def test_trust_remote_code_defaults_off():
 def test_official_prosst_models_enable_their_required_remote_code():
     from types import SimpleNamespace
 
-    from rem2.backbone.baseline_dispatch import should_trust_remote_code
+    from vrh.backbone.baseline_dispatch import should_trust_remote_code
 
     args = SimpleNamespace(trust_remote_code=False)
     assert should_trust_remote_code("AI4Protein/ProSST-20", args) is True
@@ -166,7 +166,7 @@ def test_fasta_rejects_mutants_and_mutant_sites_together():
 
 
 def test_needed_structure_vocab_sizes():
-    from rem2.baseline.prosst.structure_tokens import needed_structure_vocab_sizes
+    from vrh.baseline.prosst.structure_tokens import needed_structure_vocab_sizes
 
     assert needed_structure_vocab_sizes("prosst-4096") == [4096]
     assert needed_structure_vocab_sizes("prosst") == [2048]

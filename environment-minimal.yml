@@ -1,5 +1,5 @@
-# Portable env for rem2. Install CUDA PyTorch yourself, then the package.
-name: rem2
+# Portable env for vrh. Install CUDA PyTorch yourself, then the package.
+name: vrh
 channels:
   - conda-forge
 dependencies:

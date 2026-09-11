@@ -15,7 +15,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TABLES = REPO_ROOT / "data/venusvirohub/iclr_appendix/feishu_tables"
-DEFAULT_SNAPSHOT = REPO_ROOT / "rem2/dashboard/data/venusvirohub_rem2.json"
+DEFAULT_SNAPSHOT = REPO_ROOT / "vrh/dashboard/data/venusvirohub_rem2.json"
 
 COMPARE_METRICS = {
     "spearman": "Spearman",
@@ -57,13 +57,13 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return [{key.strip(): (value or "").strip() for key, value in row.items()} for row in csv.DictReader(handle)]
 
 
-def score_triple(base: float, rem2: float) -> dict[str, float]:
+def score_triple(base: float, recipe: float) -> dict[str, float]:
     rounded_base = round(base, 3)
-    rounded_rem2 = round(rem2, 3)
+    rounded_recipe = round(recipe, 3)
     return {
         "base": rounded_base,
-        "rem2": rounded_rem2,
-        "delta": round(rounded_rem2 - rounded_base, 3),
+        "rem2": rounded_recipe,
+        "delta": round(rounded_recipe - rounded_base, 3),
     }
 
 
@@ -114,28 +114,33 @@ def build_snapshot(tables: Path) -> dict:
         model_key = row["model_key"]
         index_row = model_index.get(model_key, {})
         raw_names = [row.get("raw_name", ""), index_row.get("raw_display", "")]
-        rem2_names = [row.get("rem2_name", ""), index_row.get("rem2_display", "")]
+        recipe_names = [
+            row.get("rem2_name", "") or row.get("vrh_name", ""),
+            index_row.get("rem2_display", "") or index_row.get("vrh_display", ""),
+        ]
         metrics = {}
         properties_by_metric = {}
         for metric_key, (_sheet_name, average_column) in METRIC_SHEETS.items():
             prefix = COMPARE_METRICS[metric_key]
             raw = lookup_row(summary_indexes[metric_key], "Raw", raw_names, model_key, metric_key)
-            rem2 = lookup_row(summary_indexes[metric_key], "REM2", rem2_names, model_key, metric_key)
-            if raw["Model_name"] != row.get("raw_name") or rem2["Model_name"] != row.get("rem2_name"):
+            recipe = lookup_row(summary_indexes[metric_key], "REM2", recipe_names, model_key, metric_key)
+            recipe_label = row.get("rem2_name") or row.get("vrh_name")
+            if raw["Model_name"] != row.get("raw_name") or recipe["Model_name"] != recipe_label:
                 join_fallbacks.append(
-                    f"{model_key}/{metric_key}: Compare ({row.get('raw_name')!r}, {row.get('rem2_name')!r}) "
-                    f"-> sheets ({raw['Model_name']!r}, {rem2['Model_name']!r})"
+                    f"{model_key}/{metric_key}: Compare ({row.get('raw_name')!r}, {recipe_label!r}) "
+                    f"-> sheets ({raw['Model_name']!r}, {recipe['Model_name']!r})"
                 )
             properties = {
-                "overall": score_triple(float(raw[average_column]), float(rem2[average_column])),
+                "overall": score_triple(float(raw[average_column]), float(recipe[average_column])),
                 **{
-                    key: score_triple(float(raw[column]), float(rem2[column]))
+                    key: score_triple(float(raw[column]), float(recipe[column]))
                     for key, column in PROPERTY_COLUMNS.items()
                 },
             }
+            compare_recipe = row.get(f"{prefix}_rem2") or row.get(f"{prefix}_vrh")
             compare_triple = score_triple(
                 float(row[f"{prefix}_raw"]),
-                float(row[f"{prefix}_rem2"]),
+                float(compare_recipe),
             )
             if compare_triple != properties["overall"]:
                 raise SystemExit(
@@ -148,7 +153,7 @@ def build_snapshot(tables: Path) -> dict:
             {
                 "key": model_key,
                 "base_name": row["raw_name"],
-                "rem2_name": row["rem2_name"],
+                "rem2_name": row.get("rem2_name") or row.get("vrh_name"),
                 "notes": row.get("category") or index_row.get("category") or "",
                 "metrics": metrics,
                 "properties": properties_by_metric["spearman"],
@@ -205,7 +210,7 @@ def main() -> None:
         for item in join_fallbacks:
             print(f"  {item}")
     else:
-        print("name joins: Compare raw_name/rem2_name matched sheet Model_name for all 59 pairs")
+        print("name joins: Compare raw_name/vrh_name matched sheet Model_name for all 59 pairs")
 
 
 if __name__ == "__main__":

@@ -1,21 +1,21 @@
-# rem2 scoring formula
+# vrh scoring formula
 
-Package default (`rem2`, `--alpha entropy`, `--scoring_mode calibrated_margin`).
+Package default (`vrh`, `--alpha entropy`, `--scoring_mode calibrated_margin`).
 `--alpha 0.8` is a fixed-blend ablation, not this recipe.
 
-**rem2** is the calibration head and can sit on any backbone.
-**VenusREM2** is rem2 on the official ProSST ensemble only (`--model venusrem2`).
+**vrh** is the calibration head and can sit on any backbone.
+**VenusREM2** is vrh on the official ProSST ensemble only (`--model venusrem2`).
 
 ## Score columns
 
 | Run | Column |
 |-----|--------|
-| Single backbone | `{HF-basename}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`, `ProSST-2048__rem2`) |
+| Single backbone | `{HF-basename}__vrh` (e.g. `esm2_t33_650M_UR50D__vrh`, `ProSST-2048__vrh`) |
 | Same run, raw PLM | `{HF-basename}__raw_backbone` |
 | Official ensemble, per K | `VenusREM2__ProSST-{K}` |
 | Official ensemble, combined | `VenusREM2` (z-mean of the six `VenusREM2__*` members) |
 
-`--scoring_strategy` is **not** a column name. `wt` / `mask` / `tf` only change how \(\ell_{\mathrm{raw}}\) is obtained (`docs/models.md`). The rem2 head below is the same.
+`--scoring_strategy` is **not** a column name. `wt` / `mask` / `tf` only change how \(\ell_{\mathrm{raw}}\) is obtained (`docs/models.md`). The vrh head below is the same.
 
 ## Notation
 
@@ -123,7 +123,7 @@ S=\sum_{i\in\mathcal{M}} s_i
 
 ## 8. VenusREM2 ensemble
 
-Each of the six official ProSST checkpoints (\(K\in\{20,128,512,1024,2048,4096\}\)) is scored with rem2, then
+Each of the six official ProSST checkpoints (\(K\in\{20,128,512,1024,2048,4096\}\)) is scored with vrh, then
 
 \[
 \mathrm{VenusREM2}=\mathrm{mean}_K\;\mathrm{zscore}(\mathrm{VenusREM2\_\_ProSST\text{-}K})
@@ -146,7 +146,7 @@ VenusREM v1 on this tree: `--model prosst-2048 --alpha 0.8 --scoring_mode log_od
 
 ## ProteinGym (217 proteins)
 
-Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma/staged_ablation_59.csv` (`pg_*` columns). Full rem2 = entropy \(\alpha\), \(\beta=1-\alpha\), gated CCD, RSA + pLDDT `above_mean`.
+Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma/staged_ablation_59.csv` (`pg_*` columns). Full vrh = entropy \(\alpha\), \(\beta=1-\alpha\), gated CCD, RSA + pLDDT `above_mean`.
 
 ### VenusREM2 (ProSST ensemble)
 
@@ -156,9 +156,9 @@ Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma
 | + MSA | log_odds | dynamic | - | - | 0.5424 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.5499 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.5543 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.5556** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.5556** |
 
-### rem2 on ESM-2 (650M, wt-marginals)
+### vrh on ESM-2 (650M, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -166,9 +166,9 @@ Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma
 | + MSA | log_odds | dynamic | - | - | 0.4287 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.4405 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.4647 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.4677** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.4677** |
 
-### rem2 on SaProt (AF-650M, wt-marginals)
+### vrh on SaProt (AF-650M, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -176,9 +176,9 @@ Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma
 | + MSA | log_odds | dynamic | - | - | 0.4273 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.4326 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.4522 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.4537** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.4537** |
 
-### rem2 on ESM-1v (5-seed, wt-marginals)
+### vrh on ESM-1v (5-seed, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -186,4 +186,4 @@ Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma
 | + MSA | log_odds | dynamic | - | - | 0.4190 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.4331 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.4548 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.4567** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.4567** |

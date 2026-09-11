@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from rem2.data.mutagenesis import (
+from vrh.data.mutagenesis import (
     estimate_mutant_count,
     generate_npoint_saturation,
     materialize_single_protein_inputs,
@@ -85,7 +85,7 @@ def test_materialize_single_protein(tmp_path: Path):
 
 
 def test_materialize_from_pdb_only(tmp_path: Path):
-    from rem2.data.pdb_sequence import extract_sequence_from_pdb
+    from vrh.data.pdb_sequence import extract_sequence_from_pdb
 
     pdb = Path(__file__).resolve().parent / "fixtures" / "trp_cage" / "pdbs" / "trp_cage.pdb"
     name, sequence, chain = extract_sequence_from_pdb(pdb)

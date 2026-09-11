@@ -163,7 +163,7 @@ script/upload_venusrem2_hf.py
 
 # Legacy code trees (pre-package layout)
 src/
-rem2/legacy/
+vrh/legacy/
 venusrem2/legacy/
 
 # VenusREM-Orbit leftovers (old package name / scripts / local dumps)
@@ -172,21 +172,21 @@ venusrem_orbit/
 
 # Model tensor caches / checkpoints
 *.pt
-!rem2/**/protssn_config/**/*.pt
+!vrh/**/protssn_config/**/*.pt
 !venusrem2/**/protssn_config/**/*.pt
-rem2/baseline/prosst/static/
+vrh/baseline/prosst/static/
 venusrem2/baseline/prosst/static/
 *.joblib
 *.pth
 *.ckpt
 *.bin
-!rem2/**/tokenizers/**
+!vrh/**/tokenizers/**
 !venusrem2/**/tokenizers/**
 
 # ---------------------------------------------------------------------------
 # Project: data/
 # Local datasets stay untracked. Only data/.keep is committed.
-# Benchmarks come from `rem2 download` (Hugging Face), not git.
+# Benchmarks come from `vrh download` (Hugging Face), not git.
 # ---------------------------------------------------------------------------
 data/*
 !data/.keep

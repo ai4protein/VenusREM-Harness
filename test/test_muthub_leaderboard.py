@@ -1,6 +1,6 @@
 """VenusMutHub dashboard catalog.
 
-No packaged 59-model Raw/+REM2 ``Leaderboard_Compare.csv`` matching the
+No packaged 59-model Raw/+VRH ``Leaderboard_Compare.csv`` matching the
 ProteinGym/ViroHub schema (Spearman / NDCG / AUC / MCC / Top_recall) was
 found. The older Orbit hub
 ``experiments/hubs/venusmuthub_raw_vs_orbit/tables/Leaderboard_Compare.csv``
@@ -12,7 +12,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from rem2.dashboard.leaderboard import proteingym_catalog
+from vrh.dashboard.leaderboard import proteingym_catalog
 
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
@@ -63,8 +63,8 @@ def test_venusmuthub_properties_match_manifest() -> None:
 
 def test_venusmuthub_score_status() -> None:
     muthub = _muthub()
-    rem2_path = REPO / "rem2" / "dashboard" / "data" / "venusmuthub_rem2.json"
-    if rem2_path.is_file():
+    vrh_path = REPO / "vrh" / "dashboard" / "data" / "venusmuthub_vrh.json"
+    if vrh_path.is_file():
         assert muthub["status"] == "ready"
         assert muthub["pairs"]
         assert all(row.get("metrics") for row in muthub["pairs"])

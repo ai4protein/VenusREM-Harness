@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VRH Dashboard</title>
+  <link rel="stylesheet" href="app.css?v=20260911g">
+</head>
+<body>
+  <div id="app">
+    <header class="shell-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">vh</span>
+        <a href="#/runs" class="brand-title">VRH</a>
+        <span id="app-version" class="brand-ver" hidden></span>
+      </div>
+      <nav class="tabs" aria-label="Dashboard sections">
+        <a href="#/runs" id="tab-runs" class="tab is-active">Projects</a>
+        <a href="#/predict" id="tab-predict" class="tab">New prediction</a>
+        <a href="#/review" id="tab-review" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Review</a>
+        <a href="#/benchmarks" id="tab-benchmarks" class="tab">Benchmarks</a>
+      </nav>
+      <div class="header-right">
+        <span id="conn-status" class="status-pill is-off" title="API health">Offline</span>
+        <span id="job-status" class="status-pill is-run" hidden>Job running</span>
+        <span id="last-poll" class="poll-time" hidden>poll --:--:--</span>
+        <button type="button" id="btn-doctor" class="btn btn-ghost">Doctor</button>
+      </div>
+    </header>
+
+    <div class="banner" role="note">
+      Prediction scores rank variants: higher is better. They are not physical ΔΔG measurements and have no kcal/mol unit.
+    </div>
+
+    <div id="flash" class="flash" hidden></div>
+
+    <main id="main">
+      <section id="page-runs" class="page" hidden>
+        <div class="page-head">
+          <h1>Runs</h1>
+          <p class="muted">Open a run to watch scoring. Review opens after it finishes.</p>
+        </div>
+        <div id="runs-body" class="panel">Loading runs…</div>
+      </section>
+
+      <section id="page-predict" class="page" hidden>
+        <div class="page-head page-head-job">
+          <div>
+            <h1>New prediction</h1>
+            <p class="muted">Define the target, choose evidence, then score candidates for review.</p>
+          </div>
+          <div class="example-row" id="example-row" role="group" aria-label="Load a demo">
+            <span class="example-label">Examples</span>
+            <button type="button" class="example-btn" data-example="sequence">Sequence</button>
+            <button type="button" class="example-btn" data-example="structure">+ Structure</button>
+            <button type="button" class="example-btn" data-example="full">Full vrh</button>
+          </div>
+        </div>
+
+        <div class="workflow-rail" aria-label="Prediction workflow">
+          <span class="is-current"><b>1</b> Target</span><span><b>2</b> Evidence</span><span><b>3</b> Model</span><span><b>4</b> Review</span><span><b>5</b> Export</span>
+        </div>
+
+        <form id="predict-form" class="panel form-panel" autocomplete="off">
+          <section class="form-model-step">
+            <h2>Model</h2>
+            <div id="model-series" class="model-series"></div>
+            <select id="model-select" name="model" hidden></select>
+            <p id="model-meta" class="field-hint"></p>
+            <details class="advanced">
+              <summary>Recipe</summary>
+              <div id="recipe-radios" class="seg">
+                <label class="seg-item"><input type="radio" name="recipe" value="full" checked> Full vrh</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="raw"> Raw</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="msa"> + MSA</label>
+                <label class="seg-item"><input type="radio" name="recipe" value="ccd"> + CCD</label>
+              </div>
+              <p id="recipe-hint" class="field-hint"></p>
+            </details>
+          </section>
+
+          <section class="form-input-step">
+            <div class="section-kicker">Target &amp; evidence</div>
+            <h2>What do you know about this protein?</h2>
+            <p class="field-hint">A sequence is enough to start. Structure and MSA improve model coverage when available.</p>
+            <div class="input-slots" id="intake-box">
+              <div class="input-slot" id="slot-sequence" data-slot="fasta">
+                <h3>Sequence</h3>
+                <label class="slot-drop">
+                  <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+                  <strong>Drop FASTA</strong>
+                  <span>or click to upload</span>
+                </label>
+                <label class="slot-id">Protein ID <span class="label-note">UniProt or PDB</span>
+                  <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 or 2L6Q" autocomplete="off">
+                </label>
+                <div class="slot-chips" id="slot-sequence-chips"></div>
+              </div>
+              <div class="input-slot" id="slot-structure" data-slot="pdb">
+                <h3>Structure</h3>
+                <label class="slot-drop">
+                  <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+                  <strong>Drop PDB / CIF</strong>
+                  <span>or click to upload</span>
+                </label>
+                <label class="slot-id">Fetch
+                  <select name="fetch_structure" id="f-fetch">
+                    <option value="auto" selected>Auto (RCSB + AFDB)</option>
+                    <option value="afdb">AlphaFold DB only</option>
+                    <option value="rcsb">RCSB only</option>
+                    <option value="none">Don't fetch</option>
+                  </select>
+                </label>
+                <input type="hidden" name="pdb_id" id="f-pdb-id">
+                <input type="hidden" name="uniprot_id" id="f-uniprot">
+                <div class="slot-chips" id="slot-structure-chips"></div>
+              </div>
+              <div class="input-slot" id="slot-msa" data-slot="msa">
+                <h3>MSA</h3>
+                <label class="slot-drop">
+                  <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+                  <strong>Drop MSA</strong>
+                  <span>optional — skip → α=0</span>
+                </label>
+                <div class="slot-chips" id="slot-msa-chips"></div>
+              </div>
+            </div>
+            <div id="input-gate" class="input-gate" aria-live="polite"></div>
+            <details class="advanced scope-details">
+              <summary><span>Limit mutation scope</span><small>Optional · default is all positions × 19 substitutions</small></summary>
+              <p class="scope-copy"><strong>Default:</strong> predict every single-amino-acid substitution at every residue. Only change this section when you want a smaller candidate set or already have a mutant list.</p>
+              <label class="file-field">
+                <span>Use a predefined mutant list</span>
+                <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
+                <span class="file-name" data-for="file-mutants"></span>
+              </label>
+              <fieldset id="saturation-fields" class="field sat-box">
+                <legend>Or limit saturation mutagenesis</legend>
+                <div class="field-row">
+                  <label>Mutation order <span class="label-note">1 = single substitutions</span>
+                    <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
+                  </label>
+                  <label>Specific positions <span class="label-note">optional</span>
+                    <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
+                  </label>
+                  <label>Residue range <span class="label-note">optional</span>
+                    <input type="text" name="residue_range" id="f-range" placeholder="10-20">
+                  </label>
+                </div>
+              </fieldset>
+            </details>
+            <details class="advanced">
+              <summary>Advanced</summary>
+              <div class="field-row">
+                <label>scoring_strategy
+                  <select name="scoring_strategy" id="f-strategy">
+                    <option value="wt" selected>wt</option>
+                    <option value="mask">mask</option>
+                    <option value="tf">tf</option>
+                  </select>
+                </label>
+                <label>max_mutants
+                  <input type="number" name="max_mutants" id="f-max" min="1" step="1" placeholder="1000000">
+                </label>
+              </div>
+              <p id="strategy-hint" class="field-hint"></p>
+              <div class="cli-block">
+                <div class="cli-label">Equivalent CLI</div>
+                <pre id="cli-preview" class="cli"></pre>
+              </div>
+            </details>
+            <div id="model-gate" class="input-gate" hidden></div>
+          </section>
+
+          <p id="form-error" class="form-error" hidden></p>
+          <div class="form-actions">
+            <button type="submit" id="btn-submit" class="btn btn-primary">Start scoring</button>
+          </div>
+        </form>
+
+      </section>
+
+      <section id="page-benchmarks" class="page" hidden>
+        <div class="benchmark-page-head">
+          <p class="section-kicker">Benchmark evidence</p>
+          <h1>Cross-benchmark leaderboard</h1>
+          <p>Compare foundation models with and without VRH across protein fitness benchmarks.</p>
+        </div>
+        <div class="panel board-panel" id="pg-board" aria-live="polite">Loading benchmark evidence…</div>
+      </section>
+
+      <section id="page-workspace" class="page" hidden>
+        <div id="workspace-body">Loading run…</div>
+      </section>
+
+      <section id="page-structure" class="page" hidden>
+        <div id="structure-body">Loading structure…</div>
+      </section>
+
+      <section id="page-select" class="page" hidden>
+        <div id="select-body">Loading selection…</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="drawer-root" hidden>
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <aside id="doctor-drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="doctor-title">
+      <div class="drawer-head">
+        <h2 id="doctor-title">Doctor</h2>
+        <button type="button" id="btn-doctor-close" class="btn btn-ghost">Close</button>
+      </div>
+      <div id="doctor-body" class="drawer-body">Checking install…</div>
+    </aside>
+  </div>
+
+  <noscript>
+    <p class="noscript">VRH Dashboard needs JavaScript enabled.</p>
+  </noscript>
+  <script src="app.js?v=20260911g"></script>
+</body>
+</html>

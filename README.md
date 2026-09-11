@@ -1,13 +1,13 @@
-# VenusREM2
+# VenusREM-Harness
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-Academic-green)](LICENSE)
-[![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM2-black)](https://github.com/tyang816/VenusREM2)
+[![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM--Harness-black)](https://github.com/tyang816/VenusREM-Harness)
 ![Status](https://img.shields.io/badge/dashboard-preview-orange)
 
 From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction
 
-**rem2** is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
+**vrh** is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
 - Calibrate any frozen PLM (ESM-2, SaProt, ProSST, ProteinMPNN, …).
 - Score substitution mutants from FASTA, PDB, or a dataset directory.
@@ -15,52 +15,52 @@ From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readou
 
 | Name | Description |
 |------|-------------|
-| **rem2** | Calibration recipe. Applies to ESM-2, SaProt, ProSST, ProteinMPNN, … CLI: `rem2`. |
-| **VenusREM2** | rem2 on the six official ProSST checkpoints (`--model venusrem2`). |
+| **vrh** | Calibration recipe. Applies to ESM-2, SaProt, ProSST, ProteinMPNN, … CLI: `vrh` / `remharness`. |
+| **VenusREM2** | vrh on the six official ProSST checkpoints (`--model venusrem2`). |
 
-Python import: `rem2`. Default backbone: ESM-2 650M.
+Python import: `vrh`. Default backbone: ESM-2 650M.
 
 > [!NOTE]
-> rem2 scores are for ranking, not ΔΔG. Experimental validation is required
+> vrh scores are for ranking, not ΔΔG. Experimental validation is required
 > before any wet-lab decision. The dashboard is a local preview and may change.
 
 ## News
 
-- **2026.09** Local dashboard preview (`rem2 dashboard`) at http://127.0.0.1:8765.
-- **2026.09** Package and CLI released as `rem2`.
+- **2026.09** Local dashboard preview (`vrh dashboard`) at http://127.0.0.1:8765.
+- **2026.09** Package and CLI released as `vrh`.
 - **2026.07** VenusREM frozen on `v1.0.0`.
 - **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
 - **2025.04** Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
 
 ## Installation
 
-Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `rem2 demo` (ESM-2 8M) can run on CPU.
+Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `vrh demo` (ESM-2 8M) can run on CPU.
 
-`pip install rem2` is CLI + dashboard. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
+`pip install vrh` is CLI + dashboard. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-pip install "rem2 @ git+https://github.com/tyang816/VenusREM2.git"
-rem2 doctor
-rem2 demo
-rem2 dashboard
+pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
+vrh doctor
+vrh demo
+vrh dashboard
 ```
 
 `[cli]`, `[dashboard]`, and `[all]` are aliases of that default. They do **not** pull extra backbones.
 
 ```bash
 # when you actually use that model
-pip install "rem2[prosst]"    # VenusREM2 / ProSST
-pip install "rem2[s3f]"       # S3F / S2F (Python <3.11)
-pip install "rem2[carp]"
-pip install "rem2[esm3]"
+pip install "vrh[prosst]"    # VenusREM2 / ProSST
+pip install "vrh[s3f]"       # S3F / S2F (Python <3.11)
+pip install "vrh[carp]"
+pip install "vrh[esm3]"
 ```
 
 Editable: `pip install -e .` then add a backbone extra as needed.
 
 | Extra | Use |
 |-------|-----|
-| (core) / `[all]` | ESM-2 scoring, `rem2` CLI, local dashboard |
+| (core) / `[all]` | ESM-2 scoring, `vrh` CLI, local dashboard |
 | `[cli]` / `[dashboard]` / `[recommended]` | aliases of the default install |
 | `[prosst]` | VenusREM2 / ProSST (install when you use `--model venusrem2`) |
 | `[carp]`, `[esm3]`, `[s3f]` | other backbones (`[s3f]`: Python &lt; 3.11) |
@@ -71,34 +71,34 @@ Editable: `pip install -e .` then add a backbone extra as needed.
 ### 1. Check the install, then run the demo
 
 ```bash
-rem2 doctor
-rem2 demo
+vrh doctor
+vrh demo
 ```
 
-`rem2 doctor` reports torch, extras, and cache. `rem2 demo` scores a bundled ProteinGym assay with ESM-2 8M.
+`vrh doctor` reports torch, extras, and cache. `vrh demo` scores a bundled ProteinGym assay with ESM-2 8M.
 
 ### 2. Score mutants from the CLI or Python
 
 ```bash
 # single protein
-rem2 --fasta prot.fasta --mutants mutants.csv
-rem2 --fasta prot.fasta --mutants mutants.csv --pdb prot.pdb
+vrh --fasta prot.fasta --mutants mutants.csv
+vrh --fasta prot.fasta --mutants mutants.csv --pdb prot.pdb
 
 # SaProt / ProSST / VenusREM2: PDB is enough (sequence is read from the structure)
-rem2 --model saprot --pdb prot.pdb --mutants mutants.csv
-rem2 --model prosst-2048 --pdb prot.pdb --mutants mutants.csv
+vrh --model saprot --pdb prot.pdb --mutants mutants.csv
+vrh --model prosst-2048 --pdb prot.pdb --mutants mutants.csv
 
 # single-site saturation (omit --mutants)
-rem2 --fasta prot.fasta
-rem2 --model saprot --pdb prot.pdb
+vrh --fasta prot.fasta
+vrh --model saprot --pdb prot.pdb
 
 # dataset
-rem2 --base_dir data/my_assay
-rem2 --model venusrem2 --base_dir data/proteingym_v1
+vrh --base_dir data/my_assay
+vrh --model venusrem2 --base_dir data/proteingym_v1
 ```
 
 ```python
-from rem2 import score
+from vrh import score
 
 df = score("prot.fasta", mutants="mutants.csv", pdb="prot.pdb")
 df = score(pdb="prot.pdb", mutants="mutants.csv", model="saprot")
@@ -108,20 +108,20 @@ summary = score(base_dir="data/my_assay")
 Outputs (default `result/`):
 
 ```
-result/scores/<protein>.csv    # mutants + rem2 column
+result/scores/<protein>.csv    # mutants + vrh column
 result/summary_performance.csv # Spearman vs DMS_score, if present
 result/run_meta.json
 ```
 
-Score column: `{backbone}__rem2` (e.g. `esm2_t33_650M_UR50D__rem2`). VenusREM2 writes per-K columns plus a z-mean `VenusREM2`. Higher = more preferred by the calibrated model. Use for ranking; this is not a ΔΔG.
+Score column: `{backbone}__vrh` (e.g. `esm2_t33_650M_UR50D__vrh`). VenusREM2 writes per-K columns plus a z-mean `VenusREM2`. Higher = more preferred by the calibrated model. Use for ranking; this is not a ΔΔG.
 
 ### 3. Open the local dashboard
 
 ```bash
-rem2 dashboard
+vrh dashboard
 ```
 
-Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service. Included in `pip install rem2`.
+Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted service. Included in `pip install vrh`.
 
 ## Dashboard
 
@@ -132,13 +132,13 @@ Local predict / select console (preview). Typical loop:
 3. **Structure** — PyMOL-style 3D view (cartoon / sticks / surface). Crystal PDBs have no pLDDT (B-factor is a temperature factor); fetch an AFDB model to color by confidence.
 4. **Select top-K** — export the chosen variants.
 
-CLI scoring still writes `result/scores/`. Dashboard sessions also keep working files under `~/.cache/rem2/dashboard`.
+CLI scoring still writes `result/scores/`. Dashboard sessions also keep working files under `~/.cache/vrh/dashboard`.
 
 ```bash
-rem2 dashboard
+vrh dashboard
 ```
 
-`rem2 dashboard` ships with the default install. Extra backbones still need their extras (`[prosst]`, `[s3f]`, …).
+`vrh dashboard` ships with the default install. Extra backbones still need their extras (`[prosst]`, `[s3f]`, …).
 
 ## Data
 
@@ -155,17 +155,17 @@ data/my_assay/
   struc_seq/             # optional; built from pdbs/ if missing
 ```
 
-**Downloads.** Data: [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/rem2/weights`.
+**Downloads.** Data: [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/vrh/weights`.
 
 ```bash
-rem2 download                 # ProteinGym → data/proteingym_v1
-rem2 download VenusMutHub
-rem2 download VenusViroHub
-rem2 download benchmark-all
-rem2 download example
-rem2 download esm2
-rem2 download venusrem2
-rem2 download model-all
+vrh download                 # ProteinGym → data/proteingym_v1
+vrh download VenusMutHub
+vrh download VenusViroHub
+vrh download benchmark-all
+vrh download example
+vrh download esm2
+vrh download venusrem2
+vrh download model-all
 ```
 
 **Structures.** RSA from any PDB. pLDDT uses the B-factor on predicted models only (AlphaFold / ColabFold / ESMFold).
@@ -173,7 +173,7 @@ rem2 download model-all
 **Combinatorial libraries.** Double/triple mutants need an explicit site list. Libraries larger than `--max_mutants` (default 1e6) are refused.
 
 ```bash
-rem2 --fasta prot.fasta --pdb prot.pdb \
+vrh --fasta prot.fasta --pdb prot.pdb \
     --mutant_sites 1,2,3 --positions 10,11,12,13,14
 ```
 
@@ -188,10 +188,10 @@ Default recipe (all terms on when the files exist):
 
 Scoring mode: `calibrated_margin`. Formula: [`docs/scoring_formula.md`](docs/scoring_formula.md). Forwards (`wt` / `mask` / `tf`): [`docs/models.md`](docs/models.md).
 
-Raw PLM baseline (no rem2 extras):
+Raw PLM baseline (no vrh extras):
 
 ```bash
-rem2 --fasta prot.fasta --mutants m.csv --alpha 0 --scoring_mode log_odds \
+vrh --fasta prot.fasta --mutants m.csv --alpha 0 --scoring_mode log_odds \
     --no_rsa_decay --no_plddt_decay --background_weight 0
 ```
 
@@ -199,13 +199,13 @@ Reuse one forward pass across heads:
 
 ```bash
 CACHE="--logits_cache_dir cache/esm2 --reuse_logits_cache --write_logits_cache --logits_cache_tag esm2_v1"
-rem2 --base_dir data/my_assay $CACHE --out_scores_dir result/raw --alpha 0
-rem2 --base_dir data/my_assay $CACHE --out_scores_dir result/rem2
+vrh --base_dir data/my_assay $CACHE --out_scores_dir result/raw --alpha 0
+vrh --base_dir data/my_assay $CACHE --out_scores_dir result/vrh
 ```
 
 ## Models
 
-`rem2 --list-models` lists backbones. ESM-2 650M is ~2.5 GB on first download.
+`vrh --list-models` lists backbones. ESM-2 650M is ~2.5 GB on first download.
 
 `--scoring_strategy`: `wt` (default), `mask`, or `tf` (ProteinMPNN). ProSST / VenusREM2 are wt only.
 
@@ -246,16 +246,16 @@ ProSST does not read a raw PDB; it needs precomputed structure tokens. Inverse-f
 
 ```bash
 # raw
-rem2 --alpha 0 --scoring_mode log_odds --background_weight 0 --no_rsa_decay --no_plddt_decay
+vrh --alpha 0 --scoring_mode log_odds --background_weight 0 --no_rsa_decay --no_plddt_decay
 # + MSA (dynamic α)
-rem2 --alpha entropy --scoring_mode log_odds --background_weight 0 --no_rsa_decay --no_plddt_decay
+vrh --alpha entropy --scoring_mode log_odds --background_weight 0 --no_rsa_decay --no_plddt_decay
 # + MSA + gated CCD
-rem2 --no_rsa_decay --no_plddt_decay
-# full rem2 (package default)
-rem2
+vrh --no_rsa_decay --no_plddt_decay
+# full vrh (package default)
+vrh
 ```
 
-Offline: `--no_auto_download`. All flags: `rem2 --help`.
+Offline: `--no_auto_download`. All flags: `vrh --help`.
 
 ## ProteinGym (217 proteins)
 
@@ -269,9 +269,9 @@ Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixe
 | + MSA | log_odds | dynamic | - | - | 0.542 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.550 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.554 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.556** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.556** |
 
-### rem2 on ESM-2 (650M, wt-marginals)
+### vrh on ESM-2 (650M, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -279,9 +279,9 @@ Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixe
 | + MSA | log_odds | dynamic | - | - | 0.429 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.440 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.465 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.468** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.468** |
 
-### rem2 on SaProt (AF-650M, wt-marginals)
+### vrh on SaProt (AF-650M, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -289,9 +289,9 @@ Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixe
 | + MSA | log_odds | dynamic | - | - | 0.427 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.433 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.452 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.454** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.454** |
 
-### rem2 on ESM-1v (5-seed, wt-marginals)
+### vrh on ESM-1v (5-seed, wt-marginals)
 
 | Variant | Scoring | Alpha | RSA | pLDDT | Mean Spearman |
 |---------|---------|-------|-----|-------|---------------|
@@ -299,14 +299,14 @@ Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixe
 | + MSA | log_odds | dynamic | - | - | 0.419 |
 | + MSA + CCD | calibrated_margin | dynamic | - | - | 0.433 |
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.455 |
-| **Full rem2** | calibrated_margin | dynamic | above_mean | above_mean | **0.457** |
+| **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.457** |
 
 ## VenusREM
 
 VenusREM is frozen on **`v1.0.0`**. Closest command here:
 
 ```bash
-rem2 --model prosst-2048 --base_dir data/proteingym_v1 \
+vrh --model prosst-2048 --base_dir data/proteingym_v1 \
     --alpha 0.8 --scoring_mode log_odds
 ```
 
@@ -320,18 +320,18 @@ pytest test/ -v
 
 Dashboard tests live in `test/test_dashboard.py` and `test/test_dashboard_flows.py`.
 
-**Publish to PyPI.** First upload creates the `rem2` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
+**Publish to PyPI.** First upload creates the `vrh` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
 
-1. On [pypi.org](https://pypi.org) → Publishing → add a pending publisher: project `rem2`, owner `tyang816`, repo `VenusREM2`, workflow `publish-pypi.yml`, environment `pypi`.
+1. On [pypi.org](https://pypi.org) → Publishing → add a pending publisher: project `vrh`, owner `tyang816`, repo `VenusREM-Harness`, workflow `publish-pypi.yml`, environment `pypi`.
 2. In GitHub: Settings → Environments → create `pypi`.
-3. Bump `version` in `pyproject.toml` and `rem2/__init__.py` together, then tag:
+3. Bump `version` in `pyproject.toml` and `vrh/__init__.py` together, then tag:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The tag workflow builds the wheel and uploads it. After that, anyone can `pip install rem2`. A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.
+The tag workflow builds the wheel and uploads it. After that, anyone can `pip install vrh`. A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.
 
 ## Citation
 

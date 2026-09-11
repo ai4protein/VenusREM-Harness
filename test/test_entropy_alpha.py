@@ -1,4 +1,4 @@
-"""rem2 entropy-α / β=1-α helpers (no model weights)."""
+"""vrh entropy-α / β=1-α helpers (no model weights)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import math
 
 import torch
 
-from rem2.scoring.entropy_alpha import (
+from vrh.scoring.entropy_alpha import (
     AA20,
     beta_to_raw_alpha,
     entropy_weighted_rho,
@@ -64,7 +64,7 @@ def test_cli_zmean_columns():
     import numpy as np
     import pandas as pd
 
-    from rem2.cli import _zmean_columns
+    from vrh.cli import _zmean_columns
 
     frame = pd.DataFrame({
         "a": [1.0, 2.0, 3.0],

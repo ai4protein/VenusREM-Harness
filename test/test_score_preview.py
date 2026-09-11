@@ -1,6 +1,6 @@
 import pandas as pd
 
-from rem2.scoring.run_utils import (
+from vrh.scoring.run_utils import (
     format_score_preview,
     has_experimental_dms,
     print_score_preview,
@@ -40,18 +40,18 @@ def test_print_score_preview_logs_sample(capsys):
     assert "out/scores/demo.csv" in out
 
 
-def test_format_score_preview_accepts_raw_and_rem2_columns():
+def test_format_score_preview_accepts_raw_and_vrh_columns():
     frame = pd.DataFrame(
         {
             "mutant": ["A16C"],
             "DMS_score": [-0.5],
             "bb__raw_backbone": [0.1],
-            "bb__rem2": [0.3],
+            "bb__vrh": [0.3],
         }
     )
-    lines = format_score_preview(frame, ["bb__raw_backbone", "bb__rem2"], n=1)
+    lines = format_score_preview(frame, ["bb__raw_backbone", "bb__vrh"], n=1)
     assert "bb__raw_backbone" in lines[0]
-    assert "bb__rem2" in lines[0]
+    assert "bb__vrh" in lines[0]
 
 
 def test_has_experimental_dms():

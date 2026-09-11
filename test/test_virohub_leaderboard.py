@@ -1,8 +1,8 @@
-"""VenusViroHub product-benchmark snapshot loaded by the rem2 dashboard."""
+"""VenusViroHub product-benchmark snapshot loaded by the vrh dashboard."""
 
 from __future__ import annotations
 
-from rem2.dashboard.leaderboard import proteingym_catalog
+from vrh.dashboard.leaderboard import proteingym_catalog
 
 
 METRIC_IDS = ("spearman", "ndcg", "auc", "mcc", "top_recall")
@@ -51,6 +51,6 @@ def test_virohub_properties_and_metric_grid():
         for metric_id in METRIC_IDS:
             assert set(pair["properties_by_metric"][metric_id]) == set(PROPERTY_IDS)
             for values in pair["properties_by_metric"][metric_id].values():
-                assert values["delta"] == round(values["rem2"] - values["base"], 3)
+                assert values["delta"] == round(values["vrh"] - values["base"], 3)
         for values in pair["metrics"].values():
-            assert values["delta"] == round(values["rem2"] - values["base"], 3)
+            assert values["delta"] == round(values["vrh"] - values["base"], 3)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rem2.scoring.structure_weights import (
+from vrh.scoring.structure_weights import (
     classify_pdb_origin,
     load_residue_plddt_from_pdb,
     plddt_skip_reason,
@@ -76,7 +76,7 @@ def test_headerless_af_like_bfactors_allowed(tmp_path):
 def test_cli_warns_crystal_when_plddt_on(tmp_path):
     from types import SimpleNamespace
 
-    from rem2.cli import _crystal_plddt_skip_paths, _warn_crystal_no_plddt
+    from vrh.cli import _crystal_plddt_skip_paths, _warn_crystal_no_plddt
 
     xtal = _write(
         tmp_path / "xtal.pdb",
@@ -95,7 +95,7 @@ def test_cli_warns_crystal_when_plddt_on(tmp_path):
     assert _crystal_plddt_skip_paths(on)
     log = _Log()
     assert _warn_crystal_no_plddt(on, log) is True
-    assert "Full rem2 includes pLDDT" in log.msgs[0]
+    assert "Full vrh includes pLDDT" in log.msgs[0]
     assert "no pLDDT" in log.msgs[0]
 
     off = SimpleNamespace(use_plddt_decay=False, plddt_explicit=False, pdb=xtal, pdb_dir=None)

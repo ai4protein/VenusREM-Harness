@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from rem2.models.scoring_strategy import (
+from vrh.models.scoring_strategy import (
     MASKED_MARGINALS,
     TEACHER_FORCE,
     WT_MARGINALS,
@@ -39,7 +39,7 @@ def test_normalize_rejects_unknown():
 
 
 def test_parser_accepts_short_aliases():
-    from rem2.config import create_parser, postprocess_args
+    from vrh.config import create_parser, postprocess_args
 
     args = postprocess_args(create_parser().parse_args(["--model", "esm2", "--scoring_strategy", "mask", "--fasta", "p.fa"]))
     assert args.scoring_strategy == MASKED_MARGINALS

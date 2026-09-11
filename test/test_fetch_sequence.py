@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from rem2.data.fetch_sequence import RCSB_FASTA, UNIPROT_FASTA, fetch_query_fasta
+from vrh.data.fetch_sequence import RCSB_FASTA, UNIPROT_FASTA, fetch_query_fasta
 
 
 def test_fetch_query_fasta_uniprot(tmp_path):

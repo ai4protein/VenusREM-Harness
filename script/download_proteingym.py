@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Fetch ProteinGym into data/proteingym_v1. Same as ``rem2 download``."""
+"""Fetch ProteinGym into data/proteingym_v1. Same as ``vrh download``."""
 
-from rem2.data.proteingym import run_download
+from vrh.data.proteingym import run_download
 
 
 if __name__ == "__main__":

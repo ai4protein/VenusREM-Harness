@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from rem2.data.download import normalize_dataset
-from rem2.data.mirrors import (
+from vrh.data.download import normalize_dataset
+from vrh.data.mirrors import (
     call_with_hf_retry,
     download_from_venusrem2,
     first_venusrem2_repo,
@@ -62,7 +62,7 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
     calls = []
 
     monkeypatch.setattr(
-        "rem2.data.mirrors.hf_file_available",
+        "vrh.data.mirrors.hf_file_available",
         lambda repo, filename: repo.startswith("tyang816"),
     )
 
@@ -71,7 +71,7 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
         Path(dest).write_text("ok")
         return Path(dest)
 
-    monkeypatch.setattr("rem2.data.mirrors.download_hf_file", fake_download)
+    monkeypatch.setattr("vrh.data.mirrors.download_hf_file", fake_download)
     dest = tmp_path / "aa_seq.tar.gz"
     got = download_from_venusrem2("ProteinGym/aa_seq.tar.gz", dest, log=lambda *_: None)
     assert got == dest

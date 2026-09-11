@@ -1,27 +1,27 @@
-# rem2 models and forwards
+# vrh models and forwards
 
 `--scoring_strategy` chooses how the backbone produces \(\ell_{\mathrm{raw}}\).
-`--scoring_mode` is the rem2 head on top of those logits. They are not the same flag.
+`--scoring_mode` is the vrh head on top of those logits. They are not the same flag.
 
-`rem2 --list-models` prints each backbone and its allowed forwards (`wt` / `mask` / `tf`).
-An unsupported strategy is refused; rem2 does not silently fall back.
+`vrh --list-models` prints each backbone and its allowed forwards (`wt` / `mask` / `tf`).
+An unsupported strategy is refused; vrh does not silently fall back.
 
-## rem2 vs VenusREM2
+## vrh vs VenusREM2
 
 | Name | Meaning |
 |------|---------|
-| **rem2** | Calibration recipe on any backbone. CLI: `rem2`. |
-| **VenusREM2** | rem2 on the six official ProSST checkpoints (`--model venusrem2`). |
+| **vrh** | Calibration recipe on any backbone. CLI: `vrh` / `remharness`. |
+| **VenusREM2** | vrh on the six official ProSST checkpoints (`--model venusrem2`). |
 
-A single ESM-2 or ProSST-2048 run is rem2, not VenusREM2.
+A single ESM-2 or ProSST-2048 run is vrh, not VenusREM2.
 
 ## Score columns
 
-Matches `rem2/naming.py`. `--scoring_strategy` is not part of the column name.
+Matches `vrh/naming.py`. `--scoring_strategy` is not part of the column name.
 
 | Run | Column |
 |-----|--------|
-| One backbone | `{HF-basename}__rem2` (also `{HF-basename}__raw_backbone`) |
+| One backbone | `{HF-basename}__vrh` (also `{HF-basename}__raw_backbone`) |
 | Official ensemble, per K | `VenusREM2__ProSST-{K}` |
 | Official ensemble, combined | `VenusREM2` (z-mean of the six members) |
 
@@ -43,10 +43,10 @@ One pass on the wild-type sequence. Site \(i\) uses the logits at position \(i\)
 This is the default for every backbone.
 
 On causal LMs (ProGen2 / ProGen3 / ProtGPT2 / RITA) and inverse-folding models
-(ESM-IF, MIF-ST) this *is* the teacher-forced / unmasked likelihood. rem2 still
+(ESM-IF, MIF-ST) this *is* the teacher-forced / unmasked likelihood. vrh still
 calls that `wt`, not `tf`. `mask` is refused.
 
-MIF-ST: ProteinGym’s name looks like a masked model; rem2 scores it unmasked
+MIF-ST: ProteinGym’s name looks like a masked model; vrh scores it unmasked
 and refuses `--scoring_strategy mask`.
 
 ### `mask` — per-site mask (Meier / ESM-1v)
@@ -83,9 +83,9 @@ as the explicit name). `mask` is refused.
 `--trust_remote_code`. Built-in keys (`esm2`, `progen3`, `rita`, …) keep
 the code their adapters already need.
 
-## `--scoring_mode` (the rem2 head)
+## `--scoring_mode` (the vrh head)
 
-After \(\ell_{\mathrm{raw}}\) is built, rem2 is the same for every strategy.
+After \(\ell_{\mathrm{raw}}\) is built, vrh is the same for every strategy.
 See [`scoring_formula.md`](scoring_formula.md).
 
 | Mode | What it scores |

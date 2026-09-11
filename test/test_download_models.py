@@ -1,12 +1,12 @@
 """Model / benchmark target resolution (no network)."""
 
-from rem2.data.download import resolve_download_target
-from rem2.download.models import (
+from vrh.data.download import resolve_download_target
+from vrh.download.models import (
     list_downloadable_models,
     model_artifacts,
     resolve_model_key,
 )
-from rem2.download.progress import format_bytes, format_hint
+from vrh.download.progress import format_bytes, format_hint
 
 
 def test_format_bytes():
@@ -22,7 +22,7 @@ def test_resolve_benchmark_and_model_targets():
     assert resolve_download_target("esm2") == ("model", "esm2")
     assert resolve_download_target("venusrem2") == ("model", "venusrem2")
     assert resolve_download_target("proteinmpnn-020") == ("model", "protein_mpnn")
-    from rem2.download.example import EXAMPLE_NAME
+    from vrh.download.example import EXAMPLE_NAME
 
     assay = EXAMPLE_NAME
     assert resolve_download_target("example") == ("example", assay)

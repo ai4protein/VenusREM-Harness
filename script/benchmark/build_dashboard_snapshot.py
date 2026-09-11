@@ -83,7 +83,7 @@ def main() -> None:
     parser.add_argument(
         "--snapshot",
         type=Path,
-        default=Path("rem2/dashboard/data/proteingym_rem2.json"),
+        default=Path("vrh/dashboard/data/proteingym_rem2.json"),
     )
     args = parser.parse_args()
 
@@ -113,7 +113,7 @@ def main() -> None:
             expected_metric = pair["metrics"][metric_key]
             for json_key, column_suffix in (("base", "raw"), ("rem2", "rem2"), ("delta", "delta")):
                 actual_value = float(comparison[f"{column_prefix}_{column_suffix}"])
-                expected_value = float(expected_metric[json_key])
+                expected_value = float(expected_metric.get(json_key, expected_metric.get("vrh")))
                 if abs(actual_value - expected_value) > 1e-9:
                     raise SystemExit(
                         f"{metric_key} {json_key} mismatch for {pair['key']}: "
@@ -123,17 +123,19 @@ def main() -> None:
         pair["properties_by_metric"] = {}
         for metric_key, (_sheet_name, average_column) in METRIC_SHEETS.items():
             raw = summary_indexes[metric_key][("Raw", pair["base_name"])]
-            rem2 = summary_indexes[metric_key][("rem2", pair["rem2_name"])]
+            recipe_name = pair.get("rem2_name") or pair.get("vrh_name")
+            recipe = summary_indexes[metric_key].get(("REM2", recipe_name)) or summary_indexes[metric_key][("rem2", recipe_name)]
             expected = pair["metrics"][metric_key]
-            actual = (float(raw[average_column]), float(rem2[average_column]))
-            if actual != (float(expected["base"]), float(expected["rem2"])):
+            expected_recipe = expected.get("rem2", expected.get("vrh"))
+            actual = (float(raw[average_column]), float(recipe[average_column]))
+            if actual != (float(expected["base"]), float(expected_recipe)):
                 raise SystemExit(f"{metric_key} mismatch for {pair['key']}: {actual} != {expected}")
             properties = {
                 "overall": {"base": actual[0], "rem2": actual[1]},
                 **{
                     key: {
                         "base": float(raw[column]),
-                        "rem2": float(rem2[column]),
+                        "rem2": float(recipe[column]),
                     }
                     for key, column in PROPERTY_COLUMNS.items()
                 }

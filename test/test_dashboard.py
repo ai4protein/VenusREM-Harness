@@ -1,4 +1,4 @@
-"""Dashboard API (no GPU / no real rem2 forward)."""
+"""Dashboard API (no GPU / no real vrh forward)."""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from rem2.dashboard.app import create_app
-from rem2.dashboard.jobs import JobRunner, build_argv, recipe_argv
-from rem2.dashboard.recipes import recipe_public
-from rem2.dashboard.store import RunStore
+from vrh.dashboard.app import create_app
+from vrh.dashboard.jobs import JobRunner, build_argv, recipe_argv
+from vrh.dashboard.recipes import recipe_public
+from vrh.dashboard.store import RunStore
 
 
 def _fake_execute(job, store):
@@ -20,7 +20,7 @@ def _fake_execute(job, store):
     scores = out / "scores"
     scores.mkdir(parents=True, exist_ok=True)
     (scores / "demo.csv").write_text(
-        "mutant,esm2_t6_8M_UR50D__rem2,DMS_score\n"
+        "mutant,esm2_t6_8M_UR50D__vrh,DMS_score\n"
         "A1C,0.50,0.10\n"
         "A1D,-0.20,0.00\n"
         "A1E,1.25,0.80\n",
@@ -157,7 +157,7 @@ def test_create_run_scores_and_top(client):
 
         time.sleep(0.05)
     assert job["status"] == "done", job
-    assert job["primary_score"] == "esm2_t6_8M_UR50D__rem2"
+    assert job["primary_score"] == "esm2_t6_8M_UR50D__vrh"
     assert job["n_mutants"] == 3
     assert job["has_dms"] is True
 
@@ -176,7 +176,7 @@ def test_create_run_scores_and_top(client):
 
     hist = client.get(f"/api/runs/{run_id}/histogram").json()
     assert hist["bins"]
-    assert hist["primary_score"] == "esm2_t6_8M_UR50D__rem2"
+    assert hist["primary_score"] == "esm2_t6_8M_UR50D__vrh"
 
     feats = client.get(f"/api/runs/{run_id}/features").json()
     assert feats["sequence"] == "ACDE"
@@ -241,7 +241,7 @@ def test_features_fall_back_to_base_dir(tmp_path):
 
 
 def test_proteingym_leaderboard(client):
-    from rem2.dashboard.leaderboard import proteingym_board
+    from vrh.dashboard.leaderboard import proteingym_board
 
     board = proteingym_board()
     assert board["rows"][0]["name"] == "VenusREM2"
@@ -308,20 +308,20 @@ def test_proteingym_leaderboard(client):
     assert pairs["prosst_ensemble"]["enhanced"] == 0.556
     assert pairs["prosst_ensemble"]["delta"] == 0.027
     assert pairs["prosst_ensemble"]["metrics"]["ndcg"] == {
-        "base": 0.793, "rem2": 0.808, "delta": 0.015
+        "base": 0.793, "vrh": 0.808, "delta": 0.015
     }
     assert pairs["prosst_ensemble"]["inputs"] == ["seq", "str"]
     assert pairs["prosst_ensemble"]["properties"]["activity"] == {
-        "base": 0.485, "rem2": 0.539, "delta": 0.054
+        "base": 0.485, "vrh": 0.539, "delta": 0.054
     }
     assert pairs["prosst_ensemble"]["properties_by_metric"]["ndcg"]["activity"] == {
-        "base": 0.790, "rem2": 0.815, "delta": 0.025
+        "base": 0.790, "vrh": 0.815, "delta": 0.025
     }
     assert pairs["esm2_650m_wt"]["enhanced"] == 0.472
     assert "official_reference" not in pairs["prosst_ensemble"]
     assert all(len(row["metrics"]) == 5 for row in benchmark["pairs"])
     assert all(
-        values["delta"] == round(values["rem2"] - values["base"], 3)
+        values["delta"] == round(values["vrh"] - values["base"], 3)
         for row in benchmark["pairs"]
         for values in row["metrics"].values()
     )
@@ -340,7 +340,7 @@ def test_create_run_fetches_sequence(client, monkeypatch):
         assert seq_id == "P0A6Y8"
         return str(dest)
 
-    monkeypatch.setattr("rem2.data.fetch_sequence.fetch_query_fasta", fake_fasta)
+    monkeypatch.setattr("vrh.data.fetch_sequence.fetch_query_fasta", fake_fasta)
     res = client.post(
         "/api/runs",
         data={"model": "esm2-8m", "recipe": "full", "seq_id": "P0A6Y8"},
@@ -358,7 +358,7 @@ def test_create_run_seq_id_fetch_fails(client, monkeypatch):
     def boom(seq_id, dest, **_kwargs):
         raise OSError("uniprot down")
 
-    monkeypatch.setattr("rem2.data.fetch_sequence.fetch_query_fasta", boom)
+    monkeypatch.setattr("vrh.data.fetch_sequence.fetch_query_fasta", boom)
     res = client.post(
         "/api/runs",
         data={"model": "esm2-8m", "recipe": "full", "seq_id": "P0A6Y8"},
@@ -382,7 +382,7 @@ def test_unknown_run_404(client):
 def test_static_index(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert b"REM2 Dashboard" in res.content
+    assert b"VRH Dashboard" in res.content
     assert b"Review" in res.content
     assert b"AlphaFold DB" in res.content
     js = client.get("/app.js")
@@ -449,7 +449,7 @@ def test_create_run_fetches_structure(client, monkeypatch):
             "preferred": {"kind": "afdb", "has_plddt": True},
         }
 
-    monkeypatch.setattr("rem2.dashboard.jobs.maybe_fetch_structures", fake_fetch)
+    monkeypatch.setattr("vrh.dashboard.jobs.maybe_fetch_structures", fake_fetch)
     res = client.post(
         "/api/runs",
         data={
@@ -518,7 +518,7 @@ def test_fetch_structure_on_existing_run(client, monkeypatch):
             (dest / "query.pdb").write_text(_AF)
         return {"pdb_id": None, "uniprot_id": "P0A6Y8", "errors": []}
 
-    monkeypatch.setattr("rem2.dashboard.app.maybe_fetch_structures", fake_fetch)
+    monkeypatch.setattr("vrh.dashboard.app.maybe_fetch_structures", fake_fetch)
     fetched = client.post(
         f"/api/runs/{run_id}/fetch_structure",
         data={"uniprot_id": "P0A6Y8", "source": "afdb"},
@@ -531,8 +531,8 @@ def test_fetch_structure_on_existing_run(client, monkeypatch):
 
 
 def test_log_tee_isatty(tmp_path):
-    from rem2.dashboard.jobs import LogTee
-    from rem2.dashboard.store import RunStore
+    from vrh.dashboard.jobs import LogTee
+    from vrh.dashboard.store import RunStore
 
     store = RunStore(tmp_path)
     job = {"id": "abc123", "progress": {"pct": 0}}
@@ -542,7 +542,7 @@ def test_log_tee_isatty(tmp_path):
     assert tee.write("loading 40%\n") == len("loading 40%\n")
     tee.flush()
     assert "40%" in store.log_path("abc123").read_text(encoding="utf-8")
-    from rem2.scoring.run_utils import should_use_color
+    from vrh.scoring.run_utils import should_use_color
     import sys
 
     old = sys.stdout

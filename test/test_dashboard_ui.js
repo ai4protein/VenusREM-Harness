@@ -5,9 +5,9 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const appPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "app.js");
-const htmlPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "index.html");
-const cssPath = path.join(__dirname, "..", "rem2", "dashboard", "static", "app.css");
+const appPath = path.join(__dirname, "..", "vrh", "dashboard", "static", "app.js");
+const htmlPath = path.join(__dirname, "..", "vrh", "dashboard", "static", "index.html");
+const cssPath = path.join(__dirname, "..", "vrh", "dashboard", "static", "app.css");
 
 const storage = Object.create(null);
 const localStorage = {
@@ -291,7 +291,7 @@ check("experiment selections drive molecular positions", () => {
 const html = fs.readFileSync(htmlPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
 
-check("full rem2 treats MSA as optional", () => {
+check("full vrh treats MSA as optional", () => {
   const full = context.pipelineHtml("full");
   assert.ok(full.includes("is-opt"));
   assert.ok(full.includes("optional; skip → α=0"));
@@ -392,7 +392,7 @@ check("leaderboard catalog has filter boards", () => {
   assert.strictEqual(context.currentBoard().rows[0].score, 0.556);
 });
 
-check("product benchmark compares the same base with REM2", () => {
+check("product benchmark compares the same base with VRH", () => {
   const benchmark = context.currentBenchmark();
   assert.strictEqual(benchmark.id, "proteingym");
   assert.strictEqual(benchmark.pairs.length, 4);
@@ -406,7 +406,7 @@ check("product benchmark compares the same base with REM2", () => {
   assert.ok(context.benchmarkRows(benchmark).every((row) => row.key !== "prosst_ensemble"));
   const saprot = benchmark.pairs.find((row) => row.key === "saprot_wt");
   assert.strictEqual(Object.prototype.hasOwnProperty.call(saprot, "official_reference"), false);
-  context.state.benchmarkVariant = "rem2";
+  context.state.benchmarkVariant = "vrh";
   const featured = context.benchmarkPairRow(prosst, 1, "overall", 1, { featured: true });
   assert.ok(featured.includes("VenusREM2"));
   assert.ok(featured.includes("ours"));
@@ -427,7 +427,7 @@ check("product benchmark compares the same base with REM2", () => {
   const raw = context.benchmarkPairRow(benchmark.pairs[1], 2, "overall");
   assert.ok(!raw.includes("Foundation model"));
   assert.ok(!raw.includes("ProSST-Ensemble"));
-  context.state.benchmarkVariant = "rem2";
+  context.state.benchmarkVariant = "vrh";
 });
 
 check("benchmark property, input, and score mode keep one row per model", () => {
@@ -435,8 +435,8 @@ check("benchmark property, input, and score mode keep one row per model", () => 
   context.state.catalog = { default_benchmark: "proteingym", benchmarks: [{
     id: "proteingym",
     pairs: [
-      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha rem2", inputs: ["seq"], protocol: "paired", properties: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } }, properties_by_metric: { spearman: { binding: { base: 0.7, rem2: 0.8, delta: 0.1 } }, ndcg: { binding: { base: 0.6, rem2: 0.7, delta: 0.1 } } } },
-      { key: "beta", base_name: "Beta", enhanced_name: "Beta rem2", inputs: ["str"], protocol: "paired", properties: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } }, properties_by_metric: { spearman: { binding: { base: 0.75, rem2: 0.76, delta: 0.01 } }, ndcg: { binding: { base: 0.8, rem2: 0.75, delta: -0.05 } } } },
+      { key: "alpha", base_name: "Alpha", enhanced_name: "Alpha vrh", inputs: ["seq"], protocol: "paired", properties: { binding: { base: 0.7, vrh: 0.8, delta: 0.1 } }, properties_by_metric: { spearman: { binding: { base: 0.7, vrh: 0.8, delta: 0.1 } }, ndcg: { binding: { base: 0.6, vrh: 0.7, delta: 0.1 } } } },
+      { key: "beta", base_name: "Beta", enhanced_name: "Beta vrh", inputs: ["str"], protocol: "paired", properties: { binding: { base: 0.75, vrh: 0.76, delta: 0.01 } }, properties_by_metric: { spearman: { binding: { base: 0.75, vrh: 0.76, delta: 0.01 } }, ndcg: { binding: { base: 0.8, vrh: 0.75, delta: -0.05 } } } },
     ],
   }] };
   context.state.benchmarkProperty = "binding";
@@ -446,7 +446,7 @@ check("benchmark property, input, and score mode keep one row per model", () => 
   context.state.benchmarkMetric = "spearman";
   context.state.benchmarkId = "proteingym";
   assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["beta", "alpha"]);
-  context.state.benchmarkVariant = "rem2";
+  context.state.benchmarkVariant = "vrh";
   assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["alpha", "beta"]);
   context.state.benchmarkMetric = "ndcg";
   assert.deepStrictEqual(context.benchmarkRows(context.currentBenchmark()).map((row) => row.key), ["beta", "alpha"]);
@@ -459,7 +459,7 @@ check("benchmark property, input, and score mode keep one row per model", () => 
   context.state.catalog = original;
   context.state.benchmarkProperty = "overall";
   context.state.benchmarkInput = "all";
-  context.state.benchmarkVariant = "rem2";
+  context.state.benchmarkVariant = "vrh";
   context.state.benchmarkQuery = "";
 });
 
@@ -559,13 +559,13 @@ check("VenusREM2 is a separate callout with its true rank", () => {
     properties: [{ id: "overall", label: "Overall" }],
     metrics: [{ id: "spearman", label: "Spearman" }],
     pairs: [
-      { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base: 0.236, enhanced: 0.297, delta: 0.061, inputs: ["seq", "str"], properties: { overall: { base: 0.236, rem2: 0.297, delta: 0.061 } }, properties_by_metric: { spearman: { overall: { base: 0.236, rem2: 0.297, delta: 0.061 } } } },
-      { key: "saprot650m_pdb_mask", family: "SaProt (650M_PDB, mask)", base: 0.306, enhanced: 0.320, delta: 0.014, inputs: ["seq", "str"], properties: { overall: { base: 0.306, rem2: 0.320, delta: 0.014 } }, properties_by_metric: { spearman: { overall: { base: 0.306, rem2: 0.320, delta: 0.014 } } } },
+      { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base: 0.236, enhanced: 0.297, delta: 0.061, inputs: ["seq", "str"], properties: { overall: { base: 0.236, vrh: 0.297, delta: 0.061 } }, properties_by_metric: { spearman: { overall: { base: 0.236, vrh: 0.297, delta: 0.061 } } } },
+      { key: "saprot650m_pdb_mask", family: "SaProt (650M_PDB, mask)", base: 0.306, enhanced: 0.320, delta: 0.014, inputs: ["seq", "str"], properties: { overall: { base: 0.306, vrh: 0.320, delta: 0.014 } }, properties_by_metric: { spearman: { overall: { base: 0.306, vrh: 0.320, delta: 0.014 } } } },
     ],
   }] };
   context.state.benchmarkId = "venusvirohub";
   context.state.benchmarkProperty = "overall";
-  context.state.benchmarkVariant = "rem2";
+  context.state.benchmarkVariant = "vrh";
   const bench = context.currentBenchmark();
   assert.strictEqual(context.featuredRank(bench, context.featuredPair(bench)), 2);
   assert.deepStrictEqual(context.benchmarkRows(bench).map((row) => row.key), ["saprot650m_pdb_mask"]);

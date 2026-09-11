@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from rem2.baseline.saprot.foldseek_util import get_struc_seq
+from vrh.baseline.saprot.foldseek_util import get_struc_seq
 
 
 def test_get_struc_seq_uses_argv_and_tempdir(tmp_path, monkeypatch):
@@ -25,7 +25,7 @@ def test_get_struc_seq_uses_argv_and_tempdir(tmp_path, monkeypatch):
         out.write_text(f"prot.pdb_A\tACDE\tpynw\n", encoding="utf-8")
         return subprocess.CompletedProcess(cmd, 0)
 
-    monkeypatch.setattr("rem2.baseline.saprot.foldseek_util.subprocess.run", fake_run)
+    monkeypatch.setattr("vrh.baseline.saprot.foldseek_util.subprocess.run", fake_run)
     result = get_struc_seq(str(foldseek), str(pdb), chains=["A"])
     assert "A" in result
     assert result["A"][0] == "ACDE"
@@ -49,6 +49,6 @@ def test_get_struc_seq_raises_on_foldseek_error(tmp_path, monkeypatch):
     def fake_run(cmd, **kwargs):
         raise subprocess.CalledProcessError(1, cmd, stderr="boom")
 
-    monkeypatch.setattr("rem2.baseline.saprot.foldseek_util.subprocess.run", fake_run)
+    monkeypatch.setattr("vrh.baseline.saprot.foldseek_util.subprocess.run", fake_run)
     with pytest.raises(RuntimeError, match="Foldseek failed"):
         get_struc_seq(str(foldseek), str(pdb))

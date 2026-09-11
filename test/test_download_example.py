@@ -1,15 +1,15 @@
-"""Unzipped HF example used by rem2 demo (no network)."""
+"""Unzipped HF example used by vrh demo (no network)."""
 
 from pathlib import Path
 
-from rem2.cli import main
-from rem2.download.example import (
+from vrh.cli import main
+from vrh.download.example import (
     EXAMPLE_FILES,
     EXAMPLE_NAME,
     bundled_example_dir,
     ensure_demo_dataset,
 )
-from rem2.examples import demo_example_payload, demo_file_path
+from vrh.examples import demo_example_payload, demo_file_path
 
 
 def test_example_dry_run(capsys):
@@ -33,7 +33,7 @@ def test_ensure_demo_uses_cache_then_hf(tmp_path, monkeypatch):
         Path(target).write_text("ok")
         return Path(target)
 
-    monkeypatch.setattr("rem2.download.example.download_from_venusrem2", fake_download)
+    monkeypatch.setattr("vrh.download.example.download_from_venusrem2", fake_download)
     got = ensure_demo_dataset(dest=str(dest), log=lambda *_: None)
     assert got == dest
     assert calls == list(EXAMPLE_FILES)
@@ -49,7 +49,7 @@ def test_ensure_demo_uses_bundled_without_dest(tmp_path, monkeypatch):
     bundled = bundled_example_dir()
     assert bundled is not None
     monkeypatch.setattr(
-        "rem2.download.example.default_example_dir", lambda explicit=None: tmp_path / "cache"
+        "vrh.download.example.default_example_dir", lambda explicit=None: tmp_path / "cache"
     )
     got = ensure_demo_dataset(log=lambda *_: None)
     assert got == bundled
@@ -68,6 +68,6 @@ def test_demo_example_payload_lists_bundled_files():
 def test_ensure_demo_falls_back_to_bundled(tmp_path, monkeypatch):
     bundled = bundled_example_dir()
     assert bundled is not None
-    monkeypatch.setattr("rem2.download.example.download_from_venusrem2", lambda *a, **k: None)
+    monkeypatch.setattr("vrh.download.example.download_from_venusrem2", lambda *a, **k: None)
     got = ensure_demo_dataset(dest=str(tmp_path / "empty"), log=lambda *_: None)
     assert got == bundled

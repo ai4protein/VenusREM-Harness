@@ -13,9 +13,9 @@ import pandas as pd
 import pytest
 import torch
 
-from rem2.models import apply_model_defaults, get_model
-from rem2.scoring import score_protein
-from rem2.scoring.score_protein import read_seq
+from vrh.models import apply_model_defaults, get_model
+from vrh.scoring import score_protein
+from vrh.scoring.score_protein import read_seq
 
 from helpers import SEQUENCE, NullLogger, make_args
 
@@ -152,7 +152,7 @@ def test_model_forward_log_probs_on_real_fasta_pdb(
         if fwd is not None:
             logits = fwd(sequence=sequence)
         else:
-            from rem2.backbone.forward_utils import forward_sequence_logits
+            from vrh.backbone.forward_utils import forward_sequence_logits
 
             use_structure = model_name == "prosst"
             structure_sequence = None

@@ -1,4 +1,4 @@
-"""Dashboard flows and edge cases (no GPU / no real rem2 forward)."""
+"""Dashboard flows and edge cases (no GPU / no real vrh forward)."""
 
 from __future__ import annotations
 
@@ -11,9 +11,9 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from rem2.dashboard.app import create_app
-from rem2.dashboard.jobs import JobRunner, histogram, prepare_run, slice_scores
-from rem2.dashboard.store import RunStore
+from vrh.dashboard.app import create_app
+from vrh.dashboard.jobs import JobRunner, histogram, prepare_run, slice_scores
+from vrh.dashboard.store import RunStore
 from test.test_dashboard import _AF, _CRYSTAL, _fake_execute
 
 pytest.importorskip("pandas")
@@ -153,7 +153,7 @@ def test_fetch_none_does_not_call_network(store_client, monkeypatch):
     def boom(**_kwargs):
         raise AssertionError("fetch should be skipped when fetch_structure=none")
 
-    monkeypatch.setattr("rem2.dashboard.jobs.maybe_fetch_structures", boom)
+    monkeypatch.setattr("vrh.dashboard.jobs.maybe_fetch_structures", boom)
     res = client.post(
         "/api/runs",
         data={"model": "esm2-8m", "recipe": "full", "fetch_structure": "none"},
@@ -167,7 +167,7 @@ def test_fetch_none_does_not_call_network(store_client, monkeypatch):
 
 def test_id_only_without_fetch_fails(store_client, monkeypatch):
     _store, _runner, client = store_client
-    monkeypatch.setattr("rem2.dashboard.jobs.maybe_fetch_structures", lambda **_k: None)
+    monkeypatch.setattr("vrh.dashboard.jobs.maybe_fetch_structures", lambda **_k: None)
     res = client.post(
         "/api/runs",
         data={
@@ -308,7 +308,7 @@ def test_artifacts_and_fetch_errors(store_client, monkeypatch):
             (dest / "query.pdb").write_text(_AF)
         return {"pdb_id": None, "uniprot_id": "P0A6Y8", "errors": ["rcsb missed"]}
 
-    monkeypatch.setattr("rem2.dashboard.app.maybe_fetch_structures", fake_fetch)
+    monkeypatch.setattr("vrh.dashboard.app.maybe_fetch_structures", fake_fetch)
     fetched = client.post(
         f"/api/runs/{run_id}/fetch_structure",
         data={"uniprot_id": "P0A6Y8", "source": "afdb"},
@@ -366,7 +366,7 @@ def test_prepare_run_skips_fetch_when_none(tmp_path, monkeypatch):
     )
 
     monkeypatch.setattr(
-        "rem2.dashboard.jobs.maybe_fetch_structures",
+        "vrh.dashboard.jobs.maybe_fetch_structures",
         lambda **_k: (_ for _ in ()).throw(AssertionError("no fetch")),
     )
     out = prepare_run(job, store)
@@ -378,13 +378,13 @@ def test_slice_and_histogram_edges():
     frame = pd.DataFrame(
         {
             "mutant": ["A1C", "A1D", "A1E"],
-            "esm2__rem2": [0.1, 0.1, 0.1],
+            "esm2__vrh": [0.1, 0.1, 0.1],
         }
     )
-    rows, total = slice_scores(frame, primary="esm2__rem2", offset=10, limit=5, sort="-score", q="")
+    rows, total = slice_scores(frame, primary="esm2__vrh", offset=10, limit=5, sort="-score", q="")
     assert total == 3
     assert rows == []
-    hist = histogram(frame, "esm2__rem2")
+    hist = histogram(frame, "esm2__vrh")
     assert hist["bins"]
     assert hist["min"] == hist["max"]
     empty = histogram(pd.DataFrame(), "missing")

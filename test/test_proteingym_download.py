@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rem2.cli import main
-from rem2.data.proteingym import (
+from vrh.cli import main
+from vrh.data.proteingym import (
     copy_named_files,
     map_pdbs_to_assays,
     safe_extract_tar,
@@ -80,7 +80,7 @@ def test_safe_extract_tar_rejects_symlink(tmp_path):
     with tarfile.open(archive, "w:gz") as handle:
         info = tarfile.TarInfo(name="outside")
         info.type = tarfile.SYMTYPE
-        info.linkname = "/tmp/rem2-should-not-write"
+        info.linkname = "/tmp/vrh-should-not-write"
         handle.addfile(info)
     dest = tmp_path / "out"
     dest.mkdir()
@@ -193,7 +193,7 @@ def test_cli_download_help_lists_model_and_benchmark():
 
 
 def test_download_help_text():
-    from rem2.data.download import build_download_parser
+    from vrh.data.download import build_download_parser
 
     text = build_download_parser().format_help()
     assert "model-all" in text

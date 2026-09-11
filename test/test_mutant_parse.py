@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from rem2.scoring.mutant_parse import MutantParseError, parse_substitution
+from vrh.scoring.mutant_parse import MutantParseError, parse_substitution
 
 VOCAB = {aa: i for i, aa in enumerate("ACDEFGHIKLMNPQRSTVWY")}
 SEQ = "NLYIQWLKDGGPSSGRPPPS"

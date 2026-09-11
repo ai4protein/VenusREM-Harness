@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from rem2.api import build_score_argv
-from rem2.scoring.logits_cache import load_cached_logits
-from rem2.user_commands import build_demo_argv
+from vrh.api import build_score_argv
+from vrh.scoring.logits_cache import load_cached_logits
+from vrh.user_commands import build_demo_argv
 
 
 def test_demo_argv_injects_small_model_and_fixture(tmp_path, monkeypatch):
     (tmp_path / "aa_seq").mkdir()
-    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: tmp_path)
+    monkeypatch.setattr("vrh.download.example.ensure_demo_dataset", lambda **k: tmp_path)
     argv = build_demo_argv([])
     assert "--model" in argv
     assert "esm2-8m" in argv
@@ -18,7 +18,7 @@ def test_demo_argv_injects_small_model_and_fixture(tmp_path, monkeypatch):
 
 def test_demo_argv_keeps_user_model(tmp_path, monkeypatch):
     (tmp_path / "aa_seq").mkdir()
-    monkeypatch.setattr("rem2.download.example.ensure_demo_dataset", lambda **k: tmp_path)
+    monkeypatch.setattr("vrh.download.example.ensure_demo_dataset", lambda **k: tmp_path)
     argv = build_demo_argv(["--model", "esm2"])
     assert argv.count("--model") == 1
     assert argv[argv.index("--model") + 1] == "esm2"

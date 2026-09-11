@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from rem2.models import (
+from vrh.models import (
     apply_model_defaults,
     get_model,
     list_models,
     resolve_model_name,
 )
-from rem2.config import create_parser
+from vrh.config import create_parser
 
 from helpers import make_args
 
@@ -98,19 +98,32 @@ def test_resolve_model_prefers_model_flag():
     assert resolve_model_name(args) == "esm2"
 
 
-def test_resolve_model_defaults_to_esm2():
+def test_resolve_model_defaults_to_esm2(monkeypatch):
+    monkeypatch.delenv("VRH_MODEL", raising=False)
+    monkeypatch.delenv("REM2_MODEL", raising=False)
+    monkeypatch.delenv("VENUSREM2_MODEL", raising=False)
     args = make_args()
     assert resolve_model_name(args) == "esm2"
 
 
 def test_resolve_model_env_override(monkeypatch):
+    monkeypatch.delenv("REM2_MODEL", raising=False)
+    monkeypatch.delenv("VENUSREM2_MODEL", raising=False)
+    monkeypatch.setenv("VRH_MODEL", "esm2-8m")
+    args = make_args()
+    assert resolve_model_name(args) == "esm2-8m"
+
+
+def test_resolve_model_legacy_rem2_env(monkeypatch):
+    monkeypatch.delenv("VRH_MODEL", raising=False)
     monkeypatch.delenv("VENUSREM2_MODEL", raising=False)
     monkeypatch.setenv("REM2_MODEL", "esm2-8m")
     args = make_args()
     assert resolve_model_name(args) == "esm2-8m"
 
 
-def test_resolve_model_legacy_env_override(monkeypatch):
+def test_resolve_model_legacy_venusrem2_env(monkeypatch):
+    monkeypatch.delenv("VRH_MODEL", raising=False)
     monkeypatch.delenv("REM2_MODEL", raising=False)
     monkeypatch.setenv("VENUSREM2_MODEL", "esm2-8m")
     args = make_args()
@@ -128,7 +141,7 @@ def test_apply_model_defaults_esm2():
     assert args.baseline_type == "esm2"
     assert args.model_name == ["facebook/esm2_t33_650M_UR50D"]
     assert args.cache_dir
-    assert args.model_out_name == ["esm2_t33_650M_UR50D__rem2"]
+    assert args.model_out_name == ["esm2_t33_650M_UR50D__vrh"]
 
 
 def test_apply_model_defaults_prosst_2048():
@@ -136,7 +149,7 @@ def test_apply_model_defaults_prosst_2048():
     apply_model_defaults(args, "prosst-2048")
     assert args.backbone_mode == "prosst"
     assert args.model_name == ["AI4Protein/ProSST-2048"]
-    assert args.model_out_name == ["ProSST-2048__rem2"]
+    assert args.model_out_name == ["ProSST-2048__vrh"]
 
 
 def test_apply_model_defaults_size_specific_keys():
@@ -144,7 +157,7 @@ def test_apply_model_defaults_size_specific_keys():
     apply_model_defaults(args, "prosst-4096")
     assert args.backbone_mode == "prosst"
     assert args.model_name == ["AI4Protein/ProSST-4096"]
-    assert args.model_out_name == ["ProSST-4096__rem2"]
+    assert args.model_out_name == ["ProSST-4096__vrh"]
 
     args = make_args(model="prosst_k4096")
     apply_model_defaults(args, "prosst_k4096")
@@ -174,7 +187,7 @@ def test_apply_model_defaults_size_specific_keys():
 
 
 def test_venusrem2_expands_prosst_ensemble():
-    from rem2.naming import PROSST_ENSEMBLE_IDS, is_official_venusrem2
+    from vrh.naming import PROSST_ENSEMBLE_IDS, is_official_venusrem2
 
     args = make_args(model="venusrem2")
     apply_model_defaults(args, "venusrem2")
@@ -194,7 +207,7 @@ def test_venusrem2_expands_prosst_ensemble():
 
 def test_experiment_csv_backbone_keys_resolve():
     """ProteinGym ablation keys (mask/wt stripped) resolve as --model."""
-    from rem2.models.scoring_strategy import spec_supports_mask
+    from vrh.models.scoring_strategy import spec_supports_mask
 
     # Unique model_key stems from staged_ablation_59.csv (not _mask/_wt).
     experiment_keys = [
@@ -256,8 +269,8 @@ def test_experiment_csv_backbone_keys_resolve():
             assert spec_supports_mask(key)
 
 
-def test_score_label_rem2_vs_venusrem2_ensemble():
-    from rem2.naming import (
+def test_score_label_vrh_vs_venusrem2_ensemble():
+    from vrh.naming import (
         default_score_label,
         is_official_venusrem2,
         run_banner,
@@ -265,12 +278,12 @@ def test_score_label_rem2_vs_venusrem2_ensemble():
 
     esm = make_args(model="esm2", model_name=["facebook/esm2_t33_650M_UR50D"])
     assert not is_official_venusrem2("esm2", esm)
-    assert default_score_label("esm2", esm, "facebook/esm2_t33_650M_UR50D").endswith("__rem2")
-    assert run_banner("esm2", esm).startswith("rem2")
+    assert default_score_label("esm2", esm, "facebook/esm2_t33_650M_UR50D").endswith("__vrh")
+    assert run_banner("esm2", esm).startswith("vrh")
 
     single = make_args(model="prosst", model_name=["AI4Protein/ProSST-2048"])
     assert not is_official_venusrem2("prosst", single)
-    assert default_score_label("prosst", single, "AI4Protein/ProSST-2048") == "ProSST-2048__rem2"
+    assert default_score_label("prosst", single, "AI4Protein/ProSST-2048") == "ProSST-2048__vrh"
 
     ens = make_args(
         model="venusrem2",
@@ -292,7 +305,7 @@ def test_apply_model_defaults_auto_cache_for_mpnn_and_protssn():
 
 
 def test_mask_capability_and_refuse():
-    from rem2.models.scoring_strategy import (
+    from vrh.models.scoring_strategy import (
         UnsupportedScoringStrategy,
         models_supporting_mask,
         require_scoring_strategy,
@@ -335,7 +348,7 @@ def test_cli_parser_list_models_flag():
     assert args.list_models is True
 
 
-def test_cli_parser_rem2_defaults():
+def test_cli_parser_vrh_defaults():
     parser = create_parser()
     args = parser.parse_args([])
     assert args.alpha == "entropy"
@@ -363,19 +376,19 @@ def test_fixture_files_exist(fasta_path, pdb_path, mutant_csv, msa_path, struc_f
 
 
 def test_resolve_existing_weight_falls_back_to_orbit_cache(tmp_path, monkeypatch):
-    from rem2.models.weights import resolve_existing_weight
+    from vrh.models.weights import resolve_existing_weight
 
-    rem2 = tmp_path / "venusrem2" / "weights"
+    vrh = tmp_path / "venusrem2" / "weights"
     orbit = tmp_path / "venus_orbit" / "weights"
     (orbit / "protein_mpnn").mkdir(parents=True)
     ckpt = orbit / "protein_mpnn" / "v_48_020.pt"
     ckpt.write_bytes(b"orbit-weight")
-    rem2.mkdir(parents=True)
+    vrh.mkdir(parents=True)
     monkeypatch.setattr(
-        "rem2.models.weights.legacy_weight_cache_dirs",
+        "vrh.models.weights.legacy_weight_cache_dirs",
         lambda: [str(orbit)],
     )
     found = resolve_existing_weight(
-        "protein_mpnn", "v_48_020.pt", cache_dir=str(rem2)
+        "protein_mpnn", "v_48_020.pt", cache_dir=str(vrh)
     )
     assert found == str(ckpt)

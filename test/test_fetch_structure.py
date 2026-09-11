@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rem2.data.fetch_structure import (
+from vrh.data.fetch_structure import (
     describe_pdb,
     fetch_structures,
     guess_accessions,

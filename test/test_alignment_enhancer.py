@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rem2.scoring.alignment_enhancer import _fast_count_matrix, read_multi_fasta
+from vrh.scoring.alignment_enhancer import _fast_count_matrix, read_multi_fasta
 
 
 class _Tokenizer:

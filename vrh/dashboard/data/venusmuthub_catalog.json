@@ -1,0 +1,77 @@
+{
+  "id": "venusmuthub",
+  "benchmark": "VenusMutHub",
+  "label": "VenusMutHub",
+  "title": "VenusMutHub substitutions",
+  "status": "catalog",
+  "assays": 905,
+  "n": 905,
+  "source": "VenusMutHub assay_manifest.csv",
+  "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.",
+  "metrics": [
+    {
+      "id": "spearman",
+      "label": "Spearman"
+    },
+    {
+      "id": "ndcg",
+      "label": "NDCG"
+    },
+    {
+      "id": "auc",
+      "label": "AUC"
+    },
+    {
+      "id": "mcc",
+      "label": "MCC"
+    },
+    {
+      "id": "top_recall",
+      "label": "Top recall"
+    }
+  ],
+  "properties": [
+    {
+      "id": "overall",
+      "label": "Overall",
+      "n": 905
+    },
+    {
+      "id": "stability",
+      "label": "Stability",
+      "n": 540
+    },
+    {
+      "id": "activity",
+      "label": "Activity",
+      "n": 175
+    },
+    {
+      "id": "ppi_binding",
+      "label": "PPI binding",
+      "n": 100
+    },
+    {
+      "id": "selectivity",
+      "label": "Selectivity",
+      "n": 47
+    },
+    {
+      "id": "dti_binding",
+      "label": "DTI binding",
+      "n": 43
+    }
+  ],
+  "pairs": [],
+  "task_counts": {
+    "stability": 540,
+    "activity": 175,
+    "ppi_binding": 100,
+    "selectivity": 47,
+    "dti_binding": 43
+  },
+  "n_mutants": 27846,
+  "median_seq_len": 226,
+  "paired_score_table": null,
+  "manifest": "data/VenusMutHub/assay_manifest.csv"
+}

@@ -1,6 +1,6 @@
-"""Backward-compatible entrypoint. Prefer: rem2 ..."""
+"""Backward-compatible entrypoint. Prefer: vrh ..."""
 
-from rem2.cli import main
+from vrh.cli import main
 
 if __name__ == "__main__":
     main()

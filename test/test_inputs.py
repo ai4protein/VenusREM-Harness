@@ -8,14 +8,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from rem2.config import create_parser, postprocess_args
-from rem2.data.inputs import (
+from vrh.config import create_parser, postprocess_args
+from vrh.data.inputs import (
     _has_struc_tokens,
     fill_aa_seq_from_pdb,
     fill_prosst_tokens_from_pdb,
     require_run_inputs,
 )
-from rem2.scoring.run_utils import read_names
+from vrh.scoring.run_utils import read_names
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "trp_cage"
 
@@ -106,7 +106,7 @@ def test_fill_prosst_keeps_existing_tokens(tmp_path, monkeypatch):
         return dest
 
     monkeypatch.setattr(
-        "rem2.baseline.prosst.structure_tokens.generate_struc_seq_from_pdbs",
+        "vrh.baseline.prosst.structure_tokens.generate_struc_seq_from_pdbs",
         fake_gen,
     )
     args = SimpleNamespace(

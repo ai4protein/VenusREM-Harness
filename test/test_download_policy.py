@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from rem2.config import create_parser
-from rem2.models.download_policy import (
+from vrh.config import create_parser
+from vrh.models.download_policy import (
     DownloadRefused,
     apply_download_policy_from_args,
     confirm_download,
     set_download_policy,
 )
-from rem2.models.weights import (
+from vrh.models.weights import (
     cache_search_roots,
     resolve_existing_dir,
     resolve_existing_weight,
@@ -35,7 +35,7 @@ def test_parser_auto_download_flags():
 def test_policy_from_args():
     parser = create_parser()
     apply_download_policy_from_args(parser.parse_args([]))
-    from rem2.models.download_policy import get_download_policy
+    from vrh.models.download_policy import get_download_policy
 
     assert get_download_policy() == "ask"
     apply_download_policy_from_args(parser.parse_args(["--auto_download"]))
@@ -124,7 +124,7 @@ def test_resolve_weight_from_parent_cache_layout(tmp_path):
 
 
 def test_resolve_prosst_static_uses_cache_then_hf(tmp_path, monkeypatch):
-    monkeypatch.setattr("rem2.models.weights.bundled_prosst_static", lambda name: None)
+    monkeypatch.setattr("vrh.models.weights.bundled_prosst_static", lambda name: None)
     cache = tmp_path / "cache"
     static = cache / "prosst" / "static"
     static.mkdir(parents=True)
@@ -142,9 +142,9 @@ def test_resolve_prosst_static_uses_cache_then_hf(tmp_path, monkeypatch):
         dest.write_bytes(b"ae")
         return str(dest)
 
-    monkeypatch.setattr("rem2.models.weights.resolve_existing_weight", lambda *a, **k: None)
-    monkeypatch.setattr("rem2.models.weights.default_cache_dir", lambda explicit=None: str(tmp_path / "empty"))
-    monkeypatch.setattr("rem2.models.weights._hf_download", fake_hf)
+    monkeypatch.setattr("vrh.models.weights.resolve_existing_weight", lambda *a, **k: None)
+    monkeypatch.setattr("vrh.models.weights.default_cache_dir", lambda explicit=None: str(tmp_path / "empty"))
+    monkeypatch.setattr("vrh.models.weights._hf_download", fake_hf)
     path = resolve_prosst_static_file("AE.pt", cache_dir=str(tmp_path / "empty"))
     assert called["repo"] == "tyang816/ProSST"
     assert called["filename"] == "static/AE.pt"
