@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from vrh import __version__
+from vrh.dashboard.deps import friendly_import_error, scoring_blocked_message, setup_hints
 from vrh.dashboard.inspect import doctor_report, list_model_payload
 from vrh.dashboard.leaderboard import proteingym_catalog
 from vrh.dashboard.jobs import (
@@ -68,7 +69,28 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
 
     @app.get("/api/health")
     def health():
-        return {"ok": True, "version": __version__, "runs_root": str(store.runs_dir)}
+        report = doctor_report()
+        problems = list(report.get("problems") or [])
+        return {
+            "ok": True,
+            "version": __version__,
+            "runs_root": str(store.runs_dir),
+            "ready": not problems,
+            "problems": problems,
+            "hints": report.get("hints") or setup_hints(problems),
+        }
+
+    @app.exception_handler(ModuleNotFoundError)
+    async def missing_module(_request, exc: ModuleNotFoundError):
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(status_code=400, content={"detail": friendly_import_error(exc)})
+
+    @app.exception_handler(ImportError)
+    async def missing_import(_request, exc: ImportError):
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(status_code=400, content={"detail": friendly_import_error(exc)})
 
     @app.get("/api/models")
     def models():
@@ -297,6 +319,9 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         seq_id: Optional[str] = Form(None),
         fetch_structure: Optional[str] = Form("auto"),
     ):
+        blocked = scoring_blocked_message()
+        if blocked:
+            raise HTTPException(400, blocked)
         run_id = store.new_id()
         inputs = store.inputs_dir(run_id)
         out_dir = str(store.result_dir(run_id))
@@ -440,6 +465,14 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         return job
 
     if STATIC_DIR.is_dir():
+        @app.get("/")
+        def index_page():
+            return FileResponse(
+                STATIC_DIR / "index.html",
+                media_type="text/html",
+                headers={"Cache-Control": "no-store"},
+            )
+
         app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
     return app
 

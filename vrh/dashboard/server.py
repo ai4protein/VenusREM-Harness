@@ -26,11 +26,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="run store directory (default: ~/.cache/vrh/dashboard)",
     )
+    parser.add_argument(
+        "--no-install",
+        action="store_true",
+        help="do not auto-install missing core packages (torch, pandas, …)",
+    )
     return parser
 
 
 def run_dashboard(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(list(argv or []))
+    from vrh.dashboard.deps import ensure_dashboard_deps, setup_hints
+
+    leftover = ensure_dashboard_deps(install=not args.no_install)
     try:
         import uvicorn
     except ImportError:
@@ -48,5 +56,10 @@ def run_dashboard(argv: Optional[Sequence[str]] = None) -> int:
     print(f"vrh dashboard  http://{args.host}:{args.port}")
     print(f"runs            {store.runs_dir}")
     print("Prediction scores rank variants; higher is better. They are not physical ΔΔG values.")
+    if leftover:
+        print("Setup needed:")
+        for hint in setup_hints(leftover):
+            for line in hint.splitlines():
+                print("  " + line)
     uvicorn.run(app, host=args.host, port=int(args.port), log_level="info")
     return 0

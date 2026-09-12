@@ -2,7 +2,12 @@ import os
 from typing import List, Optional
 
 import numpy as np
-import torch
+
+
+def _torch():
+    import torch
+
+    return torch
 
 
 MAX_ASA = {
@@ -32,7 +37,8 @@ def resolve_pdb_file(
     return None
 
 
-def _rsa_tensor_from_values(seq_len: int, rsa_vals: List[float]) -> torch.Tensor:
+def _rsa_tensor_from_values(seq_len: int, rsa_vals: List[float]):
+    torch = _torch()
     weights = torch.zeros(seq_len, 1, dtype=torch.float32)
     n = min(seq_len, len(rsa_vals))
     if n > 0:
@@ -40,7 +46,7 @@ def _rsa_tensor_from_values(seq_len: int, rsa_vals: List[float]) -> torch.Tensor
     return weights
 
 
-def _load_rsa_with_mdtraj(resolved: str, seq_len: int) -> torch.Tensor:
+def _load_rsa_with_mdtraj(resolved: str, seq_len: int):
     import mdtraj as md
 
     traj = md.load(resolved)
@@ -58,7 +64,7 @@ def _load_rsa_with_mdtraj(resolved: str, seq_len: int) -> torch.Tensor:
     return _rsa_tensor_from_values(seq_len, rsa_vals)
 
 
-def _load_rsa_with_biopython(resolved: str, seq_len: int) -> torch.Tensor:
+def _load_rsa_with_biopython(resolved: str, seq_len: int):
     from Bio.PDB import PDBParser, ShrakeRupley
 
     parser = PDBParser(QUIET=True)
@@ -198,7 +204,7 @@ def load_residue_rsa_weights_from_pdb(
     protein_name: Optional[str],
     pdb_file: Optional[str] = None,
     pdb_dir: Optional[str] = None,
-) -> Optional[torch.Tensor]:
+):
     resolved = resolve_pdb_file(protein_name=protein_name, pdb_file=pdb_file, pdb_dir=pdb_dir)
     if resolved is None:
         return None
@@ -216,7 +222,7 @@ def load_residue_plddt_from_pdb(
     protein_name: Optional[str],
     pdb_file: Optional[str] = None,
     pdb_dir: Optional[str] = None,
-) -> Optional[torch.Tensor]:
+):
     resolved = resolve_pdb_file(protein_name=protein_name, pdb_file=pdb_file, pdb_dir=pdb_dir)
     if resolved is None:
         return None
@@ -224,6 +230,7 @@ def load_residue_plddt_from_pdb(
         return None
     try:
         from Bio.PDB import PDBParser
+        torch = _torch()
         parser_pdb = PDBParser(QUIET=True)
         structure = parser_pdb.get_structure("prot", resolved)
         model = list(structure.get_models())[0]
