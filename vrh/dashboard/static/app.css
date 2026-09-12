@@ -2984,10 +2984,82 @@ fieldset {
   border-top: 1px solid var(--line);
   padding: 10px 0 8px;
 }
+.benchmark-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 2px;
+}
+.benchmark-pager-btn {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.benchmark-pager-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.benchmark-pager-btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.benchmark-pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.benchmark-pager-range {
+  margin-left: 4px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.benchmark-jump {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.benchmark-jump[hidden] { display: none !important; }
+.benchmark-jump button {
+  min-width: 52px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.benchmark-jump button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
 .bbio-row {
   --bbio: #6b7280;
   position: relative;
   display: grid;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
   grid-template-columns: 52px minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
   column-gap: 10px;
@@ -3358,6 +3430,7 @@ fieldset {
   .benchmark-list-tools { grid-template-columns: 1fr; }
   .benchmark-list-tools-cluster { justify-content: flex-start; }
   .benchmark-list-tools-cluster .benchmark-search input { width: 100%; }
+  .benchmark-jump { right: 12px; bottom: 12px; }
   .bbio-score { font-size: 22px; }
   .bbio-id b { font-size: 15px; }
   .benchmark-catalog-meta div { grid-template-columns: 1fr; gap: 2px; }

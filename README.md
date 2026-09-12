@@ -5,7 +5,7 @@
 [![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM--Harness-black)](https://github.com/tyang816/VenusREM-Harness)
 ![Status](https://img.shields.io/badge/dashboard-preview-orange)
 
-From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction
+From Global Priors to Local Mutation Rankings: An Evolution-Guided Harness for Any Protein Foundation Model
 
 **VenusREM-Harness** (`vrh` / `remharness`) is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
@@ -351,7 +351,7 @@ VenusREM2:
 
 ```bibtex
 @article{tan2026venusrem2,
-    title={From Thinking Globally to Ranking Locally: An Adaptive and Model-Agnostic Readout Boosts Protein Mutation Prediction},
+    title={From Global Priors to Local Mutation Rankings: An Evolution-Guided Harness for Any Protein Foundation Model},
 }
 ```
 

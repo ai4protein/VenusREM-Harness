@@ -92,3 +92,26 @@ See [`scoring_formula.md`](scoring_formula.md).
 |------|----------------|
 | `calibrated_margin` (default) | fused \(\Delta\) minus gated CCD, then RSA / pLDDT |
 | `log_odds` | fused \(\Delta\) only (`--alpha 0` → raw PLM) |
+
+## Variant dump campaign (2026-09-12)
+
+Named singles that were missing from the three-benchmark logit caches:
+
+| `--model` | Catalog key | Notes |
+|-----------|-------------|--------|
+| `protssn-k{10,20,30}-h{512,768,1280}` | `protssn_k*_h*` | One GNN each. The board row `protssn` stays the 9-model ensemble. |
+| `carp-600k` / `carp-38m` / `carp-76m` | `carp_600k` / `carp_38m` / `carp_76m` | Size variants. `carp` / `carp_640m` already cached. |
+| `esm1b` (`wt` or `mask`) | `esm1b_wt` / `esm1b_mask` | Re-dump into the new layout; skip if that folder is already complete. |
+
+Caches:
+
+- ProteinGym / VenusMutHub → `experiments/full_recipe_wc0/extra_seq_gnn_variants/{pg,vmh}/cache/logits/{key}/` (same `.pt` payload as `extra_structure_models`)
+- VenusViroHub → `experiments/viro_clinvar/cache/logits/viro90/{key}/` via `dump_logits.py`
+
+```bash
+BENCHMARK=pg bash script/baseline/dump_logits_cache.sh carp-600k
+BENCHMARK=vmh bash script/baseline/dump_logits_cache.sh protssn-k20-h512
+BENCHMARK=viro bash script/baseline/dump_logits_cache.sh carp_38m
+bash experiments/full_recipe_wc0/extra_seq_gnn_variants/scripts/dump_only.sh
+```
+

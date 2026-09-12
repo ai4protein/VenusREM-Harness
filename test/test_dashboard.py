@@ -319,12 +319,15 @@ def test_proteingym_leaderboard(client):
     muthub = api["benchmarks"][1]
     virohub = api["benchmarks"][2]
     assert muthub["n"] == 905
-    assert muthub["status"] in {"catalog", "ready"}
+    assert muthub["status"] == "ready"
     assert [item["id"] for item in muthub["properties"]][:3] == ["overall", "stability", "activity"]
-    if muthub["status"] == "catalog":
-        assert muthub["pairs"] == []
-        assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
-        assert muthub["n_mutants"] == 27846
+    assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
+    assert muthub["n_mutants"] == 27846
+    assert len(muthub["pairs"]) == 59
+    muthub_pairs = {row["key"]: row for row in muthub["pairs"]}
+    assert muthub_pairs["prosst_ensemble"]["enhanced"] == 0.258
+    assert muthub_pairs["proteinmpnn"]["enhanced"] == 0.271
+    assert "stability" in muthub_pairs["prosst_ensemble"]["properties"]
     assert virohub["n"] == 89
     assert virohub["status"] in {"catalog", "ready"}
     assert "cell_entry" in [item["id"] for item in virohub["properties"]]
@@ -433,6 +436,10 @@ def test_static_index(client):
     res = client.get("/")
     assert res.status_code == 200
     assert b"VRH Dashboard" in res.content
+    assert b'rel="icon"' in res.content
+    assert b"favicon.svg" in res.content
+    assert client.get("/favicon.svg").status_code == 200
+    assert client.get("/favicon.ico").status_code == 200
     assert b"Review" in res.content
     assert b"AFDB" in res.content
     js = client.get("/app.js")
@@ -457,6 +464,7 @@ def test_static_index(client):
     assert b"Skip the form" not in res.content
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
     assert b'id="pg-board"' in res.content
+    assert b'id="benchmark-jump"' in res.content
     assert b"Benchmarks" in res.content
     assert b"bbio-bar" in js.content
     assert b"bbio-tip" in js.content

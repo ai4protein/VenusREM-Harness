@@ -1,0 +1,7884 @@
+{
+  "id": "venusmuthub",
+  "benchmark": "VenusMutHub",
+  "label": "VenusMutHub",
+  "title": "VenusMutHub substitutions",
+  "status": "ready",
+  "assays": 905,
+  "n": 905,
+  "source": "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
+  "setting": "Zero-shot \u00b7 substitutions",
+  "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Same-backbone comparison of raw model scores and the full vrh recipe.",
+  "metrics": [
+    {
+      "id": "spearman",
+      "label": "Spearman"
+    },
+    {
+      "id": "ndcg",
+      "label": "NDCG"
+    },
+    {
+      "id": "auc",
+      "label": "AUC"
+    },
+    {
+      "id": "mcc",
+      "label": "MCC"
+    },
+    {
+      "id": "top_recall",
+      "label": "Top recall"
+    }
+  ],
+  "properties": [
+    {
+      "id": "overall",
+      "label": "Overall",
+      "n": 905
+    },
+    {
+      "id": "stability",
+      "label": "Stability",
+      "n": 540
+    },
+    {
+      "id": "activity",
+      "label": "Activity",
+      "n": 175
+    },
+    {
+      "id": "ppi_binding",
+      "label": "PPI binding",
+      "n": 100
+    },
+    {
+      "id": "selectivity",
+      "label": "Selectivity",
+      "n": 47
+    },
+    {
+      "id": "dti_binding",
+      "label": "DTI binding",
+      "n": 43
+    }
+  ],
+  "pairs": [
+    {
+      "key": "prosst_ensemble",
+      "family": "ProSST-Ensemble (K=all)",
+      "base_name": "ProSST-Ensemble (K=all)",
+      "enhanced_name": "ProSST-Ensemble (K=all), vrh",
+      "vrh_name": "ProSST-Ensemble (K=all), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.19,
+          "vrh": 0.258,
+          "delta": 0.068
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.848,
+          "delta": 0.018
+        },
+        "auc": {
+          "base": 0.601,
+          "vrh": 0.637,
+          "delta": 0.036
+        },
+        "mcc": {
+          "base": 0.143,
+          "vrh": 0.193,
+          "delta": 0.05
+        },
+        "top_recall": {
+          "base": 0.211,
+          "vrh": 0.253,
+          "delta": 0.042
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.19,
+          "vrh": 0.258,
+          "delta": 0.068
+        },
+        "stability": {
+          "base": 0.294,
+          "vrh": 0.351,
+          "delta": 0.057
+        },
+        "activity": {
+          "base": 0.018,
+          "vrh": 0.122,
+          "delta": 0.104
+        },
+        "ppi_binding": {
+          "base": 0.006,
+          "vrh": 0.113,
+          "delta": 0.107
+        },
+        "selectivity": {
+          "base": -0.049,
+          "vrh": -0.017,
+          "delta": 0.032
+        },
+        "dti_binding": {
+          "base": 0.267,
+          "vrh": 0.274,
+          "delta": 0.007
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.19,
+            "vrh": 0.258,
+            "delta": 0.068
+          },
+          "stability": {
+            "base": 0.294,
+            "vrh": 0.351,
+            "delta": 0.057
+          },
+          "activity": {
+            "base": 0.018,
+            "vrh": 0.122,
+            "delta": 0.104
+          },
+          "ppi_binding": {
+            "base": 0.006,
+            "vrh": 0.113,
+            "delta": 0.107
+          },
+          "selectivity": {
+            "base": -0.049,
+            "vrh": -0.017,
+            "delta": 0.032
+          },
+          "dti_binding": {
+            "base": 0.267,
+            "vrh": 0.274,
+            "delta": 0.007
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.848,
+            "delta": 0.018
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.601,
+            "vrh": 0.637,
+            "delta": 0.036
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.143,
+            "vrh": 0.193,
+            "delta": 0.05
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.211,
+            "vrh": 0.253,
+            "delta": 0.042
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "carp_640m",
+      "family": "CARP-640M",
+      "base_name": "CARP-640M",
+      "enhanced_name": "CARP-640M, vrh",
+      "vrh_name": "CARP-640M, vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.157,
+          "vrh": 0.206,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.839,
+          "delta": 0.009
+        },
+        "auc": {
+          "base": 0.584,
+          "vrh": 0.608,
+          "delta": 0.024
+        },
+        "mcc": {
+          "base": 0.128,
+          "vrh": 0.15,
+          "delta": 0.022
+        },
+        "top_recall": {
+          "base": 0.192,
+          "vrh": 0.22,
+          "delta": 0.028
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.157,
+          "vrh": 0.206,
+          "delta": 0.049
+        },
+        "stability": {
+          "base": 0.221,
+          "vrh": 0.271,
+          "delta": 0.05
+        },
+        "activity": {
+          "base": 0.116,
+          "vrh": 0.151,
+          "delta": 0.035
+        },
+        "ppi_binding": {
+          "base": 0.005,
+          "vrh": 0.076,
+          "delta": 0.071
+        },
+        "selectivity": {
+          "base": -0.119,
+          "vrh": -0.094,
+          "delta": 0.025
+        },
+        "dti_binding": {
+          "base": 0.187,
+          "vrh": 0.236,
+          "delta": 0.049
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.157,
+            "vrh": 0.206,
+            "delta": 0.049
+          },
+          "stability": {
+            "base": 0.221,
+            "vrh": 0.271,
+            "delta": 0.05
+          },
+          "activity": {
+            "base": 0.116,
+            "vrh": 0.151,
+            "delta": 0.035
+          },
+          "ppi_binding": {
+            "base": 0.005,
+            "vrh": 0.076,
+            "delta": 0.071
+          },
+          "selectivity": {
+            "base": -0.119,
+            "vrh": -0.094,
+            "delta": 0.025
+          },
+          "dti_binding": {
+            "base": 0.187,
+            "vrh": 0.236,
+            "delta": 0.049
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.839,
+            "delta": 0.009
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.584,
+            "vrh": 0.608,
+            "delta": 0.024
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.128,
+            "vrh": 0.15,
+            "delta": 0.022
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.192,
+            "vrh": 0.22,
+            "delta": 0.028
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm1b_mask",
+      "family": "ESM-1b (mask)",
+      "base_name": "ESM-1b (mask)",
+      "enhanced_name": "ESM-1b (mask), vrh",
+      "vrh_name": "ESM-1b (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.166,
+          "vrh": 0.211,
+          "delta": 0.045
+        },
+        "ndcg": {
+          "base": 0.831,
+          "vrh": 0.839,
+          "delta": 0.008
+        },
+        "auc": {
+          "base": 0.589,
+          "vrh": 0.613,
+          "delta": 0.024
+        },
+        "mcc": {
+          "base": 0.137,
+          "vrh": 0.16,
+          "delta": 0.023
+        },
+        "top_recall": {
+          "base": 0.208,
+          "vrh": 0.221,
+          "delta": 0.013
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.166,
+          "vrh": 0.211,
+          "delta": 0.045
+        },
+        "stability": {
+          "base": 0.214,
+          "vrh": 0.265,
+          "delta": 0.051
+        },
+        "activity": {
+          "base": 0.129,
+          "vrh": 0.163,
+          "delta": 0.034
+        },
+        "ppi_binding": {
+          "base": 0.067,
+          "vrh": 0.126,
+          "delta": 0.059
+        },
+        "selectivity": {
+          "base": -0.048,
+          "vrh": -0.048,
+          "delta": 0.0
+        },
+        "dti_binding": {
+          "base": 0.174,
+          "vrh": 0.211,
+          "delta": 0.037
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.166,
+            "vrh": 0.211,
+            "delta": 0.045
+          },
+          "stability": {
+            "base": 0.214,
+            "vrh": 0.265,
+            "delta": 0.051
+          },
+          "activity": {
+            "base": 0.129,
+            "vrh": 0.163,
+            "delta": 0.034
+          },
+          "ppi_binding": {
+            "base": 0.067,
+            "vrh": 0.126,
+            "delta": 0.059
+          },
+          "selectivity": {
+            "base": -0.048,
+            "vrh": -0.048,
+            "delta": 0.0
+          },
+          "dti_binding": {
+            "base": 0.174,
+            "vrh": 0.211,
+            "delta": 0.037
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.831,
+            "vrh": 0.839,
+            "delta": 0.008
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.589,
+            "vrh": 0.613,
+            "delta": 0.024
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.137,
+            "vrh": 0.16,
+            "delta": 0.023
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.208,
+            "vrh": 0.221,
+            "delta": 0.013
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm1b_wt",
+      "family": "ESM-1b (wt)",
+      "base_name": "ESM-1b (wt)",
+      "enhanced_name": "ESM-1b (wt), vrh",
+      "vrh_name": "ESM-1b (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.153,
+          "vrh": 0.193,
+          "delta": 0.04
+        },
+        "ndcg": {
+          "base": 0.831,
+          "vrh": 0.836,
+          "delta": 0.005
+        },
+        "auc": {
+          "base": 0.582,
+          "vrh": 0.603,
+          "delta": 0.021
+        },
+        "mcc": {
+          "base": 0.123,
+          "vrh": 0.157,
+          "delta": 0.034
+        },
+        "top_recall": {
+          "base": 0.204,
+          "vrh": 0.219,
+          "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.153,
+          "vrh": 0.193,
+          "delta": 0.04
+        },
+        "stability": {
+          "base": 0.201,
+          "vrh": 0.255,
+          "delta": 0.054
+        },
+        "activity": {
+          "base": 0.092,
+          "vrh": 0.098,
+          "delta": 0.006
+        },
+        "ppi_binding": {
+          "base": 0.072,
+          "vrh": 0.131,
+          "delta": 0.059
+        },
+        "selectivity": {
+          "base": -0.057,
+          "vrh": -0.069,
+          "delta": -0.012
+        },
+        "dti_binding": {
+          "base": 0.209,
+          "vrh": 0.246,
+          "delta": 0.037
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.153,
+            "vrh": 0.193,
+            "delta": 0.04
+          },
+          "stability": {
+            "base": 0.201,
+            "vrh": 0.255,
+            "delta": 0.054
+          },
+          "activity": {
+            "base": 0.092,
+            "vrh": 0.098,
+            "delta": 0.006
+          },
+          "ppi_binding": {
+            "base": 0.072,
+            "vrh": 0.131,
+            "delta": 0.059
+          },
+          "selectivity": {
+            "base": -0.057,
+            "vrh": -0.069,
+            "delta": -0.012
+          },
+          "dti_binding": {
+            "base": 0.209,
+            "vrh": 0.246,
+            "delta": 0.037
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.831,
+            "vrh": 0.836,
+            "delta": 0.005
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.582,
+            "vrh": 0.603,
+            "delta": 0.021
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.123,
+            "vrh": 0.157,
+            "delta": 0.034
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.204,
+            "vrh": 0.219,
+            "delta": 0.015
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm1v_mask",
+      "family": "ESM-1v (mask)",
+      "base_name": "ESM-1v (mask)",
+      "enhanced_name": "ESM-1v (mask), vrh",
+      "vrh_name": "ESM-1v (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.162,
+          "vrh": 0.206,
+          "delta": 0.044
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.839,
+          "delta": 0.009
+        },
+        "auc": {
+          "base": 0.581,
+          "vrh": 0.606,
+          "delta": 0.025
+        },
+        "mcc": {
+          "base": 0.124,
+          "vrh": 0.162,
+          "delta": 0.038
+        },
+        "top_recall": {
+          "base": 0.198,
+          "vrh": 0.219,
+          "delta": 0.021
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.162,
+          "vrh": 0.206,
+          "delta": 0.044
+        },
+        "stability": {
+          "base": 0.218,
+          "vrh": 0.268,
+          "delta": 0.05
+        },
+        "activity": {
+          "base": 0.141,
+          "vrh": 0.165,
+          "delta": 0.024
+        },
+        "ppi_binding": {
+          "base": 0.003,
+          "vrh": 0.081,
+          "delta": 0.078
+        },
+        "selectivity": {
+          "base": -0.093,
+          "vrh": -0.082,
+          "delta": 0.011
+        },
+        "dti_binding": {
+          "base": 0.18,
+          "vrh": 0.201,
+          "delta": 0.021
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.162,
+            "vrh": 0.206,
+            "delta": 0.044
+          },
+          "stability": {
+            "base": 0.218,
+            "vrh": 0.268,
+            "delta": 0.05
+          },
+          "activity": {
+            "base": 0.141,
+            "vrh": 0.165,
+            "delta": 0.024
+          },
+          "ppi_binding": {
+            "base": 0.003,
+            "vrh": 0.081,
+            "delta": 0.078
+          },
+          "selectivity": {
+            "base": -0.093,
+            "vrh": -0.082,
+            "delta": 0.011
+          },
+          "dti_binding": {
+            "base": 0.18,
+            "vrh": 0.201,
+            "delta": 0.021
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.839,
+            "delta": 0.009
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.581,
+            "vrh": 0.606,
+            "delta": 0.025
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.124,
+            "vrh": 0.162,
+            "delta": 0.038
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.198,
+            "vrh": 0.219,
+            "delta": 0.021
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm1v_wt",
+      "family": "ESM-1v (wt)",
+      "base_name": "ESM-1v (wt)",
+      "enhanced_name": "ESM-1v (wt), vrh",
+      "vrh_name": "ESM-1v (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.153,
+          "vrh": 0.188,
+          "delta": 0.035
+        },
+        "ndcg": {
+          "base": 0.831,
+          "vrh": 0.837,
+          "delta": 0.006
+        },
+        "auc": {
+          "base": 0.577,
+          "vrh": 0.594,
+          "delta": 0.017
+        },
+        "mcc": {
+          "base": 0.122,
+          "vrh": 0.142,
+          "delta": 0.02
+        },
+        "top_recall": {
+          "base": 0.199,
+          "vrh": 0.214,
+          "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.153,
+          "vrh": 0.188,
+          "delta": 0.035
+        },
+        "stability": {
+          "base": 0.212,
+          "vrh": 0.256,
+          "delta": 0.044
+        },
+        "activity": {
+          "base": 0.109,
+          "vrh": 0.112,
+          "delta": 0.003
+        },
+        "ppi_binding": {
+          "base": 0.015,
+          "vrh": 0.097,
+          "delta": 0.082
+        },
+        "selectivity": {
+          "base": -0.075,
+          "vrh": -0.068,
+          "delta": 0.007
+        },
+        "dti_binding": {
+          "base": 0.172,
+          "vrh": 0.133,
+          "delta": -0.039
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.153,
+            "vrh": 0.188,
+            "delta": 0.035
+          },
+          "stability": {
+            "base": 0.212,
+            "vrh": 0.256,
+            "delta": 0.044
+          },
+          "activity": {
+            "base": 0.109,
+            "vrh": 0.112,
+            "delta": 0.003
+          },
+          "ppi_binding": {
+            "base": 0.015,
+            "vrh": 0.097,
+            "delta": 0.082
+          },
+          "selectivity": {
+            "base": -0.075,
+            "vrh": -0.068,
+            "delta": 0.007
+          },
+          "dti_binding": {
+            "base": 0.172,
+            "vrh": 0.133,
+            "delta": -0.039
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.831,
+            "vrh": 0.837,
+            "delta": 0.006
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.577,
+            "vrh": 0.594,
+            "delta": 0.017
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.122,
+            "vrh": 0.142,
+            "delta": 0.02
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.199,
+            "vrh": 0.214,
+            "delta": 0.015
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_150m_mask",
+      "family": "ESM-2 150M (mask)",
+      "base_name": "ESM-2 150M (mask)",
+      "enhanced_name": "ESM-2 150M (mask), vrh",
+      "vrh_name": "ESM-2 150M (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.167,
+          "vrh": 0.225,
+          "delta": 0.058
+        },
+        "ndcg": {
+          "base": 0.831,
+          "vrh": 0.842,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.588,
+          "vrh": 0.618,
+          "delta": 0.03
+        },
+        "mcc": {
+          "base": 0.136,
+          "vrh": 0.18,
+          "delta": 0.044
+        },
+        "top_recall": {
+          "base": 0.197,
+          "vrh": 0.23,
+          "delta": 0.033
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.167,
+          "vrh": 0.225,
+          "delta": 0.058
+        },
+        "stability": {
+          "base": 0.221,
+          "vrh": 0.291,
+          "delta": 0.07
+        },
+        "activity": {
+          "base": 0.144,
+          "vrh": 0.173,
+          "delta": 0.029
+        },
+        "ppi_binding": {
+          "base": -0.004,
+          "vrh": 0.079,
+          "delta": 0.083
+        },
+        "selectivity": {
+          "base": -0.033,
+          "vrh": -0.002,
+          "delta": 0.031
+        },
+        "dti_binding": {
+          "base": 0.19,
+          "vrh": 0.206,
+          "delta": 0.016
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.167,
+            "vrh": 0.225,
+            "delta": 0.058
+          },
+          "stability": {
+            "base": 0.221,
+            "vrh": 0.291,
+            "delta": 0.07
+          },
+          "activity": {
+            "base": 0.144,
+            "vrh": 0.173,
+            "delta": 0.029
+          },
+          "ppi_binding": {
+            "base": -0.004,
+            "vrh": 0.079,
+            "delta": 0.083
+          },
+          "selectivity": {
+            "base": -0.033,
+            "vrh": -0.002,
+            "delta": 0.031
+          },
+          "dti_binding": {
+            "base": 0.19,
+            "vrh": 0.206,
+            "delta": 0.016
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.831,
+            "vrh": 0.842,
+            "delta": 0.011
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.588,
+            "vrh": 0.618,
+            "delta": 0.03
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.136,
+            "vrh": 0.18,
+            "delta": 0.044
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.197,
+            "vrh": 0.23,
+            "delta": 0.033
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_150m_wt",
+      "family": "ESM-2 150M (wt)",
+      "base_name": "ESM-2 150M (wt)",
+      "enhanced_name": "ESM-2 150M (wt), vrh",
+      "vrh_name": "ESM-2 150M (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.165,
+          "vrh": 0.216,
+          "delta": 0.051
+        },
+        "ndcg": {
+          "base": 0.833,
+          "vrh": 0.839,
+          "delta": 0.006
+        },
+        "auc": {
+          "base": 0.588,
+          "vrh": 0.611,
+          "delta": 0.023
+        },
+        "mcc": {
+          "base": 0.129,
+          "vrh": 0.171,
+          "delta": 0.042
+        },
+        "top_recall": {
+          "base": 0.206,
+          "vrh": 0.214,
+          "delta": 0.008
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.165,
+          "vrh": 0.216,
+          "delta": 0.051
+        },
+        "stability": {
+          "base": 0.223,
+          "vrh": 0.288,
+          "delta": 0.065
+        },
+        "activity": {
+          "base": 0.12,
+          "vrh": 0.127,
+          "delta": 0.007
+        },
+        "ppi_binding": {
+          "base": -0.004,
+          "vrh": 0.11,
+          "delta": 0.114
+        },
+        "selectivity": {
+          "base": -0.029,
+          "vrh": -0.015,
+          "delta": 0.014
+        },
+        "dti_binding": {
+          "base": 0.225,
+          "vrh": 0.186,
+          "delta": -0.039
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.165,
+            "vrh": 0.216,
+            "delta": 0.051
+          },
+          "stability": {
+            "base": 0.223,
+            "vrh": 0.288,
+            "delta": 0.065
+          },
+          "activity": {
+            "base": 0.12,
+            "vrh": 0.127,
+            "delta": 0.007
+          },
+          "ppi_binding": {
+            "base": -0.004,
+            "vrh": 0.11,
+            "delta": 0.114
+          },
+          "selectivity": {
+            "base": -0.029,
+            "vrh": -0.015,
+            "delta": 0.014
+          },
+          "dti_binding": {
+            "base": 0.225,
+            "vrh": 0.186,
+            "delta": -0.039
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.833,
+            "vrh": 0.839,
+            "delta": 0.006
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.588,
+            "vrh": 0.611,
+            "delta": 0.023
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.129,
+            "vrh": 0.171,
+            "delta": 0.042
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.206,
+            "vrh": 0.214,
+            "delta": 0.008
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_35m_mask",
+      "family": "ESM-2 35M (mask)",
+      "base_name": "ESM-2 35M (mask)",
+      "enhanced_name": "ESM-2 35M (mask), vrh",
+      "vrh_name": "ESM-2 35M (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.122,
+          "vrh": 0.212,
+          "delta": 0.09
+        },
+        "ndcg": {
+          "base": 0.821,
+          "vrh": 0.839,
+          "delta": 0.018
+        },
+        "auc": {
+          "base": 0.565,
+          "vrh": 0.614,
+          "delta": 0.049
+        },
+        "mcc": {
+          "base": 0.093,
+          "vrh": 0.166,
+          "delta": 0.073
+        },
+        "top_recall": {
+          "base": 0.174,
+          "vrh": 0.228,
+          "delta": 0.054
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.122,
+          "vrh": 0.212,
+          "delta": 0.09
+        },
+        "stability": {
+          "base": 0.179,
+          "vrh": 0.28,
+          "delta": 0.101
+        },
+        "activity": {
+          "base": 0.106,
+          "vrh": 0.158,
+          "delta": 0.052
+        },
+        "ppi_binding": {
+          "base": -0.095,
+          "vrh": 0.049,
+          "delta": 0.144
+        },
+        "selectivity": {
+          "base": 0.025,
+          "vrh": 0.003,
+          "delta": -0.022
+        },
+        "dti_binding": {
+          "base": 0.078,
+          "vrh": 0.185,
+          "delta": 0.107
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.122,
+            "vrh": 0.212,
+            "delta": 0.09
+          },
+          "stability": {
+            "base": 0.179,
+            "vrh": 0.28,
+            "delta": 0.101
+          },
+          "activity": {
+            "base": 0.106,
+            "vrh": 0.158,
+            "delta": 0.052
+          },
+          "ppi_binding": {
+            "base": -0.095,
+            "vrh": 0.049,
+            "delta": 0.144
+          },
+          "selectivity": {
+            "base": 0.025,
+            "vrh": 0.003,
+            "delta": -0.022
+          },
+          "dti_binding": {
+            "base": 0.078,
+            "vrh": 0.185,
+            "delta": 0.107
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.821,
+            "vrh": 0.839,
+            "delta": 0.018
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.565,
+            "vrh": 0.614,
+            "delta": 0.049
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.093,
+            "vrh": 0.166,
+            "delta": 0.073
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.174,
+            "vrh": 0.228,
+            "delta": 0.054
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_35m_wt",
+      "family": "ESM-2 35M (wt)",
+      "base_name": "ESM-2 35M (wt)",
+      "enhanced_name": "ESM-2 35M (wt), vrh",
+      "vrh_name": "ESM-2 35M (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.11,
+          "vrh": 0.186,
+          "delta": 0.076
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.833,
+          "delta": 0.01
+        },
+        "auc": {
+          "base": 0.559,
+          "vrh": 0.593,
+          "delta": 0.034
+        },
+        "mcc": {
+          "base": 0.08,
+          "vrh": 0.138,
+          "delta": 0.058
+        },
+        "top_recall": {
+          "base": 0.194,
+          "vrh": 0.209,
+          "delta": 0.015
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.11,
+          "vrh": 0.186,
+          "delta": 0.076
+        },
+        "stability": {
+          "base": 0.169,
+          "vrh": 0.265,
+          "delta": 0.096
+        },
+        "activity": {
+          "base": 0.065,
+          "vrh": 0.092,
+          "delta": 0.027
+        },
+        "ppi_binding": {
+          "base": -0.092,
+          "vrh": 0.055,
+          "delta": 0.147
+        },
+        "selectivity": {
+          "base": -0.037,
+          "vrh": -0.024,
+          "delta": 0.013
+        },
+        "dti_binding": {
+          "base": 0.175,
+          "vrh": 0.12,
+          "delta": -0.055
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.11,
+            "vrh": 0.186,
+            "delta": 0.076
+          },
+          "stability": {
+            "base": 0.169,
+            "vrh": 0.265,
+            "delta": 0.096
+          },
+          "activity": {
+            "base": 0.065,
+            "vrh": 0.092,
+            "delta": 0.027
+          },
+          "ppi_binding": {
+            "base": -0.092,
+            "vrh": 0.055,
+            "delta": 0.147
+          },
+          "selectivity": {
+            "base": -0.037,
+            "vrh": -0.024,
+            "delta": 0.013
+          },
+          "dti_binding": {
+            "base": 0.175,
+            "vrh": 0.12,
+            "delta": -0.055
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.833,
+            "delta": 0.01
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.559,
+            "vrh": 0.593,
+            "delta": 0.034
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.08,
+            "vrh": 0.138,
+            "delta": 0.058
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.194,
+            "vrh": 0.209,
+            "delta": 0.015
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_3b_mask",
+      "family": "ESM-2 3B (mask)",
+      "base_name": "ESM-2 3B (mask)",
+      "enhanced_name": "ESM-2 3B (mask), vrh",
+      "vrh_name": "ESM-2 3B (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.182,
+          "vrh": 0.223,
+          "delta": 0.041
+        },
+        "ndcg": {
+          "base": 0.832,
+          "vrh": 0.839,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.59,
+          "vrh": 0.614,
+          "delta": 0.024
+        },
+        "mcc": {
+          "base": 0.147,
+          "vrh": 0.174,
+          "delta": 0.027
+        },
+        "top_recall": {
+          "base": 0.208,
+          "vrh": 0.221,
+          "delta": 0.013
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.182,
+          "vrh": 0.223,
+          "delta": 0.041
+        },
+        "stability": {
+          "base": 0.228,
+          "vrh": 0.277,
+          "delta": 0.049
+        },
+        "activity": {
+          "base": 0.161,
+          "vrh": 0.18,
+          "delta": 0.019
+        },
+        "ppi_binding": {
+          "base": 0.058,
+          "vrh": 0.113,
+          "delta": 0.055
+        },
+        "selectivity": {
+          "base": -0.082,
+          "vrh": -0.081,
+          "delta": 0.001
+        },
+        "dti_binding": {
+          "base": 0.274,
+          "vrh": 0.295,
+          "delta": 0.021
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.182,
+            "vrh": 0.223,
+            "delta": 0.041
+          },
+          "stability": {
+            "base": 0.228,
+            "vrh": 0.277,
+            "delta": 0.049
+          },
+          "activity": {
+            "base": 0.161,
+            "vrh": 0.18,
+            "delta": 0.019
+          },
+          "ppi_binding": {
+            "base": 0.058,
+            "vrh": 0.113,
+            "delta": 0.055
+          },
+          "selectivity": {
+            "base": -0.082,
+            "vrh": -0.081,
+            "delta": 0.001
+          },
+          "dti_binding": {
+            "base": 0.274,
+            "vrh": 0.295,
+            "delta": 0.021
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.832,
+            "vrh": 0.839,
+            "delta": 0.007
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.59,
+            "vrh": 0.614,
+            "delta": 0.024
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.147,
+            "vrh": 0.174,
+            "delta": 0.027
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.208,
+            "vrh": 0.221,
+            "delta": 0.013
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_3b_wt",
+      "family": "ESM-2 3B (wt)",
+      "base_name": "ESM-2 3B (wt)",
+      "enhanced_name": "ESM-2 3B (wt), vrh",
+      "vrh_name": "ESM-2 3B (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.161,
+          "vrh": 0.194,
+          "delta": 0.033
+        },
+        "ndcg": {
+          "base": 0.832,
+          "vrh": 0.835,
+          "delta": 0.003
+        },
+        "auc": {
+          "base": 0.581,
+          "vrh": 0.599,
+          "delta": 0.018
+        },
+        "mcc": {
+          "base": 0.111,
+          "vrh": 0.143,
+          "delta": 0.032
+        },
+        "top_recall": {
+          "base": 0.215,
+          "vrh": 0.214,
+          "delta": -0.001
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.161,
+          "vrh": 0.194,
+          "delta": 0.033
+        },
+        "stability": {
+          "base": 0.218,
+          "vrh": 0.262,
+          "delta": 0.044
+        },
+        "activity": {
+          "base": 0.092,
+          "vrh": 0.1,
+          "delta": 0.008
+        },
+        "ppi_binding": {
+          "base": 0.03,
+          "vrh": 0.082,
+          "delta": 0.052
+        },
+        "selectivity": {
+          "base": -0.058,
+          "vrh": -0.06,
+          "delta": -0.002
+        },
+        "dti_binding": {
+          "base": 0.269,
+          "vrh": 0.242,
+          "delta": -0.027
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.161,
+            "vrh": 0.194,
+            "delta": 0.033
+          },
+          "stability": {
+            "base": 0.218,
+            "vrh": 0.262,
+            "delta": 0.044
+          },
+          "activity": {
+            "base": 0.092,
+            "vrh": 0.1,
+            "delta": 0.008
+          },
+          "ppi_binding": {
+            "base": 0.03,
+            "vrh": 0.082,
+            "delta": 0.052
+          },
+          "selectivity": {
+            "base": -0.058,
+            "vrh": -0.06,
+            "delta": -0.002
+          },
+          "dti_binding": {
+            "base": 0.269,
+            "vrh": 0.242,
+            "delta": -0.027
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.832,
+            "vrh": 0.835,
+            "delta": 0.003
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.581,
+            "vrh": 0.599,
+            "delta": 0.018
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.111,
+            "vrh": 0.143,
+            "delta": 0.032
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.215,
+            "vrh": 0.214,
+            "delta": -0.001
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_650m_mask",
+      "family": "ESM-2 650M (mask)",
+      "base_name": "ESM-2 650M (mask)",
+      "enhanced_name": "ESM-2 650M (mask), vrh",
+      "vrh_name": "ESM-2 650M (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.169,
+          "vrh": 0.213,
+          "delta": 0.044
+        },
+        "ndcg": {
+          "base": 0.832,
+          "vrh": 0.839,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.588,
+          "vrh": 0.611,
+          "delta": 0.023
+        },
+        "mcc": {
+          "base": 0.13,
+          "vrh": 0.165,
+          "delta": 0.035
+        },
+        "top_recall": {
+          "base": 0.213,
+          "vrh": 0.225,
+          "delta": 0.012
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.169,
+          "vrh": 0.213,
+          "delta": 0.044
+        },
+        "stability": {
+          "base": 0.224,
+          "vrh": 0.28,
+          "delta": 0.056
+        },
+        "activity": {
+          "base": 0.134,
+          "vrh": 0.149,
+          "delta": 0.015
+        },
+        "ppi_binding": {
+          "base": 0.019,
+          "vrh": 0.1,
+          "delta": 0.081
+        },
+        "selectivity": {
+          "base": -0.054,
+          "vrh": -0.063,
+          "delta": -0.009
+        },
+        "dti_binding": {
+          "base": 0.22,
+          "vrh": 0.197,
+          "delta": -0.023
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.169,
+            "vrh": 0.213,
+            "delta": 0.044
+          },
+          "stability": {
+            "base": 0.224,
+            "vrh": 0.28,
+            "delta": 0.056
+          },
+          "activity": {
+            "base": 0.134,
+            "vrh": 0.149,
+            "delta": 0.015
+          },
+          "ppi_binding": {
+            "base": 0.019,
+            "vrh": 0.1,
+            "delta": 0.081
+          },
+          "selectivity": {
+            "base": -0.054,
+            "vrh": -0.063,
+            "delta": -0.009
+          },
+          "dti_binding": {
+            "base": 0.22,
+            "vrh": 0.197,
+            "delta": -0.023
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.832,
+            "vrh": 0.839,
+            "delta": 0.007
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.588,
+            "vrh": 0.611,
+            "delta": 0.023
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.13,
+            "vrh": 0.165,
+            "delta": 0.035
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.213,
+            "vrh": 0.225,
+            "delta": 0.012
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_650m_wt",
+      "family": "ESM-2 650M (wt)",
+      "base_name": "ESM-2 650M (wt)",
+      "enhanced_name": "ESM-2 650M (wt), vrh",
+      "vrh_name": "ESM-2 650M (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.152,
+          "vrh": 0.187,
+          "delta": 0.035
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.835,
+          "delta": 0.005
+        },
+        "auc": {
+          "base": 0.579,
+          "vrh": 0.598,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.118,
+          "vrh": 0.143,
+          "delta": 0.025
+        },
+        "top_recall": {
+          "base": 0.204,
+          "vrh": 0.216,
+          "delta": 0.012
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.152,
+          "vrh": 0.187,
+          "delta": 0.035
+        },
+        "stability": {
+          "base": 0.21,
+          "vrh": 0.259,
+          "delta": 0.049
+        },
+        "activity": {
+          "base": 0.087,
+          "vrh": 0.089,
+          "delta": 0.002
+        },
+        "ppi_binding": {
+          "base": 0.015,
+          "vrh": 0.081,
+          "delta": 0.066
+        },
+        "selectivity": {
+          "base": -0.06,
+          "vrh": -0.056,
+          "delta": 0.004
+        },
+        "dti_binding": {
+          "base": 0.241,
+          "vrh": 0.188,
+          "delta": -0.053
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.152,
+            "vrh": 0.187,
+            "delta": 0.035
+          },
+          "stability": {
+            "base": 0.21,
+            "vrh": 0.259,
+            "delta": 0.049
+          },
+          "activity": {
+            "base": 0.087,
+            "vrh": 0.089,
+            "delta": 0.002
+          },
+          "ppi_binding": {
+            "base": 0.015,
+            "vrh": 0.081,
+            "delta": 0.066
+          },
+          "selectivity": {
+            "base": -0.06,
+            "vrh": -0.056,
+            "delta": 0.004
+          },
+          "dti_binding": {
+            "base": 0.241,
+            "vrh": 0.188,
+            "delta": -0.053
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.835,
+            "delta": 0.005
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.579,
+            "vrh": 0.598,
+            "delta": 0.019
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.118,
+            "vrh": 0.143,
+            "delta": 0.025
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.204,
+            "vrh": 0.216,
+            "delta": 0.012
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_8m_mask",
+      "family": "ESM-2 8M (mask)",
+      "base_name": "ESM-2 8M (mask)",
+      "enhanced_name": "ESM-2 8M (mask), vrh",
+      "vrh_name": "ESM-2 8M (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.079,
+          "vrh": 0.198,
+          "delta": 0.119
+        },
+        "ndcg": {
+          "base": 0.807,
+          "vrh": 0.835,
+          "delta": 0.028
+        },
+        "auc": {
+          "base": 0.539,
+          "vrh": 0.606,
+          "delta": 0.067
+        },
+        "mcc": {
+          "base": 0.067,
+          "vrh": 0.163,
+          "delta": 0.096
+        },
+        "top_recall": {
+          "base": 0.141,
+          "vrh": 0.212,
+          "delta": 0.071
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.079,
+          "vrh": 0.198,
+          "delta": 0.119
+        },
+        "stability": {
+          "base": 0.11,
+          "vrh": 0.256,
+          "delta": 0.146
+        },
+        "activity": {
+          "base": 0.055,
+          "vrh": 0.144,
+          "delta": 0.089
+        },
+        "ppi_binding": {
+          "base": -0.085,
+          "vrh": 0.067,
+          "delta": 0.152
+        },
+        "selectivity": {
+          "base": -0.057,
+          "vrh": -0.045,
+          "delta": 0.012
+        },
+        "dti_binding": {
+          "base": 0.317,
+          "vrh": 0.248,
+          "delta": -0.069
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.079,
+            "vrh": 0.198,
+            "delta": 0.119
+          },
+          "stability": {
+            "base": 0.11,
+            "vrh": 0.256,
+            "delta": 0.146
+          },
+          "activity": {
+            "base": 0.055,
+            "vrh": 0.144,
+            "delta": 0.089
+          },
+          "ppi_binding": {
+            "base": -0.085,
+            "vrh": 0.067,
+            "delta": 0.152
+          },
+          "selectivity": {
+            "base": -0.057,
+            "vrh": -0.045,
+            "delta": 0.012
+          },
+          "dti_binding": {
+            "base": 0.317,
+            "vrh": 0.248,
+            "delta": -0.069
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.807,
+            "vrh": 0.835,
+            "delta": 0.028
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.539,
+            "vrh": 0.606,
+            "delta": 0.067
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.067,
+            "vrh": 0.163,
+            "delta": 0.096
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.141,
+            "vrh": 0.212,
+            "delta": 0.071
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm2_8m_wt",
+      "family": "ESM-2 8M (wt)",
+      "base_name": "ESM-2 8M (wt)",
+      "enhanced_name": "ESM-2 8M (wt), vrh",
+      "vrh_name": "ESM-2 8M (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.065,
+          "vrh": 0.176,
+          "delta": 0.111
+        },
+        "ndcg": {
+          "base": 0.814,
+          "vrh": 0.832,
+          "delta": 0.018
+        },
+        "auc": {
+          "base": 0.535,
+          "vrh": 0.583,
+          "delta": 0.048
+        },
+        "mcc": {
+          "base": 0.058,
+          "vrh": 0.12,
+          "delta": 0.062
+        },
+        "top_recall": {
+          "base": 0.169,
+          "vrh": 0.2,
+          "delta": 0.031
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.065,
+          "vrh": 0.176,
+          "delta": 0.111
+        },
+        "stability": {
+          "base": 0.102,
+          "vrh": 0.239,
+          "delta": 0.137
+        },
+        "activity": {
+          "base": 0.017,
+          "vrh": 0.079,
+          "delta": 0.062
+        },
+        "ppi_binding": {
+          "base": -0.115,
+          "vrh": 0.047,
+          "delta": 0.162
+        },
+        "selectivity": {
+          "base": -0.076,
+          "vrh": -0.052,
+          "delta": 0.024
+        },
+        "dti_binding": {
+          "base": 0.368,
+          "vrh": 0.318,
+          "delta": -0.05
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.065,
+            "vrh": 0.176,
+            "delta": 0.111
+          },
+          "stability": {
+            "base": 0.102,
+            "vrh": 0.239,
+            "delta": 0.137
+          },
+          "activity": {
+            "base": 0.017,
+            "vrh": 0.079,
+            "delta": 0.062
+          },
+          "ppi_binding": {
+            "base": -0.115,
+            "vrh": 0.047,
+            "delta": 0.162
+          },
+          "selectivity": {
+            "base": -0.076,
+            "vrh": -0.052,
+            "delta": 0.024
+          },
+          "dti_binding": {
+            "base": 0.368,
+            "vrh": 0.318,
+            "delta": -0.05
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.814,
+            "vrh": 0.832,
+            "delta": 0.018
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.535,
+            "vrh": 0.583,
+            "delta": 0.048
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.058,
+            "vrh": 0.12,
+            "delta": 0.062
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.169,
+            "vrh": 0.2,
+            "delta": 0.031
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esm3",
+      "family": "ESM3",
+      "base_name": "ESM3",
+      "enhanced_name": "ESM3, vrh",
+      "vrh_name": "ESM3, vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.185,
+          "vrh": 0.226,
+          "delta": 0.041
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.843,
+          "delta": 0.006
+        },
+        "auc": {
+          "base": 0.598,
+          "vrh": 0.62,
+          "delta": 0.022
+        },
+        "mcc": {
+          "base": 0.147,
+          "vrh": 0.187,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.219,
+          "vrh": 0.22,
+          "delta": 0.001
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.185,
+          "vrh": 0.226,
+          "delta": 0.041
+        },
+        "stability": {
+          "base": 0.264,
+          "vrh": 0.302,
+          "delta": 0.038
+        },
+        "activity": {
+          "base": 0.128,
+          "vrh": 0.15,
+          "delta": 0.022
+        },
+        "ppi_binding": {
+          "base": -0.002,
+          "vrh": 0.106,
+          "delta": 0.108
+        },
+        "selectivity": {
+          "base": -0.032,
+          "vrh": -0.034,
+          "delta": -0.002
+        },
+        "dti_binding": {
+          "base": 0.106,
+          "vrh": 0.142,
+          "delta": 0.036
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.185,
+            "vrh": 0.226,
+            "delta": 0.041
+          },
+          "stability": {
+            "base": 0.264,
+            "vrh": 0.302,
+            "delta": 0.038
+          },
+          "activity": {
+            "base": 0.128,
+            "vrh": 0.15,
+            "delta": 0.022
+          },
+          "ppi_binding": {
+            "base": -0.002,
+            "vrh": 0.106,
+            "delta": 0.108
+          },
+          "selectivity": {
+            "base": -0.032,
+            "vrh": -0.034,
+            "delta": -0.002
+          },
+          "dti_binding": {
+            "base": 0.106,
+            "vrh": 0.142,
+            "delta": 0.036
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.843,
+            "delta": 0.006
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.598,
+            "vrh": 0.62,
+            "delta": 0.022
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.147,
+            "vrh": 0.187,
+            "delta": 0.04
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.219,
+            "vrh": 0.22,
+            "delta": 0.001
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esmc",
+      "family": "ESMC-300M",
+      "base_name": "ESMC-300M",
+      "enhanced_name": "ESMC-300M, vrh",
+      "vrh_name": "ESMC-300M, vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.144,
+          "vrh": 0.198,
+          "delta": 0.054
+        },
+        "ndcg": {
+          "base": 0.828,
+          "vrh": 0.835,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.575,
+          "vrh": 0.602,
+          "delta": 0.027
+        },
+        "mcc": {
+          "base": 0.119,
+          "vrh": 0.161,
+          "delta": 0.042
+        },
+        "top_recall": {
+          "base": 0.198,
+          "vrh": 0.21,
+          "delta": 0.012
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.144,
+          "vrh": 0.198,
+          "delta": 0.054
+        },
+        "stability": {
+          "base": 0.195,
+          "vrh": 0.254,
+          "delta": 0.059
+        },
+        "activity": {
+          "base": 0.123,
+          "vrh": 0.151,
+          "delta": 0.028
+        },
+        "ppi_binding": {
+          "base": 0.011,
+          "vrh": 0.106,
+          "delta": 0.095
+        },
+        "selectivity": {
+          "base": -0.073,
+          "vrh": -0.059,
+          "delta": 0.014
+        },
+        "dti_binding": {
+          "base": 0.132,
+          "vrh": 0.181,
+          "delta": 0.049
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.144,
+            "vrh": 0.198,
+            "delta": 0.054
+          },
+          "stability": {
+            "base": 0.195,
+            "vrh": 0.254,
+            "delta": 0.059
+          },
+          "activity": {
+            "base": 0.123,
+            "vrh": 0.151,
+            "delta": 0.028
+          },
+          "ppi_binding": {
+            "base": 0.011,
+            "vrh": 0.106,
+            "delta": 0.095
+          },
+          "selectivity": {
+            "base": -0.073,
+            "vrh": -0.059,
+            "delta": 0.014
+          },
+          "dti_binding": {
+            "base": 0.132,
+            "vrh": 0.181,
+            "delta": 0.049
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.828,
+            "vrh": 0.835,
+            "delta": 0.007
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.575,
+            "vrh": 0.602,
+            "delta": 0.027
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.119,
+            "vrh": 0.161,
+            "delta": 0.042
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.198,
+            "vrh": 0.21,
+            "delta": 0.012
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esmc_600m",
+      "family": "ESMC-600M",
+      "base_name": "ESMC-600M",
+      "enhanced_name": "ESMC-600M, vrh",
+      "vrh_name": "ESMC-600M, vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.155,
+          "vrh": 0.194,
+          "delta": 0.039
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.838,
+          "delta": 0.008
+        },
+        "auc": {
+          "base": 0.58,
+          "vrh": 0.601,
+          "delta": 0.021
+        },
+        "mcc": {
+          "base": 0.134,
+          "vrh": 0.146,
+          "delta": 0.012
+        },
+        "top_recall": {
+          "base": 0.197,
+          "vrh": 0.21,
+          "delta": 0.013
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.155,
+          "vrh": 0.194,
+          "delta": 0.039
+        },
+        "stability": {
+          "base": 0.205,
+          "vrh": 0.248,
+          "delta": 0.043
+        },
+        "activity": {
+          "base": 0.114,
+          "vrh": 0.142,
+          "delta": 0.028
+        },
+        "ppi_binding": {
+          "base": 0.06,
+          "vrh": 0.108,
+          "delta": 0.048
+        },
+        "selectivity": {
+          "base": -0.074,
+          "vrh": -0.069,
+          "delta": 0.005
+        },
+        "dti_binding": {
+          "base": 0.164,
+          "vrh": 0.21,
+          "delta": 0.046
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.155,
+            "vrh": 0.194,
+            "delta": 0.039
+          },
+          "stability": {
+            "base": 0.205,
+            "vrh": 0.248,
+            "delta": 0.043
+          },
+          "activity": {
+            "base": 0.114,
+            "vrh": 0.142,
+            "delta": 0.028
+          },
+          "ppi_binding": {
+            "base": 0.06,
+            "vrh": 0.108,
+            "delta": 0.048
+          },
+          "selectivity": {
+            "base": -0.074,
+            "vrh": -0.069,
+            "delta": 0.005
+          },
+          "dti_binding": {
+            "base": 0.164,
+            "vrh": 0.21,
+            "delta": 0.046
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.838,
+            "delta": 0.008
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.58,
+            "vrh": 0.601,
+            "delta": 0.021
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.134,
+            "vrh": 0.146,
+            "delta": 0.012
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.197,
+            "vrh": 0.21,
+            "delta": 0.013
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "esmif",
+      "family": "ESM-IF1",
+      "base_name": "ESM-IF1",
+      "enhanced_name": "ESM-IF1, vrh",
+      "vrh_name": "ESM-IF1, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.216,
+          "vrh": 0.267,
+          "delta": 0.051
+        },
+        "ndcg": {
+          "base": 0.833,
+          "vrh": 0.846,
+          "delta": 0.013
+        },
+        "auc": {
+          "base": 0.613,
+          "vrh": 0.638,
+          "delta": 0.025
+        },
+        "mcc": {
+          "base": 0.164,
+          "vrh": 0.204,
+          "delta": 0.04
+        },
+        "top_recall": {
+          "base": 0.203,
+          "vrh": 0.234,
+          "delta": 0.031
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.216,
+          "vrh": 0.267,
+          "delta": 0.051
+        },
+        "stability": {
+          "base": 0.328,
+          "vrh": 0.356,
+          "delta": 0.028
+        },
+        "activity": {
+          "base": 0.074,
+          "vrh": 0.152,
+          "delta": 0.078
+        },
+        "ppi_binding": {
+          "base": 0.04,
+          "vrh": 0.108,
+          "delta": 0.068
+        },
+        "selectivity": {
+          "base": 0.018,
+          "vrh": 0.018,
+          "delta": 0.0
+        },
+        "dti_binding": {
+          "base": 0.021,
+          "vrh": 0.269,
+          "delta": 0.248
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.216,
+            "vrh": 0.267,
+            "delta": 0.051
+          },
+          "stability": {
+            "base": 0.328,
+            "vrh": 0.356,
+            "delta": 0.028
+          },
+          "activity": {
+            "base": 0.074,
+            "vrh": 0.152,
+            "delta": 0.078
+          },
+          "ppi_binding": {
+            "base": 0.04,
+            "vrh": 0.108,
+            "delta": 0.068
+          },
+          "selectivity": {
+            "base": 0.018,
+            "vrh": 0.018,
+            "delta": 0.0
+          },
+          "dti_binding": {
+            "base": 0.021,
+            "vrh": 0.269,
+            "delta": 0.248
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.833,
+            "vrh": 0.846,
+            "delta": 0.013
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.613,
+            "vrh": 0.638,
+            "delta": 0.025
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.164,
+            "vrh": 0.204,
+            "delta": 0.04
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.203,
+            "vrh": 0.234,
+            "delta": 0.031
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "progen2",
+      "family": "ProGen2-L",
+      "base_name": "ProGen2-L",
+      "enhanced_name": "ProGen2-L, vrh",
+      "vrh_name": "ProGen2-L, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.12,
+          "vrh": 0.188,
+          "delta": 0.068
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.836,
+          "delta": 0.013
+        },
+        "auc": {
+          "base": 0.56,
+          "vrh": 0.597,
+          "delta": 0.037
+        },
+        "mcc": {
+          "base": 0.091,
+          "vrh": 0.151,
+          "delta": 0.06
+        },
+        "top_recall": {
+          "base": 0.187,
+          "vrh": 0.212,
+          "delta": 0.025
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.12,
+          "vrh": 0.188,
+          "delta": 0.068
+        },
+        "stability": {
+          "base": 0.157,
+          "vrh": 0.243,
+          "delta": 0.086
+        },
+        "activity": {
+          "base": 0.114,
+          "vrh": 0.146,
+          "delta": 0.032
+        },
+        "ppi_binding": {
+          "base": -0.011,
+          "vrh": 0.084,
+          "delta": 0.095
+        },
+        "selectivity": {
+          "base": -0.108,
+          "vrh": -0.088,
+          "delta": 0.02
+        },
+        "dti_binding": {
+          "base": 0.227,
+          "vrh": 0.224,
+          "delta": -0.003
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.12,
+            "vrh": 0.188,
+            "delta": 0.068
+          },
+          "stability": {
+            "base": 0.157,
+            "vrh": 0.243,
+            "delta": 0.086
+          },
+          "activity": {
+            "base": 0.114,
+            "vrh": 0.146,
+            "delta": 0.032
+          },
+          "ppi_binding": {
+            "base": -0.011,
+            "vrh": 0.084,
+            "delta": 0.095
+          },
+          "selectivity": {
+            "base": -0.108,
+            "vrh": -0.088,
+            "delta": 0.02
+          },
+          "dti_binding": {
+            "base": 0.227,
+            "vrh": 0.224,
+            "delta": -0.003
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.836,
+            "delta": 0.013
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.56,
+            "vrh": 0.597,
+            "delta": 0.037
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.091,
+            "vrh": 0.151,
+            "delta": 0.06
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.187,
+            "vrh": 0.212,
+            "delta": 0.025
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen2_b",
+      "family": "ProGen2-B",
+      "base_name": "ProGen2-B",
+      "enhanced_name": "ProGen2-B, vrh",
+      "vrh_name": "ProGen2-B, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.124,
+          "vrh": 0.194,
+          "delta": 0.07
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.836,
+          "delta": 0.013
+        },
+        "auc": {
+          "base": 0.564,
+          "vrh": 0.599,
+          "delta": 0.035
+        },
+        "mcc": {
+          "base": 0.101,
+          "vrh": 0.156,
+          "delta": 0.055
+        },
+        "top_recall": {
+          "base": 0.184,
+          "vrh": 0.21,
+          "delta": 0.026
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.124,
+          "vrh": 0.194,
+          "delta": 0.07
+        },
+        "stability": {
+          "base": 0.172,
+          "vrh": 0.252,
+          "delta": 0.08
+        },
+        "activity": {
+          "base": 0.111,
+          "vrh": 0.142,
+          "delta": 0.031
+        },
+        "ppi_binding": {
+          "base": 0.004,
+          "vrh": 0.1,
+          "delta": 0.096
+        },
+        "selectivity": {
+          "base": -0.109,
+          "vrh": -0.089,
+          "delta": 0.02
+        },
+        "dti_binding": {
+          "base": 0.114,
+          "vrh": 0.195,
+          "delta": 0.081
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.124,
+            "vrh": 0.194,
+            "delta": 0.07
+          },
+          "stability": {
+            "base": 0.172,
+            "vrh": 0.252,
+            "delta": 0.08
+          },
+          "activity": {
+            "base": 0.111,
+            "vrh": 0.142,
+            "delta": 0.031
+          },
+          "ppi_binding": {
+            "base": 0.004,
+            "vrh": 0.1,
+            "delta": 0.096
+          },
+          "selectivity": {
+            "base": -0.109,
+            "vrh": -0.089,
+            "delta": 0.02
+          },
+          "dti_binding": {
+            "base": 0.114,
+            "vrh": 0.195,
+            "delta": 0.081
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.836,
+            "delta": 0.013
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.564,
+            "vrh": 0.599,
+            "delta": 0.035
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.101,
+            "vrh": 0.156,
+            "delta": 0.055
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.184,
+            "vrh": 0.21,
+            "delta": 0.026
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen2_m",
+      "family": "ProGen2-M",
+      "base_name": "ProGen2-M",
+      "enhanced_name": "ProGen2-M, vrh",
+      "vrh_name": "ProGen2-M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.115,
+          "vrh": 0.182,
+          "delta": 0.067
+        },
+        "ndcg": {
+          "base": 0.825,
+          "vrh": 0.835,
+          "delta": 0.01
+        },
+        "auc": {
+          "base": 0.558,
+          "vrh": 0.593,
+          "delta": 0.035
+        },
+        "mcc": {
+          "base": 0.078,
+          "vrh": 0.135,
+          "delta": 0.057
+        },
+        "top_recall": {
+          "base": 0.189,
+          "vrh": 0.209,
+          "delta": 0.02
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.115,
+          "vrh": 0.182,
+          "delta": 0.067
+        },
+        "stability": {
+          "base": 0.168,
+          "vrh": 0.24,
+          "delta": 0.072
+        },
+        "activity": {
+          "base": 0.086,
+          "vrh": 0.13,
+          "delta": 0.044
+        },
+        "ppi_binding": {
+          "base": -0.004,
+          "vrh": 0.094,
+          "delta": 0.098
+        },
+        "selectivity": {
+          "base": -0.129,
+          "vrh": -0.117,
+          "delta": 0.012
+        },
+        "dti_binding": {
+          "base": 0.104,
+          "vrh": 0.187,
+          "delta": 0.083
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.115,
+            "vrh": 0.182,
+            "delta": 0.067
+          },
+          "stability": {
+            "base": 0.168,
+            "vrh": 0.24,
+            "delta": 0.072
+          },
+          "activity": {
+            "base": 0.086,
+            "vrh": 0.13,
+            "delta": 0.044
+          },
+          "ppi_binding": {
+            "base": -0.004,
+            "vrh": 0.094,
+            "delta": 0.098
+          },
+          "selectivity": {
+            "base": -0.129,
+            "vrh": -0.117,
+            "delta": 0.012
+          },
+          "dti_binding": {
+            "base": 0.104,
+            "vrh": 0.187,
+            "delta": 0.083
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.825,
+            "vrh": 0.835,
+            "delta": 0.01
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.558,
+            "vrh": 0.593,
+            "delta": 0.035
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.078,
+            "vrh": 0.135,
+            "delta": 0.057
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.189,
+            "vrh": 0.209,
+            "delta": 0.02
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen2_s",
+      "family": "ProGen2-S",
+      "base_name": "ProGen2-S",
+      "enhanced_name": "ProGen2-S, vrh",
+      "vrh_name": "ProGen2-S, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.091,
+          "vrh": 0.192,
+          "delta": 0.101
+        },
+        "ndcg": {
+          "base": 0.815,
+          "vrh": 0.837,
+          "delta": 0.022
+        },
+        "auc": {
+          "base": 0.546,
+          "vrh": 0.595,
+          "delta": 0.049
+        },
+        "mcc": {
+          "base": 0.069,
+          "vrh": 0.154,
+          "delta": 0.085
+        },
+        "top_recall": {
+          "base": 0.174,
+          "vrh": 0.226,
+          "delta": 0.052
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.091,
+          "vrh": 0.192,
+          "delta": 0.101
+        },
+        "stability": {
+          "base": 0.137,
+          "vrh": 0.246,
+          "delta": 0.109
+        },
+        "activity": {
+          "base": 0.067,
+          "vrh": 0.153,
+          "delta": 0.086
+        },
+        "ppi_binding": {
+          "base": -0.053,
+          "vrh": 0.086,
+          "delta": 0.139
+        },
+        "selectivity": {
+          "base": -0.066,
+          "vrh": -0.07,
+          "delta": -0.004
+        },
+        "dti_binding": {
+          "base": 0.127,
+          "vrh": 0.209,
+          "delta": 0.082
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.091,
+            "vrh": 0.192,
+            "delta": 0.101
+          },
+          "stability": {
+            "base": 0.137,
+            "vrh": 0.246,
+            "delta": 0.109
+          },
+          "activity": {
+            "base": 0.067,
+            "vrh": 0.153,
+            "delta": 0.086
+          },
+          "ppi_binding": {
+            "base": -0.053,
+            "vrh": 0.086,
+            "delta": 0.139
+          },
+          "selectivity": {
+            "base": -0.066,
+            "vrh": -0.07,
+            "delta": -0.004
+          },
+          "dti_binding": {
+            "base": 0.127,
+            "vrh": 0.209,
+            "delta": 0.082
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.815,
+            "vrh": 0.837,
+            "delta": 0.022
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.546,
+            "vrh": 0.595,
+            "delta": 0.049
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.069,
+            "vrh": 0.154,
+            "delta": 0.085
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.174,
+            "vrh": 0.226,
+            "delta": 0.052
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen2_xl",
+      "family": "ProGen2-XL",
+      "base_name": "ProGen2-XL",
+      "enhanced_name": "ProGen2-XL, vrh",
+      "vrh_name": "ProGen2-XL, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.123,
+          "vrh": 0.176,
+          "delta": 0.053
+        },
+        "ndcg": {
+          "base": 0.827,
+          "vrh": 0.835,
+          "delta": 0.008
+        },
+        "auc": {
+          "base": 0.561,
+          "vrh": 0.59,
+          "delta": 0.029
+        },
+        "mcc": {
+          "base": 0.083,
+          "vrh": 0.133,
+          "delta": 0.05
+        },
+        "top_recall": {
+          "base": 0.195,
+          "vrh": 0.201,
+          "delta": 0.006
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.123,
+          "vrh": 0.176,
+          "delta": 0.053
+        },
+        "stability": {
+          "base": 0.17,
+          "vrh": 0.232,
+          "delta": 0.062
+        },
+        "activity": {
+          "base": 0.105,
+          "vrh": 0.136,
+          "delta": 0.031
+        },
+        "ppi_binding": {
+          "base": 0.03,
+          "vrh": 0.095,
+          "delta": 0.065
+        },
+        "selectivity": {
+          "base": -0.132,
+          "vrh": -0.111,
+          "delta": 0.021
+        },
+        "dti_binding": {
+          "base": 0.113,
+          "vrh": 0.131,
+          "delta": 0.018
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.123,
+            "vrh": 0.176,
+            "delta": 0.053
+          },
+          "stability": {
+            "base": 0.17,
+            "vrh": 0.232,
+            "delta": 0.062
+          },
+          "activity": {
+            "base": 0.105,
+            "vrh": 0.136,
+            "delta": 0.031
+          },
+          "ppi_binding": {
+            "base": 0.03,
+            "vrh": 0.095,
+            "delta": 0.065
+          },
+          "selectivity": {
+            "base": -0.132,
+            "vrh": -0.111,
+            "delta": 0.021
+          },
+          "dti_binding": {
+            "base": 0.113,
+            "vrh": 0.131,
+            "delta": 0.018
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.827,
+            "vrh": 0.835,
+            "delta": 0.008
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.561,
+            "vrh": 0.59,
+            "delta": 0.029
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.083,
+            "vrh": 0.133,
+            "delta": 0.05
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.195,
+            "vrh": 0.201,
+            "delta": 0.006
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3",
+      "family": "ProGen3-1B",
+      "base_name": "ProGen3-1B",
+      "enhanced_name": "ProGen3-1B, vrh",
+      "vrh_name": "ProGen3-1B, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.108,
+          "vrh": 0.173,
+          "delta": 0.065
+        },
+        "ndcg": {
+          "base": 0.821,
+          "vrh": 0.832,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.561,
+          "vrh": 0.593,
+          "delta": 0.032
+        },
+        "mcc": {
+          "base": 0.096,
+          "vrh": 0.143,
+          "delta": 0.047
+        },
+        "top_recall": {
+          "base": 0.186,
+          "vrh": 0.208,
+          "delta": 0.022
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.108,
+          "vrh": 0.173,
+          "delta": 0.065
+        },
+        "stability": {
+          "base": 0.151,
+          "vrh": 0.22,
+          "delta": 0.069
+        },
+        "activity": {
+          "base": 0.112,
+          "vrh": 0.127,
+          "delta": 0.015
+        },
+        "ppi_binding": {
+          "base": 0.013,
+          "vrh": 0.121,
+          "delta": 0.108
+        },
+        "selectivity": {
+          "base": -0.099,
+          "vrh": -0.096,
+          "delta": 0.003
+        },
+        "dti_binding": {
+          "base": 0.001,
+          "vrh": 0.175,
+          "delta": 0.174
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.108,
+            "vrh": 0.173,
+            "delta": 0.065
+          },
+          "stability": {
+            "base": 0.151,
+            "vrh": 0.22,
+            "delta": 0.069
+          },
+          "activity": {
+            "base": 0.112,
+            "vrh": 0.127,
+            "delta": 0.015
+          },
+          "ppi_binding": {
+            "base": 0.013,
+            "vrh": 0.121,
+            "delta": 0.108
+          },
+          "selectivity": {
+            "base": -0.099,
+            "vrh": -0.096,
+            "delta": 0.003
+          },
+          "dti_binding": {
+            "base": 0.001,
+            "vrh": 0.175,
+            "delta": 0.174
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.821,
+            "vrh": 0.832,
+            "delta": 0.011
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.561,
+            "vrh": 0.593,
+            "delta": 0.032
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.096,
+            "vrh": 0.143,
+            "delta": 0.047
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.186,
+            "vrh": 0.208,
+            "delta": 0.022
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3_112m",
+      "family": "ProGen3-112M",
+      "base_name": "ProGen3-112M",
+      "enhanced_name": "ProGen3-112M, vrh",
+      "vrh_name": "ProGen3-112M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.072,
+          "vrh": 0.177,
+          "delta": 0.105
+        },
+        "ndcg": {
+          "base": 0.812,
+          "vrh": 0.832,
+          "delta": 0.02
+        },
+        "auc": {
+          "base": 0.537,
+          "vrh": 0.593,
+          "delta": 0.056
+        },
+        "mcc": {
+          "base": 0.045,
+          "vrh": 0.135,
+          "delta": 0.09
+        },
+        "top_recall": {
+          "base": 0.169,
+          "vrh": 0.206,
+          "delta": 0.037
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.072,
+          "vrh": 0.177,
+          "delta": 0.105
+        },
+        "stability": {
+          "base": 0.086,
+          "vrh": 0.219,
+          "delta": 0.133
+        },
+        "activity": {
+          "base": 0.105,
+          "vrh": 0.13,
+          "delta": 0.025
+        },
+        "ppi_binding": {
+          "base": -0.048,
+          "vrh": 0.121,
+          "delta": 0.169
+        },
+        "selectivity": {
+          "base": -0.044,
+          "vrh": -0.038,
+          "delta": 0.006
+        },
+        "dti_binding": {
+          "base": 0.156,
+          "vrh": 0.203,
+          "delta": 0.047
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.072,
+            "vrh": 0.177,
+            "delta": 0.105
+          },
+          "stability": {
+            "base": 0.086,
+            "vrh": 0.219,
+            "delta": 0.133
+          },
+          "activity": {
+            "base": 0.105,
+            "vrh": 0.13,
+            "delta": 0.025
+          },
+          "ppi_binding": {
+            "base": -0.048,
+            "vrh": 0.121,
+            "delta": 0.169
+          },
+          "selectivity": {
+            "base": -0.044,
+            "vrh": -0.038,
+            "delta": 0.006
+          },
+          "dti_binding": {
+            "base": 0.156,
+            "vrh": 0.203,
+            "delta": 0.047
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.812,
+            "vrh": 0.832,
+            "delta": 0.02
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.537,
+            "vrh": 0.593,
+            "delta": 0.056
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.045,
+            "vrh": 0.135,
+            "delta": 0.09
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.169,
+            "vrh": 0.206,
+            "delta": 0.037
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3_219m",
+      "family": "ProGen3-219M",
+      "base_name": "ProGen3-219M",
+      "enhanced_name": "ProGen3-219M, vrh",
+      "vrh_name": "ProGen3-219M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.092,
+          "vrh": 0.19,
+          "delta": 0.098
+        },
+        "ndcg": {
+          "base": 0.816,
+          "vrh": 0.835,
+          "delta": 0.019
+        },
+        "auc": {
+          "base": 0.548,
+          "vrh": 0.599,
+          "delta": 0.051
+        },
+        "mcc": {
+          "base": 0.073,
+          "vrh": 0.151,
+          "delta": 0.078
+        },
+        "top_recall": {
+          "base": 0.183,
+          "vrh": 0.216,
+          "delta": 0.033
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.092,
+          "vrh": 0.19,
+          "delta": 0.098
+        },
+        "stability": {
+          "base": 0.122,
+          "vrh": 0.242,
+          "delta": 0.12
+        },
+        "activity": {
+          "base": 0.111,
+          "vrh": 0.155,
+          "delta": 0.044
+        },
+        "ppi_binding": {
+          "base": -0.071,
+          "vrh": 0.101,
+          "delta": 0.172
+        },
+        "selectivity": {
+          "base": -0.07,
+          "vrh": -0.059,
+          "delta": 0.011
+        },
+        "dti_binding": {
+          "base": 0.192,
+          "vrh": 0.157,
+          "delta": -0.035
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.092,
+            "vrh": 0.19,
+            "delta": 0.098
+          },
+          "stability": {
+            "base": 0.122,
+            "vrh": 0.242,
+            "delta": 0.12
+          },
+          "activity": {
+            "base": 0.111,
+            "vrh": 0.155,
+            "delta": 0.044
+          },
+          "ppi_binding": {
+            "base": -0.071,
+            "vrh": 0.101,
+            "delta": 0.172
+          },
+          "selectivity": {
+            "base": -0.07,
+            "vrh": -0.059,
+            "delta": 0.011
+          },
+          "dti_binding": {
+            "base": 0.192,
+            "vrh": 0.157,
+            "delta": -0.035
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.816,
+            "vrh": 0.835,
+            "delta": 0.019
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.548,
+            "vrh": 0.599,
+            "delta": 0.051
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.073,
+            "vrh": 0.151,
+            "delta": 0.078
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.183,
+            "vrh": 0.216,
+            "delta": 0.033
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3_339m",
+      "family": "ProGen3-339M",
+      "base_name": "ProGen3-339M",
+      "enhanced_name": "ProGen3-339M, vrh",
+      "vrh_name": "ProGen3-339M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.11,
+          "vrh": 0.189,
+          "delta": 0.079
+        },
+        "ndcg": {
+          "base": 0.821,
+          "vrh": 0.837,
+          "delta": 0.016
+        },
+        "auc": {
+          "base": 0.56,
+          "vrh": 0.601,
+          "delta": 0.041
+        },
+        "mcc": {
+          "base": 0.094,
+          "vrh": 0.147,
+          "delta": 0.053
+        },
+        "top_recall": {
+          "base": 0.183,
+          "vrh": 0.219,
+          "delta": 0.036
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.11,
+          "vrh": 0.189,
+          "delta": 0.079
+        },
+        "stability": {
+          "base": 0.133,
+          "vrh": 0.242,
+          "delta": 0.109
+        },
+        "activity": {
+          "base": 0.173,
+          "vrh": 0.162,
+          "delta": -0.011
+        },
+        "ppi_binding": {
+          "base": -0.051,
+          "vrh": 0.081,
+          "delta": 0.132
+        },
+        "selectivity": {
+          "base": -0.077,
+          "vrh": -0.071,
+          "delta": 0.006
+        },
+        "dti_binding": {
+          "base": 0.146,
+          "vrh": 0.169,
+          "delta": 0.023
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.11,
+            "vrh": 0.189,
+            "delta": 0.079
+          },
+          "stability": {
+            "base": 0.133,
+            "vrh": 0.242,
+            "delta": 0.109
+          },
+          "activity": {
+            "base": 0.173,
+            "vrh": 0.162,
+            "delta": -0.011
+          },
+          "ppi_binding": {
+            "base": -0.051,
+            "vrh": 0.081,
+            "delta": 0.132
+          },
+          "selectivity": {
+            "base": -0.077,
+            "vrh": -0.071,
+            "delta": 0.006
+          },
+          "dti_binding": {
+            "base": 0.146,
+            "vrh": 0.169,
+            "delta": 0.023
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.821,
+            "vrh": 0.837,
+            "delta": 0.016
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.56,
+            "vrh": 0.601,
+            "delta": 0.041
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.094,
+            "vrh": 0.147,
+            "delta": 0.053
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.183,
+            "vrh": 0.219,
+            "delta": 0.036
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3_3b",
+      "family": "ProGen3-3B",
+      "base_name": "ProGen3-3B",
+      "enhanced_name": "ProGen3-3B, vrh",
+      "vrh_name": "ProGen3-3B, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.11,
+          "vrh": 0.17,
+          "delta": 0.06
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.834,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.553,
+          "vrh": 0.586,
+          "delta": 0.033
+        },
+        "mcc": {
+          "base": 0.064,
+          "vrh": 0.119,
+          "delta": 0.055
+        },
+        "top_recall": {
+          "base": 0.2,
+          "vrh": 0.207,
+          "delta": 0.007
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.11,
+          "vrh": 0.17,
+          "delta": 0.06
+        },
+        "stability": {
+          "base": 0.16,
+          "vrh": 0.228,
+          "delta": 0.068
+        },
+        "activity": {
+          "base": 0.082,
+          "vrh": 0.11,
+          "delta": 0.028
+        },
+        "ppi_binding": {
+          "base": 0.039,
+          "vrh": 0.113,
+          "delta": 0.074
+        },
+        "selectivity": {
+          "base": -0.123,
+          "vrh": -0.115,
+          "delta": 0.008
+        },
+        "dti_binding": {
+          "base": 0.009,
+          "vrh": 0.126,
+          "delta": 0.117
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.11,
+            "vrh": 0.17,
+            "delta": 0.06
+          },
+          "stability": {
+            "base": 0.16,
+            "vrh": 0.228,
+            "delta": 0.068
+          },
+          "activity": {
+            "base": 0.082,
+            "vrh": 0.11,
+            "delta": 0.028
+          },
+          "ppi_binding": {
+            "base": 0.039,
+            "vrh": 0.113,
+            "delta": 0.074
+          },
+          "selectivity": {
+            "base": -0.123,
+            "vrh": -0.115,
+            "delta": 0.008
+          },
+          "dti_binding": {
+            "base": 0.009,
+            "vrh": 0.126,
+            "delta": 0.117
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.834,
+            "delta": 0.011
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.553,
+            "vrh": 0.586,
+            "delta": 0.033
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.064,
+            "vrh": 0.119,
+            "delta": 0.055
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.2,
+            "vrh": 0.207,
+            "delta": 0.007
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "progen3_762m",
+      "family": "ProGen3-762M",
+      "base_name": "ProGen3-762M",
+      "enhanced_name": "ProGen3-762M, vrh",
+      "vrh_name": "ProGen3-762M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.111,
+          "vrh": 0.18,
+          "delta": 0.069
+        },
+        "ndcg": {
+          "base": 0.822,
+          "vrh": 0.834,
+          "delta": 0.012
+        },
+        "auc": {
+          "base": 0.556,
+          "vrh": 0.593,
+          "delta": 0.037
+        },
+        "mcc": {
+          "base": 0.088,
+          "vrh": 0.151,
+          "delta": 0.063
+        },
+        "top_recall": {
+          "base": 0.191,
+          "vrh": 0.204,
+          "delta": 0.013
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.111,
+          "vrh": 0.18,
+          "delta": 0.069
+        },
+        "stability": {
+          "base": 0.132,
+          "vrh": 0.228,
+          "delta": 0.096
+        },
+        "activity": {
+          "base": 0.178,
+          "vrh": 0.159,
+          "delta": -0.019
+        },
+        "ppi_binding": {
+          "base": -0.02,
+          "vrh": 0.099,
+          "delta": 0.119
+        },
+        "selectivity": {
+          "base": -0.087,
+          "vrh": -0.077,
+          "delta": 0.01
+        },
+        "dti_binding": {
+          "base": 0.09,
+          "vrh": 0.122,
+          "delta": 0.032
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.111,
+            "vrh": 0.18,
+            "delta": 0.069
+          },
+          "stability": {
+            "base": 0.132,
+            "vrh": 0.228,
+            "delta": 0.096
+          },
+          "activity": {
+            "base": 0.178,
+            "vrh": 0.159,
+            "delta": -0.019
+          },
+          "ppi_binding": {
+            "base": -0.02,
+            "vrh": 0.099,
+            "delta": 0.119
+          },
+          "selectivity": {
+            "base": -0.087,
+            "vrh": -0.077,
+            "delta": 0.01
+          },
+          "dti_binding": {
+            "base": 0.09,
+            "vrh": 0.122,
+            "delta": 0.032
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.822,
+            "vrh": 0.834,
+            "delta": 0.012
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.556,
+            "vrh": 0.593,
+            "delta": 0.037
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.088,
+            "vrh": 0.151,
+            "delta": 0.063
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.191,
+            "vrh": 0.204,
+            "delta": 0.013
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "prosst_k2048",
+      "family": "ProSST (K=2048)",
+      "base_name": "ProSST (K=2048)",
+      "enhanced_name": "ProSST (K=2048), vrh",
+      "vrh_name": "ProSST (K=2048), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.213,
+          "vrh": 0.249,
+          "delta": 0.036
+        },
+        "ndcg": {
+          "base": 0.84,
+          "vrh": 0.847,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.614,
+          "vrh": 0.629,
+          "delta": 0.015
+        },
+        "mcc": {
+          "base": 0.17,
+          "vrh": 0.198,
+          "delta": 0.028
+        },
+        "top_recall": {
+          "base": 0.228,
+          "vrh": 0.245,
+          "delta": 0.017
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.213,
+          "vrh": 0.249,
+          "delta": 0.036
+        },
+        "stability": {
+          "base": 0.315,
+          "vrh": 0.348,
+          "delta": 0.033
+        },
+        "activity": {
+          "base": 0.076,
+          "vrh": 0.118,
+          "delta": 0.042
+        },
+        "ppi_binding": {
+          "base": 0.064,
+          "vrh": 0.103,
+          "delta": 0.039
+        },
+        "selectivity": {
+          "base": -0.065,
+          "vrh": -0.048,
+          "delta": 0.017
+        },
+        "dti_binding": {
+          "base": 0.137,
+          "vrh": 0.204,
+          "delta": 0.067
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.213,
+            "vrh": 0.249,
+            "delta": 0.036
+          },
+          "stability": {
+            "base": 0.315,
+            "vrh": 0.348,
+            "delta": 0.033
+          },
+          "activity": {
+            "base": 0.076,
+            "vrh": 0.118,
+            "delta": 0.042
+          },
+          "ppi_binding": {
+            "base": 0.064,
+            "vrh": 0.103,
+            "delta": 0.039
+          },
+          "selectivity": {
+            "base": -0.065,
+            "vrh": -0.048,
+            "delta": 0.017
+          },
+          "dti_binding": {
+            "base": 0.137,
+            "vrh": 0.204,
+            "delta": 0.067
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.84,
+            "vrh": 0.847,
+            "delta": 0.007
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.614,
+            "vrh": 0.629,
+            "delta": 0.015
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.17,
+            "vrh": 0.198,
+            "delta": 0.028
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.228,
+            "vrh": 0.245,
+            "delta": 0.017
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "proteinmpnn",
+      "family": "ProteinMPNN (v_48_020)",
+      "base_name": "ProteinMPNN (v_48_020)",
+      "enhanced_name": "ProteinMPNN (v_48_020), vrh",
+      "vrh_name": "ProteinMPNN (v_48_020), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.221,
+          "vrh": 0.271,
+          "delta": 0.05
+        },
+        "ndcg": {
+          "base": 0.835,
+          "vrh": 0.85,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.611,
+          "vrh": 0.637,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.164,
+          "vrh": 0.194,
+          "delta": 0.03
+        },
+        "top_recall": {
+          "base": 0.225,
+          "vrh": 0.265,
+          "delta": 0.04
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.221,
+          "vrh": 0.271,
+          "delta": 0.05
+        },
+        "stability": {
+          "base": 0.366,
+          "vrh": 0.399,
+          "delta": 0.033
+        },
+        "activity": {
+          "base": 0.006,
+          "vrh": 0.108,
+          "delta": 0.102
+        },
+        "ppi_binding": {
+          "base": -0.033,
+          "vrh": 0.024,
+          "delta": 0.057
+        },
+        "selectivity": {
+          "base": -0.001,
+          "vrh": 0.012,
+          "delta": 0.013
+        },
+        "dti_binding": {
+          "base": 0.116,
+          "vrh": 0.198,
+          "delta": 0.082
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.221,
+            "vrh": 0.271,
+            "delta": 0.05
+          },
+          "stability": {
+            "base": 0.366,
+            "vrh": 0.399,
+            "delta": 0.033
+          },
+          "activity": {
+            "base": 0.006,
+            "vrh": 0.108,
+            "delta": 0.102
+          },
+          "ppi_binding": {
+            "base": -0.033,
+            "vrh": 0.024,
+            "delta": 0.057
+          },
+          "selectivity": {
+            "base": -0.001,
+            "vrh": 0.012,
+            "delta": 0.013
+          },
+          "dti_binding": {
+            "base": 0.116,
+            "vrh": 0.198,
+            "delta": 0.082
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.835,
+            "vrh": 0.85,
+            "delta": 0.015
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.611,
+            "vrh": 0.637,
+            "delta": 0.026
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.164,
+            "vrh": 0.194,
+            "delta": 0.03
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.225,
+            "vrh": 0.265,
+            "delta": 0.04
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "protssn",
+      "family": "ProtSSN",
+      "base_name": "ProtSSN",
+      "enhanced_name": "ProtSSN, vrh",
+      "vrh_name": "ProtSSN, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.174,
+          "vrh": 0.195,
+          "delta": 0.021
+        },
+        "ndcg": {
+          "base": 0.836,
+          "vrh": 0.839,
+          "delta": 0.003
+        },
+        "auc": {
+          "base": 0.588,
+          "vrh": 0.602,
+          "delta": 0.014
+        },
+        "mcc": {
+          "base": 0.134,
+          "vrh": 0.154,
+          "delta": 0.02
+        },
+        "top_recall": {
+          "base": 0.22,
+          "vrh": 0.221,
+          "delta": 0.001
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.174,
+          "vrh": 0.195,
+          "delta": 0.021
+        },
+        "stability": {
+          "base": 0.251,
+          "vrh": 0.281,
+          "delta": 0.03
+        },
+        "activity": {
+          "base": 0.079,
+          "vrh": 0.079,
+          "delta": 0.0
+        },
+        "ppi_binding": {
+          "base": 0.056,
+          "vrh": 0.084,
+          "delta": 0.028
+        },
+        "selectivity": {
+          "base": -0.048,
+          "vrh": -0.05,
+          "delta": -0.002
+        },
+        "dti_binding": {
+          "base": 0.111,
+          "vrh": 0.11,
+          "delta": -0.001
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.174,
+            "vrh": 0.195,
+            "delta": 0.021
+          },
+          "stability": {
+            "base": 0.251,
+            "vrh": 0.281,
+            "delta": 0.03
+          },
+          "activity": {
+            "base": 0.079,
+            "vrh": 0.079,
+            "delta": 0.0
+          },
+          "ppi_binding": {
+            "base": 0.056,
+            "vrh": 0.084,
+            "delta": 0.028
+          },
+          "selectivity": {
+            "base": -0.048,
+            "vrh": -0.05,
+            "delta": -0.002
+          },
+          "dti_binding": {
+            "base": 0.111,
+            "vrh": 0.11,
+            "delta": -0.001
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.836,
+            "vrh": 0.839,
+            "delta": 0.003
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.588,
+            "vrh": 0.602,
+            "delta": 0.014
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.134,
+            "vrh": 0.154,
+            "delta": 0.02
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.22,
+            "vrh": 0.221,
+            "delta": 0.001
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "rita_l",
+      "family": "RITA-L",
+      "base_name": "RITA-L",
+      "enhanced_name": "RITA-L, vrh",
+      "vrh_name": "RITA-L, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.11,
+          "vrh": 0.193,
+          "delta": 0.083
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.838,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.555,
+          "vrh": 0.6,
+          "delta": 0.045
+        },
+        "mcc": {
+          "base": 0.071,
+          "vrh": 0.15,
+          "delta": 0.079
+        },
+        "top_recall": {
+          "base": 0.194,
+          "vrh": 0.216,
+          "delta": 0.022
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.11,
+          "vrh": 0.193,
+          "delta": 0.083
+        },
+        "stability": {
+          "base": 0.158,
+          "vrh": 0.25,
+          "delta": 0.092
+        },
+        "activity": {
+          "base": 0.091,
+          "vrh": 0.138,
+          "delta": 0.047
+        },
+        "ppi_binding": {
+          "base": -0.018,
+          "vrh": 0.101,
+          "delta": 0.119
+        },
+        "selectivity": {
+          "base": -0.066,
+          "vrh": -0.056,
+          "delta": 0.01
+        },
+        "dti_binding": {
+          "base": 0.08,
+          "vrh": 0.188,
+          "delta": 0.108
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.11,
+            "vrh": 0.193,
+            "delta": 0.083
+          },
+          "stability": {
+            "base": 0.158,
+            "vrh": 0.25,
+            "delta": 0.092
+          },
+          "activity": {
+            "base": 0.091,
+            "vrh": 0.138,
+            "delta": 0.047
+          },
+          "ppi_binding": {
+            "base": -0.018,
+            "vrh": 0.101,
+            "delta": 0.119
+          },
+          "selectivity": {
+            "base": -0.066,
+            "vrh": -0.056,
+            "delta": 0.01
+          },
+          "dti_binding": {
+            "base": 0.08,
+            "vrh": 0.188,
+            "delta": 0.108
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.838,
+            "delta": 0.015
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.555,
+            "vrh": 0.6,
+            "delta": 0.045
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.071,
+            "vrh": 0.15,
+            "delta": 0.079
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.194,
+            "vrh": 0.216,
+            "delta": 0.022
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "rita_m",
+      "family": "RITA-M",
+      "base_name": "RITA-M",
+      "enhanced_name": "RITA-M, vrh",
+      "vrh_name": "RITA-M, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.1,
+          "vrh": 0.186,
+          "delta": 0.086
+        },
+        "ndcg": {
+          "base": 0.821,
+          "vrh": 0.836,
+          "delta": 0.015
+        },
+        "auc": {
+          "base": 0.552,
+          "vrh": 0.596,
+          "delta": 0.044
+        },
+        "mcc": {
+          "base": 0.075,
+          "vrh": 0.127,
+          "delta": 0.052
+        },
+        "top_recall": {
+          "base": 0.179,
+          "vrh": 0.213,
+          "delta": 0.034
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.1,
+          "vrh": 0.186,
+          "delta": 0.086
+        },
+        "stability": {
+          "base": 0.137,
+          "vrh": 0.239,
+          "delta": 0.102
+        },
+        "activity": {
+          "base": 0.081,
+          "vrh": 0.138,
+          "delta": 0.057
+        },
+        "ppi_binding": {
+          "base": -0.021,
+          "vrh": 0.115,
+          "delta": 0.136
+        },
+        "selectivity": {
+          "base": -0.068,
+          "vrh": -0.101,
+          "delta": -0.033
+        },
+        "dti_binding": {
+          "base": 0.184,
+          "vrh": 0.203,
+          "delta": 0.019
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.1,
+            "vrh": 0.186,
+            "delta": 0.086
+          },
+          "stability": {
+            "base": 0.137,
+            "vrh": 0.239,
+            "delta": 0.102
+          },
+          "activity": {
+            "base": 0.081,
+            "vrh": 0.138,
+            "delta": 0.057
+          },
+          "ppi_binding": {
+            "base": -0.021,
+            "vrh": 0.115,
+            "delta": 0.136
+          },
+          "selectivity": {
+            "base": -0.068,
+            "vrh": -0.101,
+            "delta": -0.033
+          },
+          "dti_binding": {
+            "base": 0.184,
+            "vrh": 0.203,
+            "delta": 0.019
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.821,
+            "vrh": 0.836,
+            "delta": 0.015
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.552,
+            "vrh": 0.596,
+            "delta": 0.044
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.075,
+            "vrh": 0.127,
+            "delta": 0.052
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.179,
+            "vrh": 0.213,
+            "delta": 0.034
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "rita_s",
+      "family": "RITA-S",
+      "base_name": "RITA-S",
+      "enhanced_name": "RITA-S, vrh",
+      "vrh_name": "RITA-S, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.056,
+          "vrh": 0.182,
+          "delta": 0.126
+        },
+        "ndcg": {
+          "base": 0.812,
+          "vrh": 0.835,
+          "delta": 0.023
+        },
+        "auc": {
+          "base": 0.528,
+          "vrh": 0.593,
+          "delta": 0.065
+        },
+        "mcc": {
+          "base": 0.038,
+          "vrh": 0.142,
+          "delta": 0.104
+        },
+        "top_recall": {
+          "base": 0.171,
+          "vrh": 0.214,
+          "delta": 0.043
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.056,
+          "vrh": 0.182,
+          "delta": 0.126
+        },
+        "stability": {
+          "base": 0.068,
+          "vrh": 0.228,
+          "delta": 0.16
+        },
+        "activity": {
+          "base": 0.083,
+          "vrh": 0.134,
+          "delta": 0.051
+        },
+        "ppi_binding": {
+          "base": -0.038,
+          "vrh": 0.121,
+          "delta": 0.159
+        },
+        "selectivity": {
+          "base": -0.064,
+          "vrh": -0.041,
+          "delta": 0.023
+        },
+        "dti_binding": {
+          "base": 0.143,
+          "vrh": 0.177,
+          "delta": 0.034
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.056,
+            "vrh": 0.182,
+            "delta": 0.126
+          },
+          "stability": {
+            "base": 0.068,
+            "vrh": 0.228,
+            "delta": 0.16
+          },
+          "activity": {
+            "base": 0.083,
+            "vrh": 0.134,
+            "delta": 0.051
+          },
+          "ppi_binding": {
+            "base": -0.038,
+            "vrh": 0.121,
+            "delta": 0.159
+          },
+          "selectivity": {
+            "base": -0.064,
+            "vrh": -0.041,
+            "delta": 0.023
+          },
+          "dti_binding": {
+            "base": 0.143,
+            "vrh": 0.177,
+            "delta": 0.034
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.812,
+            "vrh": 0.835,
+            "delta": 0.023
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.528,
+            "vrh": 0.593,
+            "delta": 0.065
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.038,
+            "vrh": 0.142,
+            "delta": 0.104
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.171,
+            "vrh": 0.214,
+            "delta": 0.043
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "rita_xl",
+      "family": "RITA-XL",
+      "base_name": "RITA-XL",
+      "enhanced_name": "RITA-XL, vrh",
+      "vrh_name": "RITA-XL, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.095,
+          "vrh": 0.16,
+          "delta": 0.065
+        },
+        "ndcg": {
+          "base": 0.82,
+          "vrh": 0.832,
+          "delta": 0.012
+        },
+        "auc": {
+          "base": 0.547,
+          "vrh": 0.585,
+          "delta": 0.038
+        },
+        "mcc": {
+          "base": 0.065,
+          "vrh": 0.132,
+          "delta": 0.067
+        },
+        "top_recall": {
+          "base": 0.182,
+          "vrh": 0.206,
+          "delta": 0.024
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.095,
+          "vrh": 0.16,
+          "delta": 0.065
+        },
+        "stability": {
+          "base": 0.132,
+          "vrh": 0.216,
+          "delta": 0.084
+        },
+        "activity": {
+          "base": 0.081,
+          "vrh": 0.112,
+          "delta": 0.031
+        },
+        "ppi_binding": {
+          "base": -0.011,
+          "vrh": 0.069,
+          "delta": 0.08
+        },
+        "selectivity": {
+          "base": -0.1,
+          "vrh": -0.1,
+          "delta": 0.0
+        },
+        "dti_binding": {
+          "base": 0.142,
+          "vrh": 0.162,
+          "delta": 0.02
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.095,
+            "vrh": 0.16,
+            "delta": 0.065
+          },
+          "stability": {
+            "base": 0.132,
+            "vrh": 0.216,
+            "delta": 0.084
+          },
+          "activity": {
+            "base": 0.081,
+            "vrh": 0.112,
+            "delta": 0.031
+          },
+          "ppi_binding": {
+            "base": -0.011,
+            "vrh": 0.069,
+            "delta": 0.08
+          },
+          "selectivity": {
+            "base": -0.1,
+            "vrh": -0.1,
+            "delta": 0.0
+          },
+          "dti_binding": {
+            "base": 0.142,
+            "vrh": 0.162,
+            "delta": 0.02
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.82,
+            "vrh": 0.832,
+            "delta": 0.012
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.547,
+            "vrh": 0.585,
+            "delta": 0.038
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.065,
+            "vrh": 0.132,
+            "delta": 0.067
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.182,
+            "vrh": 0.206,
+            "delta": 0.024
+          }
+        }
+      },
+      "inputs": [
+        "seq"
+      ]
+    },
+    {
+      "key": "saprot_mask",
+      "family": "SaProt (mask)",
+      "base_name": "SaProt (mask)",
+      "enhanced_name": "SaProt (mask), vrh",
+      "vrh_name": "SaProt (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.207,
+          "vrh": 0.24,
+          "delta": 0.033
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.842,
+          "delta": 0.005
+        },
+        "auc": {
+          "base": 0.606,
+          "vrh": 0.623,
+          "delta": 0.017
+        },
+        "mcc": {
+          "base": 0.161,
+          "vrh": 0.185,
+          "delta": 0.024
+        },
+        "top_recall": {
+          "base": 0.223,
+          "vrh": 0.231,
+          "delta": 0.008
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.207,
+          "vrh": 0.24,
+          "delta": 0.033
+        },
+        "stability": {
+          "base": 0.275,
+          "vrh": 0.316,
+          "delta": 0.041
+        },
+        "activity": {
+          "base": 0.152,
+          "vrh": 0.161,
+          "delta": 0.009
+        },
+        "ppi_binding": {
+          "base": 0.058,
+          "vrh": 0.091,
+          "delta": 0.033
+        },
+        "selectivity": {
+          "base": 0.014,
+          "vrh": 0.004,
+          "delta": -0.01
+        },
+        "dti_binding": {
+          "base": 0.143,
+          "vrh": 0.2,
+          "delta": 0.057
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.207,
+            "vrh": 0.24,
+            "delta": 0.033
+          },
+          "stability": {
+            "base": 0.275,
+            "vrh": 0.316,
+            "delta": 0.041
+          },
+          "activity": {
+            "base": 0.152,
+            "vrh": 0.161,
+            "delta": 0.009
+          },
+          "ppi_binding": {
+            "base": 0.058,
+            "vrh": 0.091,
+            "delta": 0.033
+          },
+          "selectivity": {
+            "base": 0.014,
+            "vrh": 0.004,
+            "delta": -0.01
+          },
+          "dti_binding": {
+            "base": 0.143,
+            "vrh": 0.2,
+            "delta": 0.057
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.842,
+            "delta": 0.005
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.606,
+            "vrh": 0.623,
+            "delta": 0.017
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.161,
+            "vrh": 0.185,
+            "delta": 0.024
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.223,
+            "vrh": 0.231,
+            "delta": 0.008
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "saprot_wt",
+      "family": "SaProt (wt)",
+      "base_name": "SaProt (wt)",
+      "enhanced_name": "SaProt (wt), vrh",
+      "vrh_name": "SaProt (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.178,
+          "vrh": 0.202,
+          "delta": 0.024
+        },
+        "ndcg": {
+          "base": 0.832,
+          "vrh": 0.837,
+          "delta": 0.005
+        },
+        "auc": {
+          "base": 0.591,
+          "vrh": 0.602,
+          "delta": 0.011
+        },
+        "mcc": {
+          "base": 0.138,
+          "vrh": 0.148,
+          "delta": 0.01
+        },
+        "top_recall": {
+          "base": 0.222,
+          "vrh": 0.228,
+          "delta": 0.006
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.178,
+          "vrh": 0.202,
+          "delta": 0.024
+        },
+        "stability": {
+          "base": 0.249,
+          "vrh": 0.286,
+          "delta": 0.037
+        },
+        "activity": {
+          "base": 0.092,
+          "vrh": 0.093,
+          "delta": 0.001
+        },
+        "ppi_binding": {
+          "base": 0.031,
+          "vrh": 0.057,
+          "delta": 0.026
+        },
+        "selectivity": {
+          "base": -0.023,
+          "vrh": -0.035,
+          "delta": -0.012
+        },
+        "dti_binding": {
+          "base": 0.19,
+          "vrh": 0.175,
+          "delta": -0.015
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.178,
+            "vrh": 0.202,
+            "delta": 0.024
+          },
+          "stability": {
+            "base": 0.249,
+            "vrh": 0.286,
+            "delta": 0.037
+          },
+          "activity": {
+            "base": 0.092,
+            "vrh": 0.093,
+            "delta": 0.001
+          },
+          "ppi_binding": {
+            "base": 0.031,
+            "vrh": 0.057,
+            "delta": 0.026
+          },
+          "selectivity": {
+            "base": -0.023,
+            "vrh": -0.035,
+            "delta": -0.012
+          },
+          "dti_binding": {
+            "base": 0.19,
+            "vrh": 0.175,
+            "delta": -0.015
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.832,
+            "vrh": 0.837,
+            "delta": 0.005
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.591,
+            "vrh": 0.602,
+            "delta": 0.011
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.138,
+            "vrh": 0.148,
+            "delta": 0.01
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.222,
+            "vrh": 0.228,
+            "delta": 0.006
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "s3f_wt",
+      "family": "S3F (wt)",
+      "base_name": "S3F (wt)",
+      "enhanced_name": "S3F (wt), vrh",
+      "vrh_name": "S3F (wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.193,
+          "vrh": 0.224,
+          "delta": 0.031
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.842,
+          "delta": 0.005
+        },
+        "auc": {
+          "base": 0.596,
+          "vrh": 0.615,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.129,
+          "vrh": 0.163,
+          "delta": 0.034
+        },
+        "top_recall": {
+          "base": 0.226,
+          "vrh": 0.236,
+          "delta": 0.01
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.193,
+          "vrh": 0.224,
+          "delta": 0.031
+        },
+        "stability": {
+          "base": 0.271,
+          "vrh": 0.304,
+          "delta": 0.033
+        },
+        "activity": {
+          "base": 0.082,
+          "vrh": 0.111,
+          "delta": 0.029
+        },
+        "ppi_binding": {
+          "base": 0.068,
+          "vrh": 0.123,
+          "delta": 0.055
+        },
+        "selectivity": {
+          "base": -0.024,
+          "vrh": -0.022,
+          "delta": 0.002
+        },
+        "dti_binding": {
+          "base": 0.182,
+          "vrh": 0.175,
+          "delta": -0.007
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.193,
+            "vrh": 0.224,
+            "delta": 0.031
+          },
+          "stability": {
+            "base": 0.271,
+            "vrh": 0.304,
+            "delta": 0.033
+          },
+          "activity": {
+            "base": 0.082,
+            "vrh": 0.111,
+            "delta": 0.029
+          },
+          "ppi_binding": {
+            "base": 0.068,
+            "vrh": 0.123,
+            "delta": 0.055
+          },
+          "selectivity": {
+            "base": -0.024,
+            "vrh": -0.022,
+            "delta": 0.002
+          },
+          "dti_binding": {
+            "base": 0.182,
+            "vrh": 0.175,
+            "delta": -0.007
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.842,
+            "delta": 0.005
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.596,
+            "vrh": 0.615,
+            "delta": 0.019
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.129,
+            "vrh": 0.163,
+            "delta": 0.034
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.226,
+            "vrh": 0.236,
+            "delta": 0.01
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "s3f_mask",
+      "family": "S3F (mask)",
+      "base_name": "S3F (mask)",
+      "enhanced_name": "S3F (mask), vrh",
+      "vrh_name": "S3F (mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.211,
+          "vrh": 0.234,
+          "delta": 0.023
+        },
+        "ndcg": {
+          "base": 0.839,
+          "vrh": 0.843,
+          "delta": 0.004
+        },
+        "auc": {
+          "base": 0.606,
+          "vrh": 0.622,
+          "delta": 0.016
+        },
+        "mcc": {
+          "base": 0.156,
+          "vrh": 0.174,
+          "delta": 0.018
+        },
+        "top_recall": {
+          "base": 0.23,
+          "vrh": 0.224,
+          "delta": -0.006
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.211,
+          "vrh": 0.234,
+          "delta": 0.023
+        },
+        "stability": {
+          "base": 0.295,
+          "vrh": 0.316,
+          "delta": 0.021
+        },
+        "activity": {
+          "base": 0.109,
+          "vrh": 0.14,
+          "delta": 0.031
+        },
+        "ppi_binding": {
+          "base": 0.043,
+          "vrh": 0.095,
+          "delta": 0.052
+        },
+        "selectivity": {
+          "base": -0.007,
+          "vrh": -0.03,
+          "delta": -0.023
+        },
+        "dti_binding": {
+          "base": 0.203,
+          "vrh": 0.195,
+          "delta": -0.008
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.211,
+            "vrh": 0.234,
+            "delta": 0.023
+          },
+          "stability": {
+            "base": 0.295,
+            "vrh": 0.316,
+            "delta": 0.021
+          },
+          "activity": {
+            "base": 0.109,
+            "vrh": 0.14,
+            "delta": 0.031
+          },
+          "ppi_binding": {
+            "base": 0.043,
+            "vrh": 0.095,
+            "delta": 0.052
+          },
+          "selectivity": {
+            "base": -0.007,
+            "vrh": -0.03,
+            "delta": -0.023
+          },
+          "dti_binding": {
+            "base": 0.203,
+            "vrh": 0.195,
+            "delta": -0.008
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.839,
+            "vrh": 0.843,
+            "delta": 0.004
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.606,
+            "vrh": 0.622,
+            "delta": 0.016
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.156,
+            "vrh": 0.174,
+            "delta": 0.018
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.23,
+            "vrh": 0.224,
+            "delta": -0.006
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "mifst",
+      "family": "MIF-ST",
+      "base_name": "MIF-ST",
+      "enhanced_name": "MIF-ST, vrh",
+      "vrh_name": "MIF-ST, vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.196,
+          "vrh": 0.23,
+          "delta": 0.034
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.841,
+          "delta": 0.004
+        },
+        "auc": {
+          "base": 0.599,
+          "vrh": 0.617,
+          "delta": 0.018
+        },
+        "mcc": {
+          "base": 0.141,
+          "vrh": 0.168,
+          "delta": 0.027
+        },
+        "top_recall": {
+          "base": 0.219,
+          "vrh": 0.227,
+          "delta": 0.008
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.196,
+          "vrh": 0.23,
+          "delta": 0.034
+        },
+        "stability": {
+          "base": 0.317,
+          "vrh": 0.352,
+          "delta": 0.035
+        },
+        "activity": {
+          "base": 0.017,
+          "vrh": 0.044,
+          "delta": 0.027
+        },
+        "ppi_binding": {
+          "base": 0.029,
+          "vrh": 0.079,
+          "delta": 0.05
+        },
+        "selectivity": {
+          "base": -0.11,
+          "vrh": -0.106,
+          "delta": 0.004
+        },
+        "dti_binding": {
+          "base": 0.135,
+          "vrh": 0.169,
+          "delta": 0.034
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.196,
+            "vrh": 0.23,
+            "delta": 0.034
+          },
+          "stability": {
+            "base": 0.317,
+            "vrh": 0.352,
+            "delta": 0.035
+          },
+          "activity": {
+            "base": 0.017,
+            "vrh": 0.044,
+            "delta": 0.027
+          },
+          "ppi_binding": {
+            "base": 0.029,
+            "vrh": 0.079,
+            "delta": 0.05
+          },
+          "selectivity": {
+            "base": -0.11,
+            "vrh": -0.106,
+            "delta": 0.004
+          },
+          "dti_binding": {
+            "base": 0.135,
+            "vrh": 0.169,
+            "delta": 0.034
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.841,
+            "delta": 0.004
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.599,
+            "vrh": 0.617,
+            "delta": 0.018
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.141,
+            "vrh": 0.168,
+            "delta": 0.027
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.219,
+            "vrh": 0.227,
+            "delta": 0.008
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "saprot35m_af2_mask",
+      "family": "SaProt (35M_AF2, mask)",
+      "base_name": "SaProt (35M_AF2, mask)",
+      "enhanced_name": "SaProt (35M_AF2, mask), vrh",
+      "vrh_name": "SaProt (35M_AF2, mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.188,
+          "vrh": 0.237,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.832,
+          "vrh": 0.842,
+          "delta": 0.01
+        },
+        "auc": {
+          "base": 0.597,
+          "vrh": 0.624,
+          "delta": 0.027
+        },
+        "mcc": {
+          "base": 0.162,
+          "vrh": 0.184,
+          "delta": 0.022
+        },
+        "top_recall": {
+          "base": 0.208,
+          "vrh": 0.226,
+          "delta": 0.018
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.188,
+          "vrh": 0.237,
+          "delta": 0.049
+        },
+        "stability": {
+          "base": 0.258,
+          "vrh": 0.312,
+          "delta": 0.054
+        },
+        "activity": {
+          "base": 0.153,
+          "vrh": 0.171,
+          "delta": 0.018
+        },
+        "ppi_binding": {
+          "base": -0.017,
+          "vrh": 0.068,
+          "delta": 0.085
+        },
+        "selectivity": {
+          "base": -0.047,
+          "vrh": -0.04,
+          "delta": 0.007
+        },
+        "dti_binding": {
+          "base": 0.18,
+          "vrh": 0.256,
+          "delta": 0.076
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.188,
+            "vrh": 0.237,
+            "delta": 0.049
+          },
+          "stability": {
+            "base": 0.258,
+            "vrh": 0.312,
+            "delta": 0.054
+          },
+          "activity": {
+            "base": 0.153,
+            "vrh": 0.171,
+            "delta": 0.018
+          },
+          "ppi_binding": {
+            "base": -0.017,
+            "vrh": 0.068,
+            "delta": 0.085
+          },
+          "selectivity": {
+            "base": -0.047,
+            "vrh": -0.04,
+            "delta": 0.007
+          },
+          "dti_binding": {
+            "base": 0.18,
+            "vrh": 0.256,
+            "delta": 0.076
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.832,
+            "vrh": 0.842,
+            "delta": 0.01
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.597,
+            "vrh": 0.624,
+            "delta": 0.027
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.162,
+            "vrh": 0.184,
+            "delta": 0.022
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.208,
+            "vrh": 0.226,
+            "delta": 0.018
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "saprot35m_af2_wt",
+      "family": "SaProt (35M_AF2, wt)",
+      "base_name": "SaProt (35M_AF2, wt)",
+      "enhanced_name": "SaProt (35M_AF2, wt), vrh",
+      "vrh_name": "SaProt (35M_AF2, wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.142,
+          "vrh": 0.179,
+          "delta": 0.037
+        },
+        "ndcg": {
+          "base": 0.827,
+          "vrh": 0.834,
+          "delta": 0.007
+        },
+        "auc": {
+          "base": 0.576,
+          "vrh": 0.595,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.116,
+          "vrh": 0.142,
+          "delta": 0.026
+        },
+        "top_recall": {
+          "base": 0.209,
+          "vrh": 0.218,
+          "delta": 0.009
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.142,
+          "vrh": 0.179,
+          "delta": 0.037
+        },
+        "stability": {
+          "base": 0.201,
+          "vrh": 0.25,
+          "delta": 0.049
+        },
+        "activity": {
+          "base": 0.086,
+          "vrh": 0.098,
+          "delta": 0.012
+        },
+        "ppi_binding": {
+          "base": -0.031,
+          "vrh": 0.033,
+          "delta": 0.064
+        },
+        "selectivity": {
+          "base": -0.037,
+          "vrh": -0.023,
+          "delta": 0.014
+        },
+        "dti_binding": {
+          "base": 0.234,
+          "vrh": 0.171,
+          "delta": -0.063
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.142,
+            "vrh": 0.179,
+            "delta": 0.037
+          },
+          "stability": {
+            "base": 0.201,
+            "vrh": 0.25,
+            "delta": 0.049
+          },
+          "activity": {
+            "base": 0.086,
+            "vrh": 0.098,
+            "delta": 0.012
+          },
+          "ppi_binding": {
+            "base": -0.031,
+            "vrh": 0.033,
+            "delta": 0.064
+          },
+          "selectivity": {
+            "base": -0.037,
+            "vrh": -0.023,
+            "delta": 0.014
+          },
+          "dti_binding": {
+            "base": 0.234,
+            "vrh": 0.171,
+            "delta": -0.063
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.827,
+            "vrh": 0.834,
+            "delta": 0.007
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.576,
+            "vrh": 0.595,
+            "delta": 0.019
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.116,
+            "vrh": 0.142,
+            "delta": 0.026
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.209,
+            "vrh": 0.218,
+            "delta": 0.009
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "saprot650m_pdb_mask",
+      "family": "SaProt (650M_PDB, mask)",
+      "base_name": "SaProt (650M_PDB, mask)",
+      "enhanced_name": "SaProt (650M_PDB, mask), vrh",
+      "vrh_name": "SaProt (650M_PDB, mask), vrh",
+      "notes": "mask",
+      "metrics": {
+        "spearman": {
+          "base": 0.205,
+          "vrh": 0.24,
+          "delta": 0.035
+        },
+        "ndcg": {
+          "base": 0.836,
+          "vrh": 0.844,
+          "delta": 0.008
+        },
+        "auc": {
+          "base": 0.604,
+          "vrh": 0.623,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.151,
+          "vrh": 0.176,
+          "delta": 0.025
+        },
+        "top_recall": {
+          "base": 0.22,
+          "vrh": 0.232,
+          "delta": 0.012
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.205,
+          "vrh": 0.24,
+          "delta": 0.035
+        },
+        "stability": {
+          "base": 0.275,
+          "vrh": 0.319,
+          "delta": 0.044
+        },
+        "activity": {
+          "base": 0.116,
+          "vrh": 0.139,
+          "delta": 0.023
+        },
+        "ppi_binding": {
+          "base": 0.048,
+          "vrh": 0.09,
+          "delta": 0.042
+        },
+        "selectivity": {
+          "base": -0.013,
+          "vrh": -0.014,
+          "delta": -0.001
+        },
+        "dti_binding": {
+          "base": 0.285,
+          "vrh": 0.282,
+          "delta": -0.003
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.205,
+            "vrh": 0.24,
+            "delta": 0.035
+          },
+          "stability": {
+            "base": 0.275,
+            "vrh": 0.319,
+            "delta": 0.044
+          },
+          "activity": {
+            "base": 0.116,
+            "vrh": 0.139,
+            "delta": 0.023
+          },
+          "ppi_binding": {
+            "base": 0.048,
+            "vrh": 0.09,
+            "delta": 0.042
+          },
+          "selectivity": {
+            "base": -0.013,
+            "vrh": -0.014,
+            "delta": -0.001
+          },
+          "dti_binding": {
+            "base": 0.285,
+            "vrh": 0.282,
+            "delta": -0.003
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.836,
+            "vrh": 0.844,
+            "delta": 0.008
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.604,
+            "vrh": 0.623,
+            "delta": 0.019
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.151,
+            "vrh": 0.176,
+            "delta": 0.025
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.22,
+            "vrh": 0.232,
+            "delta": 0.012
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "saprot650m_pdb_wt",
+      "family": "SaProt (650M_PDB, wt)",
+      "base_name": "SaProt (650M_PDB, wt)",
+      "enhanced_name": "SaProt (650M_PDB, wt), vrh",
+      "vrh_name": "SaProt (650M_PDB, wt), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.182,
+          "vrh": 0.215,
+          "delta": 0.033
+        },
+        "ndcg": {
+          "base": 0.836,
+          "vrh": 0.84,
+          "delta": 0.004
+        },
+        "auc": {
+          "base": 0.594,
+          "vrh": 0.61,
+          "delta": 0.016
+        },
+        "mcc": {
+          "base": 0.127,
+          "vrh": 0.151,
+          "delta": 0.024
+        },
+        "top_recall": {
+          "base": 0.224,
+          "vrh": 0.219,
+          "delta": -0.005
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.182,
+          "vrh": 0.215,
+          "delta": 0.033
+        },
+        "stability": {
+          "base": 0.256,
+          "vrh": 0.304,
+          "delta": 0.048
+        },
+        "activity": {
+          "base": 0.05,
+          "vrh": 0.059,
+          "delta": 0.009
+        },
+        "ppi_binding": {
+          "base": 0.033,
+          "vrh": 0.078,
+          "delta": 0.045
+        },
+        "selectivity": {
+          "base": -0.025,
+          "vrh": -0.034,
+          "delta": -0.009
+        },
+        "dti_binding": {
+          "base": 0.363,
+          "vrh": 0.319,
+          "delta": -0.044
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.182,
+            "vrh": 0.215,
+            "delta": 0.033
+          },
+          "stability": {
+            "base": 0.256,
+            "vrh": 0.304,
+            "delta": 0.048
+          },
+          "activity": {
+            "base": 0.05,
+            "vrh": 0.059,
+            "delta": 0.009
+          },
+          "ppi_binding": {
+            "base": 0.033,
+            "vrh": 0.078,
+            "delta": 0.045
+          },
+          "selectivity": {
+            "base": -0.025,
+            "vrh": -0.034,
+            "delta": -0.009
+          },
+          "dti_binding": {
+            "base": 0.363,
+            "vrh": 0.319,
+            "delta": -0.044
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.836,
+            "vrh": 0.84,
+            "delta": 0.004
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.594,
+            "vrh": 0.61,
+            "delta": 0.016
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.127,
+            "vrh": 0.151,
+            "delta": 0.024
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.224,
+            "vrh": 0.219,
+            "delta": -0.005
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "prosst_k20",
+      "family": "ProSST (K=20)",
+      "base_name": "ProSST (K=20)",
+      "enhanced_name": "ProSST (K=20), vrh",
+      "vrh_name": "ProSST (K=20), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.143,
+          "vrh": 0.238,
+          "delta": 0.095
+        },
+        "ndcg": {
+          "base": 0.82,
+          "vrh": 0.84,
+          "delta": 0.02
+        },
+        "auc": {
+          "base": 0.576,
+          "vrh": 0.625,
+          "delta": 0.049
+        },
+        "mcc": {
+          "base": 0.114,
+          "vrh": 0.18,
+          "delta": 0.066
+        },
+        "top_recall": {
+          "base": 0.191,
+          "vrh": 0.225,
+          "delta": 0.034
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.143,
+          "vrh": 0.238,
+          "delta": 0.095
+        },
+        "stability": {
+          "base": 0.23,
+          "vrh": 0.327,
+          "delta": 0.097
+        },
+        "activity": {
+          "base": -0.031,
+          "vrh": 0.083,
+          "delta": 0.114
+        },
+        "ppi_binding": {
+          "base": 0.013,
+          "vrh": 0.122,
+          "delta": 0.109
+        },
+        "selectivity": {
+          "base": -0.087,
+          "vrh": -0.036,
+          "delta": 0.051
+        },
+        "dti_binding": {
+          "base": 0.3,
+          "vrh": 0.312,
+          "delta": 0.012
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.143,
+            "vrh": 0.238,
+            "delta": 0.095
+          },
+          "stability": {
+            "base": 0.23,
+            "vrh": 0.327,
+            "delta": 0.097
+          },
+          "activity": {
+            "base": -0.031,
+            "vrh": 0.083,
+            "delta": 0.114
+          },
+          "ppi_binding": {
+            "base": 0.013,
+            "vrh": 0.122,
+            "delta": 0.109
+          },
+          "selectivity": {
+            "base": -0.087,
+            "vrh": -0.036,
+            "delta": 0.051
+          },
+          "dti_binding": {
+            "base": 0.3,
+            "vrh": 0.312,
+            "delta": 0.012
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.82,
+            "vrh": 0.84,
+            "delta": 0.02
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.576,
+            "vrh": 0.625,
+            "delta": 0.049
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.114,
+            "vrh": 0.18,
+            "delta": 0.066
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.191,
+            "vrh": 0.225,
+            "delta": 0.034
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "prosst_k128",
+      "family": "ProSST (K=128)",
+      "base_name": "ProSST (K=128)",
+      "enhanced_name": "ProSST (K=128), vrh",
+      "vrh_name": "ProSST (K=128), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.139,
+          "vrh": 0.23,
+          "delta": 0.091
+        },
+        "ndcg": {
+          "base": 0.817,
+          "vrh": 0.842,
+          "delta": 0.025
+        },
+        "auc": {
+          "base": 0.575,
+          "vrh": 0.621,
+          "delta": 0.046
+        },
+        "mcc": {
+          "base": 0.103,
+          "vrh": 0.171,
+          "delta": 0.068
+        },
+        "top_recall": {
+          "base": 0.181,
+          "vrh": 0.231,
+          "delta": 0.05
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.139,
+          "vrh": 0.23,
+          "delta": 0.091
+        },
+        "stability": {
+          "base": 0.225,
+          "vrh": 0.305,
+          "delta": 0.08
+        },
+        "activity": {
+          "base": -0.02,
+          "vrh": 0.117,
+          "delta": 0.137
+        },
+        "ppi_binding": {
+          "base": 0.009,
+          "vrh": 0.121,
+          "delta": 0.112
+        },
+        "selectivity": {
+          "base": -0.044,
+          "vrh": -0.015,
+          "delta": 0.029
+        },
+        "dti_binding": {
+          "base": 0.204,
+          "vrh": 0.261,
+          "delta": 0.057
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.139,
+            "vrh": 0.23,
+            "delta": 0.091
+          },
+          "stability": {
+            "base": 0.225,
+            "vrh": 0.305,
+            "delta": 0.08
+          },
+          "activity": {
+            "base": -0.02,
+            "vrh": 0.117,
+            "delta": 0.137
+          },
+          "ppi_binding": {
+            "base": 0.009,
+            "vrh": 0.121,
+            "delta": 0.112
+          },
+          "selectivity": {
+            "base": -0.044,
+            "vrh": -0.015,
+            "delta": 0.029
+          },
+          "dti_binding": {
+            "base": 0.204,
+            "vrh": 0.261,
+            "delta": 0.057
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.817,
+            "vrh": 0.842,
+            "delta": 0.025
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.575,
+            "vrh": 0.621,
+            "delta": 0.046
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.103,
+            "vrh": 0.171,
+            "delta": 0.068
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.181,
+            "vrh": 0.231,
+            "delta": 0.05
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "prosst_k512",
+      "family": "ProSST (K=512)",
+      "base_name": "ProSST (K=512)",
+      "enhanced_name": "ProSST (K=512), vrh",
+      "vrh_name": "ProSST (K=512), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.124,
+          "vrh": 0.226,
+          "delta": 0.102
+        },
+        "ndcg": {
+          "base": 0.813,
+          "vrh": 0.842,
+          "delta": 0.029
+        },
+        "auc": {
+          "base": 0.564,
+          "vrh": 0.618,
+          "delta": 0.054
+        },
+        "mcc": {
+          "base": 0.089,
+          "vrh": 0.16,
+          "delta": 0.071
+        },
+        "top_recall": {
+          "base": 0.17,
+          "vrh": 0.233,
+          "delta": 0.063
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.124,
+          "vrh": 0.226,
+          "delta": 0.102
+        },
+        "stability": {
+          "base": 0.219,
+          "vrh": 0.313,
+          "delta": 0.094
+        },
+        "activity": {
+          "base": -0.045,
+          "vrh": 0.102,
+          "delta": 0.147
+        },
+        "ppi_binding": {
+          "base": -0.017,
+          "vrh": 0.083,
+          "delta": 0.1
+        },
+        "selectivity": {
+          "base": -0.089,
+          "vrh": -0.037,
+          "delta": 0.052
+        },
+        "dti_binding": {
+          "base": 0.18,
+          "vrh": 0.264,
+          "delta": 0.084
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.124,
+            "vrh": 0.226,
+            "delta": 0.102
+          },
+          "stability": {
+            "base": 0.219,
+            "vrh": 0.313,
+            "delta": 0.094
+          },
+          "activity": {
+            "base": -0.045,
+            "vrh": 0.102,
+            "delta": 0.147
+          },
+          "ppi_binding": {
+            "base": -0.017,
+            "vrh": 0.083,
+            "delta": 0.1
+          },
+          "selectivity": {
+            "base": -0.089,
+            "vrh": -0.037,
+            "delta": 0.052
+          },
+          "dti_binding": {
+            "base": 0.18,
+            "vrh": 0.264,
+            "delta": 0.084
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.813,
+            "vrh": 0.842,
+            "delta": 0.029
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.564,
+            "vrh": 0.618,
+            "delta": 0.054
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.089,
+            "vrh": 0.16,
+            "delta": 0.071
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.17,
+            "vrh": 0.233,
+            "delta": 0.063
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "prosst_k1024",
+      "family": "ProSST (K=1024)",
+      "base_name": "ProSST (K=1024)",
+      "enhanced_name": "ProSST (K=1024), vrh",
+      "vrh_name": "ProSST (K=1024), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.162,
+          "vrh": 0.242,
+          "delta": 0.08
+        },
+        "ndcg": {
+          "base": 0.822,
+          "vrh": 0.845,
+          "delta": 0.023
+        },
+        "auc": {
+          "base": 0.585,
+          "vrh": 0.627,
+          "delta": 0.042
+        },
+        "mcc": {
+          "base": 0.131,
+          "vrh": 0.184,
+          "delta": 0.053
+        },
+        "top_recall": {
+          "base": 0.201,
+          "vrh": 0.253,
+          "delta": 0.052
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.162,
+          "vrh": 0.242,
+          "delta": 0.08
+        },
+        "stability": {
+          "base": 0.265,
+          "vrh": 0.334,
+          "delta": 0.069
+        },
+        "activity": {
+          "base": -0.016,
+          "vrh": 0.12,
+          "delta": 0.136
+        },
+        "ppi_binding": {
+          "base": 0.004,
+          "vrh": 0.083,
+          "delta": 0.079
+        },
+        "selectivity": {
+          "base": -0.043,
+          "vrh": -0.014,
+          "delta": 0.029
+        },
+        "dti_binding": {
+          "base": 0.184,
+          "vrh": 0.236,
+          "delta": 0.052
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.162,
+            "vrh": 0.242,
+            "delta": 0.08
+          },
+          "stability": {
+            "base": 0.265,
+            "vrh": 0.334,
+            "delta": 0.069
+          },
+          "activity": {
+            "base": -0.016,
+            "vrh": 0.12,
+            "delta": 0.136
+          },
+          "ppi_binding": {
+            "base": 0.004,
+            "vrh": 0.083,
+            "delta": 0.079
+          },
+          "selectivity": {
+            "base": -0.043,
+            "vrh": -0.014,
+            "delta": 0.029
+          },
+          "dti_binding": {
+            "base": 0.184,
+            "vrh": 0.236,
+            "delta": 0.052
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.822,
+            "vrh": 0.845,
+            "delta": 0.023
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.585,
+            "vrh": 0.627,
+            "delta": 0.042
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.131,
+            "vrh": 0.184,
+            "delta": 0.053
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.201,
+            "vrh": 0.253,
+            "delta": 0.052
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "prosst_k4096",
+      "family": "ProSST (K=4096)",
+      "base_name": "ProSST (K=4096)",
+      "enhanced_name": "ProSST (K=4096), vrh",
+      "vrh_name": "ProSST (K=4096), vrh",
+      "notes": "wt",
+      "metrics": {
+        "spearman": {
+          "base": 0.161,
+          "vrh": 0.237,
+          "delta": 0.076
+        },
+        "ndcg": {
+          "base": 0.823,
+          "vrh": 0.843,
+          "delta": 0.02
+        },
+        "auc": {
+          "base": 0.585,
+          "vrh": 0.623,
+          "delta": 0.038
+        },
+        "mcc": {
+          "base": 0.12,
+          "vrh": 0.186,
+          "delta": 0.066
+        },
+        "top_recall": {
+          "base": 0.193,
+          "vrh": 0.232,
+          "delta": 0.039
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.161,
+          "vrh": 0.237,
+          "delta": 0.076
+        },
+        "stability": {
+          "base": 0.25,
+          "vrh": 0.324,
+          "delta": 0.074
+        },
+        "activity": {
+          "base": 0.013,
+          "vrh": 0.117,
+          "delta": 0.104
+        },
+        "ppi_binding": {
+          "base": 0.004,
+          "vrh": 0.096,
+          "delta": 0.092
+        },
+        "selectivity": {
+          "base": 0.029,
+          "vrh": 0.031,
+          "delta": 0.002
+        },
+        "dti_binding": {
+          "base": 0.155,
+          "vrh": 0.177,
+          "delta": 0.022
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.161,
+            "vrh": 0.237,
+            "delta": 0.076
+          },
+          "stability": {
+            "base": 0.25,
+            "vrh": 0.324,
+            "delta": 0.074
+          },
+          "activity": {
+            "base": 0.013,
+            "vrh": 0.117,
+            "delta": 0.104
+          },
+          "ppi_binding": {
+            "base": 0.004,
+            "vrh": 0.096,
+            "delta": 0.092
+          },
+          "selectivity": {
+            "base": 0.029,
+            "vrh": 0.031,
+            "delta": 0.002
+          },
+          "dti_binding": {
+            "base": 0.155,
+            "vrh": 0.177,
+            "delta": 0.022
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.823,
+            "vrh": 0.843,
+            "delta": 0.02
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.585,
+            "vrh": 0.623,
+            "delta": 0.038
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.12,
+            "vrh": 0.186,
+            "delta": 0.066
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.193,
+            "vrh": 0.232,
+            "delta": 0.039
+          }
+        }
+      },
+      "inputs": [
+        "seq",
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_v_48_002",
+      "family": "ProteinMPNN (v_48_002)",
+      "base_name": "ProteinMPNN (v_48_002)",
+      "enhanced_name": "ProteinMPNN (v_48_002), vrh",
+      "vrh_name": "ProteinMPNN (v_48_002), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.191,
+          "vrh": 0.244,
+          "delta": 0.053
+        },
+        "ndcg": {
+          "base": 0.83,
+          "vrh": 0.844,
+          "delta": 0.014
+        },
+        "auc": {
+          "base": 0.598,
+          "vrh": 0.624,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.149,
+          "vrh": 0.182,
+          "delta": 0.033
+        },
+        "top_recall": {
+          "base": 0.199,
+          "vrh": 0.232,
+          "delta": 0.033
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.191,
+          "vrh": 0.244,
+          "delta": 0.053
+        },
+        "stability": {
+          "base": 0.328,
+          "vrh": 0.37,
+          "delta": 0.042
+        },
+        "activity": {
+          "base": -0.021,
+          "vrh": 0.069,
+          "delta": 0.09
+        },
+        "ppi_binding": {
+          "base": -0.032,
+          "vrh": 0.021,
+          "delta": 0.053
+        },
+        "selectivity": {
+          "base": 0.001,
+          "vrh": 0.02,
+          "delta": 0.019
+        },
+        "dti_binding": {
+          "base": 0.064,
+          "vrh": 0.134,
+          "delta": 0.07
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.191,
+            "vrh": 0.244,
+            "delta": 0.053
+          },
+          "stability": {
+            "base": 0.328,
+            "vrh": 0.37,
+            "delta": 0.042
+          },
+          "activity": {
+            "base": -0.021,
+            "vrh": 0.069,
+            "delta": 0.09
+          },
+          "ppi_binding": {
+            "base": -0.032,
+            "vrh": 0.021,
+            "delta": 0.053
+          },
+          "selectivity": {
+            "base": 0.001,
+            "vrh": 0.02,
+            "delta": 0.019
+          },
+          "dti_binding": {
+            "base": 0.064,
+            "vrh": 0.134,
+            "delta": 0.07
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.83,
+            "vrh": 0.844,
+            "delta": 0.014
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.598,
+            "vrh": 0.624,
+            "delta": 0.026
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.149,
+            "vrh": 0.182,
+            "delta": 0.033
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.199,
+            "vrh": 0.232,
+            "delta": 0.033
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_v_48_010",
+      "family": "ProteinMPNN (v_48_010)",
+      "base_name": "ProteinMPNN (v_48_010)",
+      "enhanced_name": "ProteinMPNN (v_48_010), vrh",
+      "vrh_name": "ProteinMPNN (v_48_010), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.218,
+          "vrh": 0.256,
+          "delta": 0.038
+        },
+        "ndcg": {
+          "base": 0.836,
+          "vrh": 0.847,
+          "delta": 0.011
+        },
+        "auc": {
+          "base": 0.611,
+          "vrh": 0.63,
+          "delta": 0.019
+        },
+        "mcc": {
+          "base": 0.163,
+          "vrh": 0.197,
+          "delta": 0.034
+        },
+        "top_recall": {
+          "base": 0.229,
+          "vrh": 0.253,
+          "delta": 0.024
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.218,
+          "vrh": 0.256,
+          "delta": 0.038
+        },
+        "stability": {
+          "base": 0.36,
+          "vrh": 0.383,
+          "delta": 0.023
+        },
+        "activity": {
+          "base": 0.013,
+          "vrh": 0.095,
+          "delta": 0.082
+        },
+        "ppi_binding": {
+          "base": -0.034,
+          "vrh": 0.038,
+          "delta": 0.072
+        },
+        "selectivity": {
+          "base": -0.05,
+          "vrh": -0.023,
+          "delta": 0.027
+        },
+        "dti_binding": {
+          "base": 0.155,
+          "vrh": 0.122,
+          "delta": -0.033
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.218,
+            "vrh": 0.256,
+            "delta": 0.038
+          },
+          "stability": {
+            "base": 0.36,
+            "vrh": 0.383,
+            "delta": 0.023
+          },
+          "activity": {
+            "base": 0.013,
+            "vrh": 0.095,
+            "delta": 0.082
+          },
+          "ppi_binding": {
+            "base": -0.034,
+            "vrh": 0.038,
+            "delta": 0.072
+          },
+          "selectivity": {
+            "base": -0.05,
+            "vrh": -0.023,
+            "delta": 0.027
+          },
+          "dti_binding": {
+            "base": 0.155,
+            "vrh": 0.122,
+            "delta": -0.033
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.836,
+            "vrh": 0.847,
+            "delta": 0.011
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.611,
+            "vrh": 0.63,
+            "delta": 0.019
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.163,
+            "vrh": 0.197,
+            "delta": 0.034
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.229,
+            "vrh": 0.253,
+            "delta": 0.024
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_v_48_030",
+      "family": "ProteinMPNN (v_48_030)",
+      "base_name": "ProteinMPNN (v_48_030)",
+      "enhanced_name": "ProteinMPNN (v_48_030), vrh",
+      "vrh_name": "ProteinMPNN (v_48_030), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.21,
+          "vrh": 0.259,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.835,
+          "vrh": 0.847,
+          "delta": 0.012
+        },
+        "auc": {
+          "base": 0.603,
+          "vrh": 0.627,
+          "delta": 0.024
+        },
+        "mcc": {
+          "base": 0.152,
+          "vrh": 0.18,
+          "delta": 0.028
+        },
+        "top_recall": {
+          "base": 0.227,
+          "vrh": 0.25,
+          "delta": 0.023
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.21,
+          "vrh": 0.259,
+          "delta": 0.049
+        },
+        "stability": {
+          "base": 0.357,
+          "vrh": 0.388,
+          "delta": 0.031
+        },
+        "activity": {
+          "base": 0.009,
+          "vrh": 0.106,
+          "delta": 0.097
+        },
+        "ppi_binding": {
+          "base": -0.06,
+          "vrh": 0.019,
+          "delta": 0.079
+        },
+        "selectivity": {
+          "base": -0.022,
+          "vrh": -0.02,
+          "delta": 0.002
+        },
+        "dti_binding": {
+          "base": 0.067,
+          "vrh": 0.137,
+          "delta": 0.07
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.21,
+            "vrh": 0.259,
+            "delta": 0.049
+          },
+          "stability": {
+            "base": 0.357,
+            "vrh": 0.388,
+            "delta": 0.031
+          },
+          "activity": {
+            "base": 0.009,
+            "vrh": 0.106,
+            "delta": 0.097
+          },
+          "ppi_binding": {
+            "base": -0.06,
+            "vrh": 0.019,
+            "delta": 0.079
+          },
+          "selectivity": {
+            "base": -0.022,
+            "vrh": -0.02,
+            "delta": 0.002
+          },
+          "dti_binding": {
+            "base": 0.067,
+            "vrh": 0.137,
+            "delta": 0.07
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.835,
+            "vrh": 0.847,
+            "delta": 0.012
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.603,
+            "vrh": 0.627,
+            "delta": 0.024
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.152,
+            "vrh": 0.18,
+            "delta": 0.028
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.227,
+            "vrh": 0.25,
+            "delta": 0.023
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_soluble_v_48_002",
+      "family": "ProteinMPNN-Soluble (v_48_002)",
+      "base_name": "ProteinMPNN-Soluble (v_48_002)",
+      "enhanced_name": "ProteinMPNN-Soluble (v_48_002), vrh",
+      "vrh_name": "ProteinMPNN-Soluble (v_48_002), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.198,
+          "vrh": 0.25,
+          "delta": 0.052
+        },
+        "ndcg": {
+          "base": 0.829,
+          "vrh": 0.845,
+          "delta": 0.016
+        },
+        "auc": {
+          "base": 0.599,
+          "vrh": 0.626,
+          "delta": 0.027
+        },
+        "mcc": {
+          "base": 0.141,
+          "vrh": 0.189,
+          "delta": 0.048
+        },
+        "top_recall": {
+          "base": 0.202,
+          "vrh": 0.239,
+          "delta": 0.037
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.198,
+          "vrh": 0.25,
+          "delta": 0.052
+        },
+        "stability": {
+          "base": 0.34,
+          "vrh": 0.379,
+          "delta": 0.039
+        },
+        "activity": {
+          "base": -0.021,
+          "vrh": 0.075,
+          "delta": 0.096
+        },
+        "ppi_binding": {
+          "base": -0.039,
+          "vrh": 0.033,
+          "delta": 0.072
+        },
+        "selectivity": {
+          "base": -0.054,
+          "vrh": -0.016,
+          "delta": 0.038
+        },
+        "dti_binding": {
+          "base": 0.135,
+          "vrh": 0.152,
+          "delta": 0.017
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.198,
+            "vrh": 0.25,
+            "delta": 0.052
+          },
+          "stability": {
+            "base": 0.34,
+            "vrh": 0.379,
+            "delta": 0.039
+          },
+          "activity": {
+            "base": -0.021,
+            "vrh": 0.075,
+            "delta": 0.096
+          },
+          "ppi_binding": {
+            "base": -0.039,
+            "vrh": 0.033,
+            "delta": 0.072
+          },
+          "selectivity": {
+            "base": -0.054,
+            "vrh": -0.016,
+            "delta": 0.038
+          },
+          "dti_binding": {
+            "base": 0.135,
+            "vrh": 0.152,
+            "delta": 0.017
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.829,
+            "vrh": 0.845,
+            "delta": 0.016
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.599,
+            "vrh": 0.626,
+            "delta": 0.027
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.141,
+            "vrh": 0.189,
+            "delta": 0.048
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.202,
+            "vrh": 0.239,
+            "delta": 0.037
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_soluble_v_48_010",
+      "family": "ProteinMPNN-Soluble (v_48_010)",
+      "base_name": "ProteinMPNN-Soluble (v_48_010)",
+      "enhanced_name": "ProteinMPNN-Soluble (v_48_010), vrh",
+      "vrh_name": "ProteinMPNN-Soluble (v_48_010), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.212,
+          "vrh": 0.256,
+          "delta": 0.044
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.846,
+          "delta": 0.009
+        },
+        "auc": {
+          "base": 0.604,
+          "vrh": 0.63,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.148,
+          "vrh": 0.19,
+          "delta": 0.042
+        },
+        "top_recall": {
+          "base": 0.236,
+          "vrh": 0.244,
+          "delta": 0.008
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.212,
+          "vrh": 0.256,
+          "delta": 0.044
+        },
+        "stability": {
+          "base": 0.357,
+          "vrh": 0.383,
+          "delta": 0.026
+        },
+        "activity": {
+          "base": -0.004,
+          "vrh": 0.104,
+          "delta": 0.108
+        },
+        "ppi_binding": {
+          "base": -0.042,
+          "vrh": 0.023,
+          "delta": 0.065
+        },
+        "selectivity": {
+          "base": -0.07,
+          "vrh": -0.025,
+          "delta": 0.045
+        },
+        "dti_binding": {
+          "base": 0.167,
+          "vrh": 0.133,
+          "delta": -0.034
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.212,
+            "vrh": 0.256,
+            "delta": 0.044
+          },
+          "stability": {
+            "base": 0.357,
+            "vrh": 0.383,
+            "delta": 0.026
+          },
+          "activity": {
+            "base": -0.004,
+            "vrh": 0.104,
+            "delta": 0.108
+          },
+          "ppi_binding": {
+            "base": -0.042,
+            "vrh": 0.023,
+            "delta": 0.065
+          },
+          "selectivity": {
+            "base": -0.07,
+            "vrh": -0.025,
+            "delta": 0.045
+          },
+          "dti_binding": {
+            "base": 0.167,
+            "vrh": 0.133,
+            "delta": -0.034
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.846,
+            "delta": 0.009
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.604,
+            "vrh": 0.63,
+            "delta": 0.026
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.148,
+            "vrh": 0.19,
+            "delta": 0.042
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.236,
+            "vrh": 0.244,
+            "delta": 0.008
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_soluble_v_48_020",
+      "family": "ProteinMPNN-Soluble (v_48_020)",
+      "base_name": "ProteinMPNN-Soluble (v_48_020)",
+      "enhanced_name": "ProteinMPNN-Soluble (v_48_020), vrh",
+      "vrh_name": "ProteinMPNN-Soluble (v_48_020), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.216,
+          "vrh": 0.265,
+          "delta": 0.049
+        },
+        "ndcg": {
+          "base": 0.837,
+          "vrh": 0.849,
+          "delta": 0.012
+        },
+        "auc": {
+          "base": 0.609,
+          "vrh": 0.635,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.162,
+          "vrh": 0.198,
+          "delta": 0.036
+        },
+        "top_recall": {
+          "base": 0.235,
+          "vrh": 0.254,
+          "delta": 0.019
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.216,
+          "vrh": 0.265,
+          "delta": 0.049
+        },
+        "stability": {
+          "base": 0.367,
+          "vrh": 0.396,
+          "delta": 0.029
+        },
+        "activity": {
+          "base": 0.004,
+          "vrh": 0.106,
+          "delta": 0.102
+        },
+        "ppi_binding": {
+          "base": -0.049,
+          "vrh": 0.036,
+          "delta": 0.085
+        },
+        "selectivity": {
+          "base": 0.0,
+          "vrh": 0.0,
+          "delta": 0.0
+        },
+        "dti_binding": {
+          "base": 0.031,
+          "vrh": 0.093,
+          "delta": 0.062
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.216,
+            "vrh": 0.265,
+            "delta": 0.049
+          },
+          "stability": {
+            "base": 0.367,
+            "vrh": 0.396,
+            "delta": 0.029
+          },
+          "activity": {
+            "base": 0.004,
+            "vrh": 0.106,
+            "delta": 0.102
+          },
+          "ppi_binding": {
+            "base": -0.049,
+            "vrh": 0.036,
+            "delta": 0.085
+          },
+          "selectivity": {
+            "base": 0.0,
+            "vrh": 0.0,
+            "delta": 0.0
+          },
+          "dti_binding": {
+            "base": 0.031,
+            "vrh": 0.093,
+            "delta": 0.062
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.837,
+            "vrh": 0.849,
+            "delta": 0.012
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.609,
+            "vrh": 0.635,
+            "delta": 0.026
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.162,
+            "vrh": 0.198,
+            "delta": 0.036
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.235,
+            "vrh": 0.254,
+            "delta": 0.019
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    },
+    {
+      "key": "pmpnn_soluble_v_48_030",
+      "family": "ProteinMPNN-Soluble (v_48_030)",
+      "base_name": "ProteinMPNN-Soluble (v_48_030)",
+      "enhanced_name": "ProteinMPNN-Soluble (v_48_030), vrh",
+      "vrh_name": "ProteinMPNN-Soluble (v_48_030), vrh",
+      "notes": "tf",
+      "metrics": {
+        "spearman": {
+          "base": 0.222,
+          "vrh": 0.265,
+          "delta": 0.043
+        },
+        "ndcg": {
+          "base": 0.839,
+          "vrh": 0.848,
+          "delta": 0.009
+        },
+        "auc": {
+          "base": 0.61,
+          "vrh": 0.636,
+          "delta": 0.026
+        },
+        "mcc": {
+          "base": 0.163,
+          "vrh": 0.211,
+          "delta": 0.048
+        },
+        "top_recall": {
+          "base": 0.236,
+          "vrh": 0.255,
+          "delta": 0.019
+        }
+      },
+      "properties": {
+        "overall": {
+          "base": 0.222,
+          "vrh": 0.265,
+          "delta": 0.043
+        },
+        "stability": {
+          "base": 0.357,
+          "vrh": 0.383,
+          "delta": 0.026
+        },
+        "activity": {
+          "base": 0.026,
+          "vrh": 0.12,
+          "delta": 0.094
+        },
+        "ppi_binding": {
+          "base": -0.03,
+          "vrh": 0.039,
+          "delta": 0.069
+        },
+        "selectivity": {
+          "base": 0.03,
+          "vrh": 0.022,
+          "delta": -0.008
+        },
+        "dti_binding": {
+          "base": 0.131,
+          "vrh": 0.168,
+          "delta": 0.037
+        }
+      },
+      "properties_by_metric": {
+        "spearman": {
+          "overall": {
+            "base": 0.222,
+            "vrh": 0.265,
+            "delta": 0.043
+          },
+          "stability": {
+            "base": 0.357,
+            "vrh": 0.383,
+            "delta": 0.026
+          },
+          "activity": {
+            "base": 0.026,
+            "vrh": 0.12,
+            "delta": 0.094
+          },
+          "ppi_binding": {
+            "base": -0.03,
+            "vrh": 0.039,
+            "delta": 0.069
+          },
+          "selectivity": {
+            "base": 0.03,
+            "vrh": 0.022,
+            "delta": -0.008
+          },
+          "dti_binding": {
+            "base": 0.131,
+            "vrh": 0.168,
+            "delta": 0.037
+          }
+        },
+        "ndcg": {
+          "overall": {
+            "base": 0.839,
+            "vrh": 0.848,
+            "delta": 0.009
+          }
+        },
+        "auc": {
+          "overall": {
+            "base": 0.61,
+            "vrh": 0.636,
+            "delta": 0.026
+          }
+        },
+        "mcc": {
+          "overall": {
+            "base": 0.163,
+            "vrh": 0.211,
+            "delta": 0.048
+          }
+        },
+        "top_recall": {
+          "overall": {
+            "base": 0.236,
+            "vrh": 0.255,
+            "delta": 0.019
+          }
+        }
+      },
+      "inputs": [
+        "str"
+      ]
+    }
+  ],
+  "task_counts": {
+    "stability": 540,
+    "activity": 175,
+    "ppi_binding": 100,
+    "selectivity": 47,
+    "dti_binding": 43
+  },
+  "n_mutants": 27846,
+  "median_seq_len": 226,
+  "paired_score_table": "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
+  "manifest": "data/VenusMutHub/assay_manifest.csv"
+}

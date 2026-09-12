@@ -105,6 +105,7 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         return {"recipes": recipe_public()}
 
     @app.get("/api/leaderboard")
+    @app.get("/api/catalog")
     def leaderboard():
         return proteingym_catalog()
 

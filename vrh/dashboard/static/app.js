@@ -305,15 +305,15 @@
       id: "venusmuthub",
       label: "VenusMutHub",
       title: "VenusMutHub substitutions",
-      description: "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.",
-      status: "catalog",
+      description: "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Same-backbone comparison of raw model scores and the full vrh recipe.",
+      status: "ready",
       n: 905,
       setting: "Zero-shot · substitutions",
-      source: "VenusMutHub assay_manifest.csv",
+      source: "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
       manifest: "data/VenusMutHub/assay_manifest.csv",
       n_mutants: 27846,
       median_seq_len: 226,
-      paired_score_table: null,
+      paired_score_table: "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
       properties: [
         { id: "overall", label: "Overall", n: 905 },
         { id: "stability", label: "Stability", n: 540 },
@@ -329,7 +329,12 @@
         { id: "mcc", label: "MCC" },
         { id: "top_recall", label: "Top recall" },
       ],
-      pairs: [],
+      pairs: [
+        { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base_name: "ProSST-Ensemble (K=all)", enhanced_name: "ProSST-Ensemble (K=all), vrh", base: 0.190, enhanced: 0.258, delta: 0.068, inputs: ["seq", "str"], metrics: { spearman: { base: 0.190, vrh: 0.258, delta: 0.068 }, ndcg: { base: 0.830, vrh: 0.848, delta: 0.018 }, auc: { base: 0.601, vrh: 0.637, delta: 0.036 }, mcc: { base: 0.143, vrh: 0.193, delta: 0.050 }, top_recall: { base: 0.211, vrh: 0.253, delta: 0.042 } }, properties: { overall: { base: 0.190, vrh: 0.258, delta: 0.068 }, stability: { base: 0.294, vrh: 0.351, delta: 0.057 }, activity: { base: 0.018, vrh: 0.122, delta: 0.104 }, ppi_binding: { base: 0.006, vrh: 0.113, delta: 0.107 }, selectivity: { base: -0.049, vrh: -0.017, delta: 0.032 }, dti_binding: { base: 0.267, vrh: 0.274, delta: 0.007 } } },
+        { key: "proteinmpnn", family: "ProteinMPNN (v_48_020)", base_name: "ProteinMPNN (v_48_020)", enhanced_name: "ProteinMPNN (v_48_020), vrh", base: 0.221, enhanced: 0.271, delta: 0.050, inputs: ["str"], metrics: { spearman: { base: 0.221, vrh: 0.271, delta: 0.050 }, ndcg: { base: 0.835, vrh: 0.850, delta: 0.015 }, auc: { base: 0.611, vrh: 0.637, delta: 0.026 }, mcc: { base: 0.164, vrh: 0.194, delta: 0.030 }, top_recall: { base: 0.225, vrh: 0.265, delta: 0.040 } }, properties: { overall: { base: 0.221, vrh: 0.271, delta: 0.050 }, stability: { base: 0.366, vrh: 0.399, delta: 0.033 }, activity: { base: 0.006, vrh: 0.108, delta: 0.102 }, ppi_binding: { base: -0.033, vrh: 0.024, delta: 0.057 }, selectivity: { base: -0.001, vrh: 0.012, delta: 0.013 }, dti_binding: { base: 0.116, vrh: 0.198, delta: 0.082 } } },
+        { key: "esmif", family: "ESM-IF1", base_name: "ESM-IF1", enhanced_name: "ESM-IF1, vrh", base: 0.216, enhanced: 0.267, delta: 0.051, inputs: ["str"], metrics: { spearman: { base: 0.216, vrh: 0.267, delta: 0.051 } }, properties: { overall: { base: 0.216, vrh: 0.267, delta: 0.051 }, stability: { base: 0.328, vrh: 0.356, delta: 0.028 }, activity: { base: 0.074, vrh: 0.152, delta: 0.078 }, ppi_binding: { base: 0.040, vrh: 0.108, delta: 0.068 }, selectivity: { base: 0.018, vrh: 0.018, delta: 0.000 }, dti_binding: { base: 0.021, vrh: 0.269, delta: 0.248 } } },
+        { key: "carp_640m", family: "CARP-640M", base_name: "CARP-640M", enhanced_name: "CARP-640M, vrh", base: 0.157, enhanced: 0.206, delta: 0.049, inputs: ["seq"], metrics: { spearman: { base: 0.157, vrh: 0.206, delta: 0.049 } }, properties: { overall: { base: 0.157, vrh: 0.206, delta: 0.049 }, stability: { base: 0.221, vrh: 0.271, delta: 0.050 }, activity: { base: 0.116, vrh: 0.151, delta: 0.035 }, ppi_binding: { base: 0.005, vrh: 0.076, delta: 0.071 }, selectivity: { base: -0.119, vrh: -0.094, delta: 0.025 }, dti_binding: { base: 0.187, vrh: 0.236, delta: 0.049 } } },
+      ],
     },
     {
       id: "venusvirohub",
@@ -358,6 +363,20 @@
       pairs: [],
     }
   );
+  FALLBACK_CATALOG.benchmarks.forEach(function (benchmark) {
+    (benchmark.pairs || []).forEach(function (pair) {
+      if (!pair.properties && pair.base != null) {
+        pair.properties = { overall: { base: pair.base, vrh: pair.enhanced, rem2: pair.enhanced, delta: pair.delta } };
+      }
+      pair.properties_by_metric = pair.properties_by_metric || {};
+      if (pair.properties && !pair.properties_by_metric.spearman) {
+        pair.properties_by_metric.spearman = pair.properties;
+      }
+      Object.keys(pair.metrics || {}).forEach(function (metric) {
+        if (!pair.properties_by_metric[metric]) pair.properties_by_metric[metric] = { overall: pair.metrics[metric] };
+      });
+    });
+  });
   var FALLBACK_BOARD = FALLBACK_CATALOG.boards[0];
 
   var PIPELINE = [
@@ -384,6 +403,7 @@
     benchmarkInput: "all",
     benchmarkVariant: "vrh",
     benchmarkQuery: "",
+    benchmarkPage: 1,
     features: null,
     runs: [],
     job: null,
@@ -1008,6 +1028,7 @@
     for (var i = 0; i < pages.length; i++) {
       setHidden($(pages[i]), pages[i] !== id);
     }
+    setHidden($("benchmark-jump"), id !== "page-benchmarks");
   }
 
   function parseHash() {
@@ -1486,6 +1507,120 @@
     });
   }
 
+  var BENCHMARK_PAGE_SIZE = 10;
+  var benchmarkLazyObserver = null;
+
+  function resetBenchmarkPage() {
+    state.benchmarkPage = 1;
+  }
+
+  function benchmarkPageCount(total) {
+    return Math.max(1, Math.ceil(Math.max(0, Number(total) || 0) / BENCHMARK_PAGE_SIZE));
+  }
+
+  function clampBenchmarkPage(total) {
+    var pages = benchmarkPageCount(total);
+    var page = parseInt(state.benchmarkPage, 10);
+    if (!isFinite(page) || page < 1) page = 1;
+    if (page > pages) page = pages;
+    state.benchmarkPage = page;
+    return page;
+  }
+
+  function pagedBenchmarkRows(rows) {
+    var list = rows || [];
+    var page = clampBenchmarkPage(list.length);
+    var start = (page - 1) * BENCHMARK_PAGE_SIZE;
+    return list.slice(start, start + BENCHMARK_PAGE_SIZE);
+  }
+
+  function benchmarkPagerHtml(total, page) {
+    var count = Number(total) || 0;
+    if (count <= BENCHMARK_PAGE_SIZE) return "";
+    var pages = benchmarkPageCount(count);
+    page = clampBenchmarkPage(count);
+    var start = (page - 1) * BENCHMARK_PAGE_SIZE + 1;
+    var end = Math.min(count, page * BENCHMARK_PAGE_SIZE);
+    var buttons = [];
+    var i;
+    for (i = 1; i <= pages; i++) {
+      buttons.push(
+        '<button type="button" class="benchmark-pager-btn' + (i === page ? " is-on" : "") +
+        '" data-benchmark-page="' + i + '">' + i + "</button>"
+      );
+    }
+    return '<nav class="benchmark-pager" aria-label="Model pages">' +
+      '<button type="button" class="benchmark-pager-btn" data-benchmark-page="prev"' +
+      (page <= 1 ? " disabled" : "") + ">Prev</button>" +
+      buttons.join("") +
+      '<button type="button" class="benchmark-pager-btn" data-benchmark-page="next"' +
+      (page >= pages ? " disabled" : "") + ">Next</button>" +
+      '<span class="benchmark-pager-range">' + start + "–" + end + " / " + count + "</span></nav>";
+  }
+
+  function prefersBenchmarkInstantScroll() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function scrollBenchmarkEdge(edge) {
+    if (typeof window === "undefined" || !window.scrollTo) return;
+    var behavior = prefersBenchmarkInstantScroll() ? "auto" : "smooth";
+    if (edge === "top") {
+      window.scrollTo({ top: 0, left: 0, behavior: behavior });
+      return;
+    }
+    var doc = document.documentElement;
+    var body = document.body;
+    var top = Math.max(
+      doc ? doc.scrollHeight : 0,
+      body ? body.scrollHeight : 0
+    );
+    window.scrollTo({ top: top, left: 0, behavior: behavior });
+  }
+
+  function scrollBenchmarkList() {
+    var chart = typeof document !== "undefined" && document.querySelector
+      ? document.querySelector("#page-benchmarks .benchmark-chart")
+      : null;
+    if (chart && chart.scrollIntoView) {
+      chart.scrollIntoView({
+        behavior: prefersBenchmarkInstantScroll() ? "auto" : "smooth",
+        block: "start",
+      });
+      return;
+    }
+    scrollBenchmarkEdge("top");
+  }
+
+  function hydrateBenchmarkRows(host) {
+    if (!host || !host.querySelectorAll) return;
+    var rows = host.querySelectorAll("[data-lazy-row]");
+    if (!rows.length) return;
+    if (benchmarkLazyObserver) {
+      benchmarkLazyObserver.disconnect();
+      benchmarkLazyObserver = null;
+    }
+    var mark = function (node) {
+      node.classList.add("is-ready");
+    };
+    if (typeof IntersectionObserver === "undefined") {
+      for (var i = 0; i < rows.length; i++) mark(rows[i]);
+      return;
+    }
+    benchmarkLazyObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        mark(entry.target);
+        benchmarkLazyObserver.unobserve(entry.target);
+      });
+    }, { root: null, rootMargin: "120px 0px", threshold: 0.01 });
+    for (var j = 0; j < rows.length; j++) benchmarkLazyObserver.observe(rows[j]);
+  }
+
   function featuredPair(benchmark) {
     var row = (benchmark.pairs || []).filter(isVenusrem2Pair)[0];
     if (!row || !pairMatchesFilters(row, activeBenchmarkProperty(benchmark))) return null;
@@ -1592,7 +1727,7 @@
     var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100));
     var tipPos = pct < 18 ? "is-start" : pct > 82 ? "is-end" : "";
     return '<article class="bbio-row' + (featured ? " is-ours" : "") + " is-" + family +
-      '" style="--bbio:' + color + '" data-family="' + esc(family) + '">' +
+      '" style="--bbio:' + color + '" data-family="' + esc(family) + '" data-lazy-row>' +
       '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
       '<div class="bbio-id"><b><i class="bbio-swatch"></i>' + esc(name) + (featured ? " <em>ours</em>" : "") + "</b>" +
       (sub ? "<span>" + esc(sub) + "</span>" : "") + "</div>" +
@@ -1689,6 +1824,8 @@
     var hasScores = (benchmark.pairs || []).length > 0;
     var allPairs = catalogPairs(benchmark);
     var pairs = hasScores ? benchmarkRows(benchmark) : [];
+    var page = hasScores ? clampBenchmarkPage(pairs.length) : 1;
+    var pageRows = hasScores ? pagedBenchmarkRows(pairs) : [];
     var featured = hasScores ? featuredPair(benchmark) : null;
     var properties = benchmark.properties || [{ id: "overall", label: "Overall" }];
     var metrics = benchmark.metrics || [{ id: "spearman", label: "Spearman" }];
@@ -1721,23 +1858,28 @@
     });
     var total = pool.length;
     var rank = featured ? featuredRank(benchmark, featured) : null;
-    var body = pairs.map(function (row, index) {
-      return benchmarkPairRow(row, index + 1, property, scale);
+    var body = pageRows.map(function (row, index) {
+      return benchmarkPairRow(row, (page - 1) * BENCHMARK_PAGE_SIZE + index + 1, property, scale);
     }).join("");
     var featuredHtml = featured ? benchmarkFeaturedHtml(featured, property, scale, rank, total) : "";
+    var pager = hasScores ? benchmarkPagerHtml(pairs.length, page) : "";
     var chart = !hasScores
       ? renderCatalogAwaiting(benchmark)
       : featuredHtml +
         (body || '<p class="benchmark-no-results">No models match these filters.</p>') +
         (body ? benchmarkAxis(scale) : "") +
-        (body ? benchmarkLegend(pairs, featured) : "");
+        (body ? benchmarkLegend(pageRows, featured) : "");
+    var pageNote = pairs.length > BENCHMARK_PAGE_SIZE
+      ? " · " + ((page - 1) * BENCHMARK_PAGE_SIZE + 1) + "–" +
+        Math.min(pairs.length, page * BENCHMARK_PAGE_SIZE) + " of " + pairs.length
+      : "";
     var summary = !hasScores
       ? (benchmark.status === "offline"
         ? "Offline"
         : catalogCount(benchmark.n) + " assays · catalog · Raw/+VRH disabled until pairs exist")
       : total + " models · " +
         (variant === "raw" ? "Raw " : "+VRH ") + esc(activeMetric.label) + " · " + esc(activeProperty.label) +
-        (featured && rank ? " · VenusREM2 #" + rank : "");
+        (featured && rank ? " · VenusREM2 #" + rank : "") + pageNote;
     var inputPills = benchmarkInputOptions(pool.length ? pool : allPairs);
     host.innerHTML = '<header class="benchmark-cross-head"><div><h2>' +
       esc(benchmark.label || benchmark.title || "Benchmarks") + '</h2></div><dl><div><dt>Models</dt><dd>' + (hasScores ? total : "—") +
@@ -1755,7 +1897,10 @@
       '<label class="benchmark-search"><span class="sr-only">Find model</span>' +
       '<input type="search" data-benchmark-query value="' + esc(state.benchmarkQuery || "") +
       '" placeholder="ESM, ProSST, SaProt…"' + (hasScores ? "" : " disabled") + '></label></div></div>' +
-      '<section class="benchmark-chart">' + chart + "</section>";
+      pager +
+      '<section class="benchmark-chart">' + chart + "</section>" +
+      (pager ? pager : "");
+    hydrateBenchmarkRows(host);
   }
 
   function renderLeaderboard() {
@@ -4646,6 +4791,7 @@
         state.benchmarkInput = "all";
         state.benchmarkVariant = "vrh";
         state.benchmarkQuery = "";
+        resetBenchmarkPage();
       }
       showPage("page-benchmarks");
       renderLeaderboard();
@@ -4807,21 +4953,35 @@
     var benchmarkHost = $("pg-board");
     if (benchmarkHost) {
       benchmarkHost.addEventListener("click", function (ev) {
+        var pageBtn = ev.target.closest("[data-benchmark-page]");
+        if (pageBtn) {
+          var rawPage = pageBtn.getAttribute("data-benchmark-page");
+          var curPage = Number(state.benchmarkPage) || 1;
+          if (rawPage === "prev") state.benchmarkPage = curPage - 1;
+          else if (rawPage === "next") state.benchmarkPage = curPage + 1;
+          else state.benchmarkPage = parseInt(rawPage, 10) || 1;
+          renderLeaderboard();
+          scrollBenchmarkList();
+          return;
+        }
         var propertyBtn = ev.target.closest("[data-benchmark-property]");
         if (propertyBtn) {
           state.benchmarkProperty = propertyBtn.getAttribute("data-benchmark-property");
+          resetBenchmarkPage();
           renderLeaderboard();
           return;
         }
         var metricBtn = ev.target.closest("[data-benchmark-metric]");
         if (metricBtn) {
           state.benchmarkMetric = metricBtn.getAttribute("data-benchmark-metric");
+          resetBenchmarkPage();
           renderLeaderboard();
           return;
         }
         var inputBtn = ev.target.closest("[data-benchmark-input]");
         if (inputBtn) {
           state.benchmarkInput = inputBtn.getAttribute("data-benchmark-input");
+          resetBenchmarkPage();
           renderLeaderboard();
           return;
         }
@@ -4829,6 +4989,7 @@
         if (variantBtn) {
           state.benchmarkVariant = variantBtn.getAttribute("data-benchmark-variant");
           if (state.benchmarkVariant === "raw" && state.benchmarkInput === "evo") state.benchmarkInput = "all";
+          resetBenchmarkPage();
           renderLeaderboard();
           return;
         }
@@ -4842,6 +5003,7 @@
       benchmarkHost.addEventListener("input", function (ev) {
         if (!ev.target.matches("[data-benchmark-query]")) return;
         state.benchmarkQuery = ev.target.value;
+        resetBenchmarkPage();
         clearTimeout(benchmarkSearchTimer);
         benchmarkSearchTimer = setTimeout(function () {
           renderLeaderboard();
@@ -4851,6 +5013,14 @@
             next.setSelectionRange(next.value.length, next.value.length);
           }
         }, 180);
+      });
+    }
+    var jumpDock = $("benchmark-jump");
+    if (jumpDock) {
+      jumpDock.addEventListener("click", function (ev) {
+        var jumpBtn = ev.target.closest("[data-benchmark-jump]");
+        if (!jumpBtn) return;
+        scrollBenchmarkEdge(jumpBtn.getAttribute("data-benchmark-jump"));
       });
     }
     function bindSlotDrop(id, slot) {

@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-store">
   <title>VRH Dashboard</title>
+  <meta name="theme-color" content="#145246">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script>
     window.__VRH_BASE__ = (function () {
       var href = location.href.split("#")[0].split("?")[0];
@@ -13,7 +18,7 @@
       return href;
     })();
   </script>
-  <link rel="stylesheet" href="app.css?v=20260912r">
+  <link rel="stylesheet" href="app.css?v=20260912v">
 </head>
 <body>
   <div id="app">
@@ -205,6 +210,11 @@
     </main>
   </div>
 
+  <aside id="benchmark-jump" class="benchmark-jump" hidden>
+    <button type="button" data-benchmark-jump="top" title="Back to top" aria-label="Back to top">Top</button>
+    <button type="button" data-benchmark-jump="bottom" title="Jump to end" aria-label="Jump to end">End</button>
+  </aside>
+
   <div id="drawer-root" hidden>
     <div id="drawer-backdrop" class="drawer-backdrop"></div>
     <aside id="doctor-drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="doctor-title">
@@ -219,6 +229,6 @@
   <noscript>
     <p class="noscript">VRH Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260912r"></script>
+  <script src="app.js?v=20260912v"></script>
 </body>
 </html>

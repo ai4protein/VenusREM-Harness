@@ -228,7 +228,7 @@ _MUTHUB_DEFAULT = {
     "id": "venusmuthub",
     "label": "VenusMutHub",
     "title": "VenusMutHub substitutions",
-    "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.",
+    "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Same-backbone comparison of raw model scores and the full vrh recipe.",
     "status": "catalog",
     "n": 905,
     "setting": "Zero-shot · substitutions",

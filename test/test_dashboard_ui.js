@@ -73,6 +73,10 @@ this.renderCatalogAwaiting = renderCatalogAwaiting;
 this.benchmarkTabMeta = benchmarkTabMeta;
 this.featuredRank = featuredRank;
 this.benchmarkFeaturedHtml = benchmarkFeaturedHtml;
+this.BENCHMARK_PAGE_SIZE = BENCHMARK_PAGE_SIZE;
+this.pagedBenchmarkRows = pagedBenchmarkRows;
+this.benchmarkPagerHtml = benchmarkPagerHtml;
+this.resetBenchmarkPage = resetBenchmarkPage;
 `;
 
 const context = vm.createContext({
@@ -301,6 +305,9 @@ check("full vrh treats MSA as optional", () => {
 });
 
 check("html flow chrome", () => {
+  assert.ok(html.includes('rel="icon"'));
+  assert.ok(html.includes("favicon.svg"));
+  assert.ok(html.includes("favicon.ico"));
   assert.ok(html.includes('id="tab-predict"'));
   assert.ok(html.includes('id="tab-benchmarks"'));
   assert.ok(html.includes('id="tab-review"') && html.includes("is-disabled"));
@@ -506,10 +513,14 @@ check("pdb or accession unlocks VenusREM2", () => {
 check("catalog hubs keep filter chrome and honest empty scores", () => {
   const host = { innerHTML: "" };
   const catalog = context.state.catalog;
-  const muthub = catalog.benchmarks.find((item) => item.id === "venusmuthub");
+  const snapshot = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "vrh", "dashboard", "data", "venusmuthub_vrh.json"), "utf8"));
+  const muthub = Object.assign({}, catalog.benchmarks.find((item) => item.id === "venusmuthub"), snapshot, { status: "ready" });
+  catalog.benchmarks = catalog.benchmarks.map((item) => item.id === "venusmuthub" ? muthub : item);
+  context.state.catalog = catalog;
   const virohub = catalog.benchmarks.find((item) => item.id === "venusvirohub");
-  assert.ok(muthub && muthub.status === "catalog" && muthub.n === 905);
-  assert.ok(Array.isArray(muthub.pairs) && muthub.pairs.length === 0);
+  assert.ok(muthub && muthub.status === "ready" && muthub.n === 905);
+  assert.ok(Array.isArray(muthub.pairs) && muthub.pairs.length === 59);
+  assert.ok(muthub.pairs.some((row) => row.key === "prosst_ensemble"));
   assert.ok(virohub && virohub.status === "offline" && virohub.n === 89);
   assert.ok(Array.isArray(virohub.pairs) && virohub.pairs.length === 0);
   assert.ok(virohub.properties.some((item) => item.id === "immune_escape"));
@@ -517,13 +528,16 @@ check("catalog hubs keep filter chrome and honest empty scores", () => {
   const viroMeta = context.benchmarkTabMeta(virohub);
   assert.ok(viroMeta === "89 assays" || viroMeta === "Offline");
   context.renderProductBenchmark(host, muthub, catalog);
-  assert.ok(host.innerHTML.includes("is-catalog"));
-  assert.ok(host.innerHTML.includes("data/VenusMutHub/assay_manifest.csv"));
-  assert.ok(host.innerHTML.includes("Disabled until pairs exist"));
+  assert.ok(host.innerHTML.includes("bbio-row"));
+  assert.ok(host.innerHTML.includes("bbio-callout"));
+  assert.ok(host.innerHTML.includes("VenusREM2"));
+  assert.ok(host.innerHTML.includes("0.258"));
+  assert.ok(host.innerHTML.includes("0.271"));
+  assert.ok(!host.innerHTML.includes("is-catalog"));
   assert.ok(host.innerHTML.includes("PPI binding"));
   assert.ok(host.innerHTML.includes("905"));
-  assert.ok(host.innerHTML.includes("27846"));
   assert.ok(host.innerHTML.includes("Spearman"));
+  assert.ok(!host.innerHTML.includes("Disabled until pairs exist"));
   assert.ok(!host.innerHTML.includes("Scores not packaged."));
   assert.ok(!host.innerHTML.includes("Schema ready"));
   assert.ok(!host.innerHTML.includes("Data pending"));
@@ -566,8 +580,42 @@ check("benchmark filter chrome is two compact rows", () => {
   assert.ok(!/benchmark-variant-pill\.is-on\s*\{\s*background:\s*var\(--accent\)/.test(css));
   const muthub = context.state.catalog.benchmarks.find((item) => item.id === "venusmuthub");
   context.renderProductBenchmark(host, muthub, context.state.catalog);
-  assert.ok(/data-benchmark-metric="[^"]+" disabled/.test(host.innerHTML));
-  assert.ok(/data-benchmark-variant="[^"]+" disabled/.test(host.innerHTML));
+  assert.ok(/data-benchmark-metric="[^"]+"/.test(host.innerHTML));
+  assert.ok(/data-benchmark-variant="[^"]+"/.test(host.innerHTML));
+  assert.ok(!/data-benchmark-metric="[^"]+" disabled/.test(host.innerHTML));
+  assert.ok(!/data-benchmark-variant="[^"]+" disabled/.test(host.innerHTML));
+  assert.ok(host.innerHTML.includes("bbio-row"));
+});
+
+check("benchmark pages show ten models and a jump dock", () => {
+  assert.strictEqual(context.BENCHMARK_PAGE_SIZE, 10);
+  assert.ok(html.includes('id="benchmark-jump"'));
+  assert.ok(html.includes('data-benchmark-jump="top"'));
+  assert.ok(html.includes('data-benchmark-jump="bottom"'));
+  assert.ok(css.includes(".benchmark-jump"));
+  assert.ok(css.includes("content-visibility: auto"));
+  const host = { innerHTML: "" };
+  const catalog = context.state.catalog;
+  const snapshot = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "vrh", "dashboard", "data", "venusmuthub_vrh.json"), "utf8"));
+  const muthub = Object.assign({}, catalog.benchmarks.find((item) => item.id === "venusmuthub"), snapshot, { status: "ready" });
+  context.state.benchmarkPage = 1;
+  context.renderProductBenchmark(host, muthub, catalog);
+  const page1 = (host.innerHTML.match(/<article class="bbio-row/g) || []).length;
+  assert.strictEqual(page1, 10);
+  assert.ok(host.innerHTML.includes("data-benchmark-page"));
+  assert.ok(host.innerHTML.includes("1–10 / 58") || host.innerHTML.includes("1–10 of 58"));
+  assert.ok(host.innerHTML.includes("0.271"));
+  context.state.benchmarkPage = 2;
+  context.renderProductBenchmark(host, muthub, catalog);
+  const page2 = (host.innerHTML.match(/<article class="bbio-row/g) || []).length;
+  assert.ok(page2 > 0 && page2 <= 10);
+  assert.ok(host.innerHTML.includes("11–20") || host.innerHTML.includes("data-benchmark-page=\"2\""));
+  const sliced = context.pagedBenchmarkRows(context.benchmarkRows(muthub));
+  assert.strictEqual(sliced.length, 10);
+  context.resetBenchmarkPage();
+  const virohub = catalog.benchmarks.find((item) => item.id === "venusvirohub");
+  context.renderProductBenchmark(host, virohub, catalog);
+  assert.ok(!host.innerHTML.includes("data-benchmark-page"));
 });
 
 check("VenusREM2 is a separate callout with its true rank", () => {
