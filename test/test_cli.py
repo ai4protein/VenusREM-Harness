@@ -135,6 +135,7 @@ def test_optional_cli_and_dashboard_extras():
     )
     core = " ".join(data["project"]["dependencies"]).lower()
     extras = data["project"]["optional-dependencies"]
+    assert "torch" not in core
     assert "fastapi" in core
     assert "biotite" in core
     assert extras["recommended"] == extras["cli"]

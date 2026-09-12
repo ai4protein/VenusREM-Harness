@@ -22,16 +22,15 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
-# Default install is the product: CLI scoring + local dashboard.
-# Install a CUDA-matching PyTorch *before* this package so pip does not
-# pull a CPU-only wheel. Backbone stacks (ProSST / S3F / CARP / ESM-3)
-# stay opt-in extras and are pulled when that model is used.
+# Default install is CLI + dashboard. PyTorch is intentionally not listed:
+# pip/uv would resolve the PyPI CPU wheel and can replace a working CUDA
+# install. Bring your own torch>=2.1 (`vrh doctor` checks). Backbone stacks
+# (ProSST / S3F / CARP / ESM-3) stay opt-in extras.
 dependencies = [
   "numpy>=1.24",
   "pandas>=2.0",
   "scipy>=1.10",
   "tqdm>=4.65",
-  "torch>=2.1",
   "transformers>=4.40",
   "huggingface-hub>=0.23",
   "joblib>=1.3",
@@ -172,3 +171,8 @@ vrh = [
   "**/*.joblib",
   "legacy/**",
 ]
+
+# Library install: `uv pip install .` into an existing env. Do not add a
+# CUDA-specific torch index or uv.lock here — those pin one GPU stack.
+[tool.uv]
+package = true

@@ -34,14 +34,23 @@ Python import: `vrh`. Default backbone: ESM-2 650M.
 
 ## Installation
 
-Install a CUDA [PyTorch](https://pytorch.org/get-started/locally/) wheel first. ESM-2 650M needs about ≥10 GB VRAM; `vrh demo` (ESM-2 8M) can run on CPU.
+vrh does **not** depend on PyTorch in `pyproject.toml`. That keeps pip / uv from replacing a working CUDA wheel with the CPU build on PyPI. Bring your own `torch>=2.1` from [pytorch.org](https://pytorch.org/get-started/locally/). ESM-2 650M needs about ≥10 GB VRAM; `vrh demo` (ESM-2 8M) can run on CPU.
 
-`pip install vrh` is CLI + dashboard (`remharness` is an alias). Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
+`pip install vrh` is CLI + dashboard (`remharness` is an alias). Other deps use lower bounds only. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
+
+**Existing env** (torch already installed):
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu124
 pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
+# or: uv pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
 vrh doctor          # or: remharness doctor
+```
+
+**New env** — install a CUDA torch first, then vrh:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu124   # pick your CUDA
+pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
 vrh demo
 vrh dashboard
 ```
@@ -49,12 +58,14 @@ vrh dashboard
 `[cli]`, `[dashboard]`, and `[all]` are aliases of that default. They do **not** pull extra backbones.
 
 ```bash
-# when you actually use that model
-pip install "vrh[prosst]"    # VenusREM2 / ProSST
+# when you actually use that model — these extras can clash with a custom torch
+pip install "vrh[prosst]"    # VenusREM2 / ProSST (torch-geometric / torch-scatter)
 pip install "vrh[s3f]"       # S3F / S2F (Python <3.11)
 pip install "vrh[carp]"
 pip install "vrh[esm3]"
 ```
+
+If `torch-geometric` is already in the env, use `pip install "vrh[prosst]" --no-deps` or skip the extra.
 
 Editable: `pip install -e .` then add a backbone extra as needed.
 
