@@ -15,6 +15,7 @@
   --row-active: #e8f0ea;
   --viewer: #11140f;
   --header-h: 56px;
+  --page-x: 22px;
   --radius: 10px;
   --shadow: 0 1px 0 rgba(28, 25, 21, 0.04), 0 8px 24px rgba(28, 25, 21, 0.05);
   --font: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
@@ -100,8 +101,8 @@ select {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 8px 10px;
-  min-height: 38px;
+  padding: 7px 10px;
+  min-height: 36px;
 }
 
 input:focus,
@@ -131,7 +132,7 @@ input[type="range"] {
   align-items: center;
   gap: 20px;
   min-height: var(--header-h);
-  padding: 0 22px;
+  padding: 0 var(--page-x);
   background: var(--panel);
   border-bottom: 1px solid var(--line);
   position: sticky;
@@ -196,6 +197,7 @@ input[type="range"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 32px;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -254,7 +256,7 @@ input[type="range"] {
   background: transparent;
   color: var(--muted);
   border-bottom: 1px solid var(--line);
-  padding: 8px 22px;
+  padding: 7px var(--page-x);
   font-size: 13px;
 }
 
@@ -277,8 +279,10 @@ input[type="range"] {
 }
 
 .tab {
-  display: inline-block;
-  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 5px 12px;
   color: var(--muted);
   text-decoration: none;
   border-radius: 8px;
@@ -306,7 +310,7 @@ input[type="range"] {
 }
 
 .flash {
-  margin: 12px 22px 0;
+  margin: 12px var(--page-x) 0;
   padding: 10px 12px;
   border: 1px solid #e4b8bb;
   background: var(--danger-soft);
@@ -316,14 +320,18 @@ input[type="range"] {
 
 #main {
   flex: 1;
-  padding: 28px 22px 48px;
+  padding: 20px var(--page-x) 36px;
   max-width: 1180px;
   width: 100%;
   margin: 0 auto;
 }
 
 .page-head {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+
+.page-head h1 {
+  margin: 0;
 }
 
 .flow-rail {
@@ -373,8 +381,15 @@ button.flow-dot {
 
 .form-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 0;
+}
+
+#predict-form .form-actions .btn-primary {
+  min-width: 148px;
+  min-height: 42px;
+  padding: 8px 16px;
 }
 
 .next-row {
@@ -469,19 +484,13 @@ button.flow-dot {
 
 .page-head-job {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 .page-head-job h1 {
-  margin-bottom: 4px;
-}
-
-button.demo-panel {
-  flex-shrink: 0;
-  margin-top: 4px;
-  font-size: 13px;
+  margin: 0;
 }
 
 .example-row {
@@ -491,7 +500,7 @@ button.demo-panel {
   justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
-  margin-top: 4px;
+  margin: 0;
 }
 
 .example-label {
@@ -523,6 +532,13 @@ button.demo-panel {
 .example-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.example-status {
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 280px;
+  line-height: 1.35;
 }
 
 .btn {
@@ -562,6 +578,8 @@ button.demo-panel {
 
 .btn-ghost {
   background: transparent;
+  min-height: 32px;
+  padding: 5px 10px;
 }
 
 .btn-danger {
@@ -925,7 +943,8 @@ button.demo-panel {
 .model-series-btn {
   border: 1px solid var(--line);
   background: #fff;
-  padding: 10px 14px;
+  padding: 8px 12px;
+  min-height: 40px;
   border-radius: 10px;
   cursor: pointer;
   text-align: left;
@@ -1088,7 +1107,7 @@ button.demo-panel {
   justify-content: center;
   gap: 4px;
   text-align: center;
-  padding: 20px 10px;
+  padding: 14px 10px;
   cursor: pointer;
   border-radius: 8px;
   background: var(--bg-2);
@@ -1171,10 +1190,15 @@ button.demo-panel {
 }
 
 .input-gate {
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: 10px;
+  padding: 8px 10px;
   border-radius: 8px;
   background: var(--bg-2);
+}
+
+.input-gate .gate-msg {
+  margin: 4px 0 0;
+  font-size: 12px;
 }
 
 .gate-chips {
@@ -1340,11 +1364,6 @@ button.demo-panel {
 .form-error {
   color: var(--danger);
   margin-bottom: 8px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .table-scroll {
@@ -2265,7 +2284,7 @@ fieldset {
 .workflow-rail {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -2274,7 +2293,7 @@ fieldset {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 8px;
+  padding: 8px 6px;
   color: var(--muted);
   font-size: 13px;
 }
@@ -2304,27 +2323,26 @@ fieldset {
 #predict-form {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
 
 #predict-form .form-input-step { order: 1; }
 #predict-form .form-model-step {
   order: 2;
-  padding-top: 20px;
+  padding-top: 4px;
   border-top: 1px solid var(--line);
 }
 #predict-form .form-error { order: 3; }
 #predict-form .form-actions { order: 4; }
 
 .benchmark-page-head {
-  max-width: 760px;
-  margin: 16px 0 34px;
+  margin: 0 0 14px;
 }
 
 .benchmark-page-head h1 {
-  margin-bottom: 10px;
-  font-size: clamp(34px, 4vw, 58px);
-  line-height: 1.02;
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
 }
 
 .benchmark-page-head > p:last-child {
@@ -2333,6 +2351,7 @@ fieldset {
 }
 
 #page-benchmarks .board-panel {
+  margin-top: 0;
   padding: 0;
   border: 0;
   box-shadow: none;
@@ -2732,24 +2751,12 @@ fieldset {
   .benchmark-section-title p { margin-top: 8px; text-align: left; }
 }
 
-/* Cross-benchmark leaderboard */
-.benchmark-page-head {
-  max-width: 760px;
-  margin: 18px 0 26px;
-}
-
-.benchmark-page-head h1 {
-  margin: 4px 0 8px;
-  font-size: clamp(32px, 4vw, 48px);
-}
-
 .benchmark-cross-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 36px;
-  padding: 20px 0 18px;
-  border-top: 1px solid var(--line);
+  gap: 24px;
+  padding: 4px 0 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -3568,14 +3575,31 @@ table.candidate-table tbody tr.is-sel:hover { background: var(--review-violet-so
 }
 
 @media (max-width: 960px) {
+  :root {
+    --page-x: 14px;
+  }
+
   .inspector,
   .inspector.has-no-viewer {
     grid-template-columns: 1fr;
   }
 
+  #main {
+    padding: 16px var(--page-x) 28px;
+  }
+
   .page-head-job {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+  }
+
+  .example-row {
+    justify-content: flex-start;
+  }
+
+  .form-actions .btn-primary {
+    width: 100%;
   }
 
   .file-grid-3 {
@@ -3589,7 +3613,7 @@ table.candidate-table tbody tr.is-sel:hover { background: var(--review-violet-so
   .shell-header {
     grid-template-columns: 1fr auto;
     height: auto;
-    padding: 10px 14px 8px;
+    padding: 10px var(--page-x) 8px;
     gap: 8px 12px;
   }
 

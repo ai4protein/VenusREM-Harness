@@ -111,7 +111,8 @@ def test_examples_serve_bundled_demo(client):
     demo = catalog["examples"][0]
     assert demo["id"] == "demo"
     assert demo["pdb_id"] == "2L6Q"
-    assert {row["id"] for row in demo["presets"]} == {"sequence", "structure", "full"}
+    assert {row["id"] for row in demo["presets"]} == {"full"}
+    assert demo["presets"][0]["files"] == ["fasta", "pdb", "msa"]
     assert "fasta" in demo["files"]
     assert "pdb" in demo["files"]
     assert "msa" in demo["files"]
@@ -384,7 +385,7 @@ def test_static_index(client):
     assert res.status_code == 200
     assert b"VRH Dashboard" in res.content
     assert b"Review" in res.content
-    assert b"AlphaFold DB" in res.content
+    assert b"AFDB" in res.content
     js = client.get("/app.js")
     assert js.status_code == 200
     assert b"ssPyMol" in js.content
@@ -396,25 +397,25 @@ def test_static_index(client):
     assert b"preferredModel" in js.content
     assert b"modelLockReason" in js.content
     assert b"needs_msa: false" in js.content
-    assert "MSA optional (none → α=0)".encode() in js.content
+    assert b"MSA optional" in js.content
     assert b"progress-bar" in js.content
     assert b"Start scoring" in res.content
     assert b'id="example-row"' in res.content
-    assert b'data-example="sequence"' in res.content
-    assert b'data-example="structure"' in res.content
+    assert b'id="btn-demo"' in res.content
     assert b'data-example="full"' in res.content
-    assert b'id="btn-demo"' not in res.content
+    assert b'data-example="sequence"' not in res.content
+    assert b'data-example="structure"' not in res.content
     assert b"Skip the form" not in res.content
     assert b"Full ProteinGym-level scoring needs at least a PDB and an MSA" not in res.content
     assert b'id="pg-board"' in res.content
-    assert b"Cross-benchmark leaderboard" in res.content
+    assert b"Benchmarks" in res.content
     assert b"bbio-bar" in js.content
     assert b"bbio-tip" in js.content
     css = client.get("/app.css")
     assert css.status_code == 200
     assert b"benchmark-chart:hover .bbio-row" in css.content
     assert b"bbio-legend" in css.content
-    assert "skip → α=0".encode() in res.content
+    assert b"all sites" in res.content
     assert b"intake-box" in res.content
     assert b"slot-sequence" in res.content
     assert b"slot-structure" in res.content

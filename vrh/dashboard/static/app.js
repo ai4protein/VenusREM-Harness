@@ -399,8 +399,8 @@
   };
 
   var EXAMPLE_PRESETS = {
-    sequence: ["fasta"],
-    structure: ["fasta", "pdb"],
+    sequence: ["fasta", "pdb", "msa"],
+    structure: ["fasta", "pdb", "msa"],
     full: ["fasta", "pdb", "msa"],
   };
   var EXAMPLE_FILE_NAMES = {
@@ -410,6 +410,7 @@
     mutants: "HCP_LAMBD_Tsuboyama_2023_2L6Q.csv",
   };
   var exampleFileCache = {};
+  var attachedFiles = {};
 
   var els = {};
   var pollTimer = null;
@@ -503,8 +504,15 @@
     return '<span class="badge badge-' + esc(s) + '">' + esc(s) + "</span>";
   }
 
+  function fileFromInput(input) {
+    if (input && input.files && input.files[0]) return input.files[0];
+    if (input && attachedFiles[input.id]) return attachedFiles[input.id];
+    return null;
+  }
+
   function fileName(input) {
-    return input && input.files && input.files[0] ? input.files[0].name : "";
+    var file = fileFromInput(input);
+    return file ? file.name : "";
   }
 
   function modelByName(name) {
@@ -745,20 +753,9 @@
 
   function inputGateMessage(snap) {
     snap = snap || formSnapshot();
-    var bits = [];
-    if (!hasSequenceInput(snap) && !hasStructureInput(snap)) {
-      bits.push("Add a sequence or structure.");
-    } else if (!structureReady(snap)) {
-      bits.push("FASTA only — sequence models unlocked.");
-    } else {
-      bits.push("Structure ready.");
-    }
-    if (!hasMsaInput(snap)) {
-      bits.push("No MSA — α=0.");
-    } else {
-      bits.push("MSA attached.");
-    }
-    return bits.join(" ");
+    if (!hasSequenceInput(snap) && !hasStructureInput(snap)) return "Add sequence or structure.";
+    if (!structureReady(snap)) return "Sequence only.";
+    return "Structure ready.";
   }
 
   function updateInputGate() {
@@ -785,12 +782,12 @@
     var rec = snap.recipe || "full";
     var parts = [];
     if ((rec === "full" || rec === "msa" || rec === "ccd") && !hasMsaInput(snap)) {
-      parts.push("This recipe can use MSA, but you did not attach one — α=0.");
+      parts.push("No MSA · α=0.");
     }
     if (rec === "full" && !structureReady(snap)) {
-      parts.push("No structure — RSA / pLDDT decay will be skipped.");
+      parts.push("No structure · skip RSA / pLDDT.");
     }
-    if (rec === "raw") parts.push("Raw backbone only. No MSA mix, CCD, RSA, or pLDDT.");
+    if (rec === "raw") parts.push("Raw backbone.");
     hint.textContent = parts.join(" ");
   }
 
@@ -806,13 +803,13 @@
       var input = $(id);
       var name = fileName(input);
       if (id === "file-mutants") {
-        nodes[i].textContent = name || "empty → saturation";
+        nodes[i].textContent = name || "all sites";
       } else if (id === "file-msa") {
-        nodes[i].textContent = name || "optional — skip → α=0";
+        nodes[i].textContent = name || "";
       } else if (id === "file-pdb") {
-        nodes[i].textContent = name || "optional — unlocks structure models";
+        nodes[i].textContent = name || "";
       } else {
-        nodes[i].textContent = name || "choose a file";
+        nodes[i].textContent = name || "";
       }
       var field = input && input.closest(".file-field");
       if (field) field.classList.toggle("has-file", !!name);
@@ -833,14 +830,10 @@
       return;
     }
     var bits = [];
-    if (spec.description) bits.push(spec.description);
-    if (spec.default_model_id) bits.push("id " + spec.default_model_id);
-    if (spec.needs_pdb) bits.push("PDB required");
-    if (spec.needs_msa) bits.push("MSA required");
-    else bits.push("MSA optional (none → α=0)");
-    if (spec.extras) bits.push("extras: " + spec.extras);
-    if (spec.size_hint) bits.push(spec.size_hint);
-    if (spec.notes) bits.push(spec.notes);
+    if (spec.needs_pdb) bits.push("needs PDB");
+    if (spec.needs_msa) bits.push("needs MSA");
+    else bits.push("MSA optional");
+    if (spec.extras) bits.push(spec.extras);
     meta.textContent = bits.join(" · ");
     if (hint) {
       var strat = ($("f-strategy") && $("f-strategy").value) || "wt";
@@ -925,7 +918,7 @@
     setTabEnabled(
       els.tabReview,
       job && job.status === "done" ? "#/review/" + encodeURIComponent(id) : "",
-      id ? "Wait until scoring finishes" : "Open a finished run first"
+      id ? "Finish scoring first" : "Open a finished run"
     );
   }
 
@@ -1540,9 +1533,7 @@
     var chips = properties.filter(function (item) { return item.id !== "overall"; }).map(function (item) {
       return '<div><span>' + esc(item.label) + '</span><strong>' + (item.n != null ? esc(item.n) : "—") + '</strong></div>';
     }).join("");
-    var copy = offline
-      ? "Leaderboard unavailable offline. Reconnect to load paired scores."
-      : "Paired Raw / +VRH model scores are not packaged for this benchmark yet.";
+    var copy = offline ? "Offline." : "Scores not packaged.";
     return '<section class="benchmark-awaiting' + (offline ? " is-offline" : "") + '"><p>' + copy + "</p>" +
       (chips ? '<div class="benchmark-awaiting-grid">' + chips + "</div>" : "") + "</section>";
   }
@@ -1557,14 +1548,14 @@
     var pct = Math.max(0, Math.min(100, Number(score) / Number(scale || 1) * 100));
     var tipPos = pct < 18 ? "is-start" : pct > 82 ? "is-end" : "";
     var rankNote = rank && total
-      ? (rank === 1 ? "Leads this slice" : "Rank " + rank + " of " + total + " on this slice")
-      : "Official ProSST ensemble";
+      ? (rank === 1 ? "#1" : "#" + rank + " / " + total)
+      : "ours";
     var mode = variant === "raw" ? "Raw" : "+VRH";
     return '<aside class="bbio-callout is-ours" style="--bbio:' + color + '">' +
-      '<p class="bbio-callout-kicker">Official model · ' + esc(rankNote) + " · " + mode + "</p>" +
+      '<p class="bbio-callout-kicker">' + esc(rankNote) + " · " + mode + "</p>" +
       '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
       '<div class="bbio-id"><b><i class="bbio-swatch"></i>VenusREM2 <em>ours</em></b>' +
-      "<span>" + (variant === "raw" ? "Uncalibrated ProSST ensemble" : signed(delta, 3) + " vs Raw") +
+      "<span>" + (variant === "raw" ? "Raw ensemble" : signed(delta, 3) + " vs Raw") +
       "</span></div><div class=\"bbio-meta\">" + benchmarkTags(["seq", "str", "evo"]) + "</div></div>" +
       '<div class="bbio-plot"><div class="bbio-bar" aria-hidden="true"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
       '<div class="bbio-tip' + (tipPos ? " " + tipPos : "") + '" style="left:' + pct.toFixed(1) + '%">' +
@@ -1624,17 +1615,13 @@
         (body ? benchmarkAxis(scale) : "") +
         (body ? benchmarkLegend(pairs, featured) : "");
     var summary = !hasScores
-      ? (benchmark.status === "offline"
-        ? "Leaderboard unavailable offline · reconnect to load paired scores"
-        : "Assay taxonomy only · paired Raw / +VRH scores are not packaged yet")
-      : "<strong>" + total + "</strong> models · " +
+      ? (benchmark.status === "offline" ? "Offline" : "Scores not packaged")
+      : total + " models · " +
         (variant === "raw" ? "Raw " : "+VRH ") + esc(activeMetric.label) + " · " + esc(activeProperty.label) +
-        (featured && rank ? " · VenusREM2 is rank " + rank : "");
+        (featured && rank ? " · VenusREM2 #" + rank : "");
     var inputPills = benchmarkInputOptions(pool.length ? pool : allPairs);
-    host.innerHTML = '<header class="benchmark-cross-head"><div><span class="section-kicker">Cross-benchmark leaderboard</span><h2>' +
-      esc(benchmark.title || "VRH benchmark evidence") + '</h2><p>' +
-      esc(benchmark.description || "Switch evaluation metric, protein property, and Raw or +VRH.") +
-      '</p></div><dl><div><dt>Models</dt><dd>' + (hasScores ? total : "—") +
+    host.innerHTML = '<header class="benchmark-cross-head"><div><h2>' +
+      esc(benchmark.label || benchmark.title || "Benchmarks") + '</h2></div><dl><div><dt>Models</dt><dd>' + (hasScores ? total : "—") +
       '</dd></div><div><dt>Assays</dt><dd>' + esc(benchmark.n) +
       '</dd></div></dl></header><div class="benchmark-filter-stack">' +
       '<div class="benchmark-filter-row benchmark-filter-primary">' +
@@ -1776,17 +1763,19 @@
 
   function setInputFile(input, file) {
     if (!input || !file) return;
+    attachedFiles[input.id] = file;
     try {
       var dt = new DataTransfer();
       dt.items.add(file);
       input.files = dt.files;
     } catch (err) {
-      /* browsers without DataTransfer keep the original picker */
+      /* keep attachedFiles so the demo still submits */
     }
   }
 
   function clearInputFile(input) {
     if (!input) return;
+    delete attachedFiles[input.id];
     try {
       input.value = "";
     } catch (err) {
@@ -1834,29 +1823,57 @@
     return file;
   }
 
-  async function loadExamplePreset(presetId) {
-    var files = EXAMPLE_PRESETS[presetId] || EXAMPLE_PRESETS.full;
-    var target = $("f-seq-id");
-    if (target) target.value = "";
-    var hiddenPdb = $("f-pdb-id");
-    var hiddenUni = $("f-uniprot");
-    if (hiddenPdb) hiddenPdb.value = "";
-    if (hiddenUni) hiddenUni.value = "";
-    clearInputFile($("file-fasta"));
-    clearInputFile($("file-pdb"));
-    clearInputFile($("file-msa"));
-    clearInputFile($("file-mutants"));
-    var i;
-    for (i = 0; i < files.length; i++) {
-      setInputFile(exampleInputFor(files[i]), await fetchExampleFile(files[i]));
+  function setExampleBusy(busy) {
+    var buttons = document.querySelectorAll("#example-row [data-example]");
+    for (var i = 0; i < buttons.length; i++) buttons[i].disabled = !!busy;
+    var note = $("example-status");
+    if (note && busy) note.textContent = "Loading 2L6Q…";
+  }
+
+  function setExampleStatus(text) {
+    var note = $("example-status");
+    if (note) note.textContent = text || "";
+  }
+
+  function setRecipe(id) {
+    var radios = document.querySelectorAll('input[name="recipe"]');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].checked = radios[i].value === id;
     }
-    state.exampleId = presetId;
-    state.examplePrefillDone = true;
-    markExampleButtons();
-    updateFileLabels();
-    renderIntakeFiles();
-    fillModels();
-    updateCli();
+  }
+
+  async function loadExamplePreset(presetId) {
+    var files = EXAMPLE_PRESETS.full;
+    setExampleBusy(true);
+    try {
+      var target = $("f-seq-id");
+      if (target) target.value = "";
+      var hiddenPdb = $("f-pdb-id");
+      var hiddenUni = $("f-uniprot");
+      if (hiddenPdb) hiddenPdb.value = "";
+      if (hiddenUni) hiddenUni.value = "";
+      clearInputFile($("file-fasta"));
+      clearInputFile($("file-pdb"));
+      clearInputFile($("file-msa"));
+      clearInputFile($("file-mutants"));
+      var i;
+      for (i = 0; i < files.length; i++) {
+        setInputFile(exampleInputFor(files[i]), await fetchExampleFile(files[i]));
+      }
+      state.exampleId = "full";
+      state.examplePrefillDone = true;
+      markExampleButtons();
+      setRecipe("full");
+      updateFileLabels();
+      renderIntakeFiles();
+      fillModels();
+      setModel("esm2-8m");
+      showFormError("");
+      setExampleStatus("2L6Q · FASTA, PDB, MSA");
+    } finally {
+      setExampleBusy(false);
+      markExampleButtons();
+    }
   }
 
   async function maybePrefillDemo() {
@@ -1869,7 +1886,8 @@
       await loadExamplePreset("full");
     } catch (err) {
       state.examplePrefillDone = true;
-      flash(err.message || "Could not load the demo example.");
+      setExampleStatus("");
+      flash(err.message || "Could not load 2L6Q.");
     }
   }
 
@@ -2694,9 +2712,9 @@
     var row = state.selectedRow;
     var mut = mutantField(row) || "Candidate";
     return (
-      '<section class="review-evidence" aria-live="polite"><div class="review-section-head"><div><span class="section-kicker">Decision support</span><h2>' +
-      (state.evidenceMode === "compare" ? "Candidate comparison" : "Evidence for " + esc(mut)) +
-      '</h2></div><div class="evidence-head-actions"><span class="score-disclaimer" title="A relative model ranking signal, not a physical stability measurement">Relative score · higher ranks better</span>' +
+      '<section class="review-evidence" aria-live="polite"><div class="review-section-head"><div><h2>' +
+      (state.evidenceMode === "compare" ? "Compare" : esc(mut)) +
+      '</h2></div><div class="evidence-head-actions"><span class="score-disclaimer" title="Relative ranking, not ΔΔG">Higher is better</span>' +
       reviewModeTabsHtml() +
       '</div></div>' +
       (state.evidenceMode === "compare" ? compareEvidenceHtml() : singleEvidenceHtml(row)) +
@@ -2712,9 +2730,7 @@
     }).join("");
     if (rows.length > 6) chips += '<span class="more-selected">+' + (rows.length - 6) + ' more</span>';
     return (
-      '<footer class="experiment-tray"><div class="experiment-count"><strong>' + rows.length + ' / 24 selected</strong><span>' +
-      'Build a CSV shortlist for downstream validation' +
-      '</span></div><div class="experiment-chips">' + (chips || '<span class="tray-empty">No candidates selected yet</span>') +
+      '<footer class="experiment-tray"><div class="experiment-count"><strong>' + rows.length + ' / 24</strong></div><div class="experiment-chips">' + (chips || '<span class="tray-empty">None</span>') +
       '</div><div class="experiment-actions"><button type="button" class="btn btn-primary" id="btn-export-experiment"' +
       (!rows.length ? " disabled" : "") +
       '>Add to CSV</button></div></footer>'
@@ -2765,7 +2781,7 @@
       '<div class="page-head"><h1 class="mono">' +
       esc(job.protein || job.id) +
       "</h1>" +
-      '<p class="muted">Scoring this run. Review opens when it finishes.</p></div>' +
+      '</div>' +
       runFlowHtml(job) +
       '<div class="panel overview">' +
       ov("protein", job.protein || "—") +
@@ -2804,9 +2820,7 @@
     var header =
       '<header class="review-context"><div><div class="review-title-row"><h1>' +
       esc(job.protein || job.id) +
-      '</h1><span class="badge badge-done">Complete</span></div><p>' +
-      esc(job.description || "Candidate review for experimental validation") +
-      '</p></div><dl><div><dt>Variants</dt><dd>' +
+      '</h1><span class="badge badge-done">Done</span></div></div><dl><div><dt>Variants</dt><dd>' +
       esc(total) +
       '</dd></div><div><dt>Model</dt><dd>' +
       esc(job.model || "—") +
@@ -2814,22 +2828,22 @@
       esc(job.recipe || "—") +
       '</dd></div></dl></header>';
     var candidates =
-      '<section class="candidate-pane"><div class="candidate-head"><div><span class="section-kicker">Ranked output</span><h2>Candidates <small>(' +
+      '<section class="candidate-pane"><div class="candidate-head"><div><h2>Candidates <small>(' +
       esc(total) +
       ')</small></h2></div><button type="button" class="btn btn-ghost" id="btn-copy-selected">Copy row</button></div>' +
-      '<div class="candidate-filters"><input type="search" id="score-q" placeholder="Search mutations, e.g. M55K" title="Press Enter" value="' +
+      '<div class="candidate-filters"><input type="search" id="score-q" placeholder="Search" title="Press Enter" value="' +
       esc(state.query) +
       '"><span class="filter-chip is-on">All positions</span><span class="filter-chip">Single substitutions</span></div>' +
       scoreTableHtml(job, state.scores) +
       '</section>';
     var structure =
-      '<section class="structure-pane"><div class="review-section-head structure-head"><div><span class="section-kicker">Molecular context</span><h2>Structure <small>' +
+      '<section class="structure-pane"><div class="review-section-head structure-head"><div><h2>Structure <small>' +
       esc(structureSelection) +
       '</small></h2></div></div>' +
       (hasCoord
         ? molPanelHtml("bench")
-        : '<div class="viewer-empty"><h2>No coordinates</h2><p>Add or fetch a PDB structure to link candidates to their molecular context.</p></div>') +
-      '<div class="sequence-panel"><div class="sequence-label"><strong>Amino acid sequence</strong><span>' +
+        : '<div class="viewer-empty"><h2>No PDB</h2></div>') +
+      '<div class="sequence-panel"><div class="sequence-label"><strong>Sequence</strong><span>' +
       esc((seq && seq.length) || 0) +
       ' residues</span></div>' +
       aaStripHtml(seq, currentMutPositions()) +
@@ -3504,7 +3518,7 @@
     var mode = state.view.color;
     if (mode === "plddt") {
       if (!sourceHasPlddt(state.job)) {
-        return "<span>Crystal / experimental PDB has no pLDDT (B-factor is a temperature factor). Showing spectrum. Fetch an AlphaFold model to color by confidence.</span>";
+        return "<span>Crystal PDB · no pLDDT. Fetch AFDB for confidence.</span>";
       }
       return (
         '<span><i class="mol-swatch" style="background:#0053d6"></i>pLDDT ≥90</span>' +
@@ -4185,13 +4199,13 @@
       "</div>" +
       '<div class="panel"><h2>Selection</h2>' +
       selectedDetailHtml(job, state.selectedRow) +
-      '<p class="mol-hint">Use the residue bar above the 3D view, or click the cartoon. Drag the gutter to grow the protein.</p></div>' +
+      '</div>' +
       fetchBarHtml(job);
     var viewer = hasCoord
       ? molPanelHtml("bench")
       : '<div class="viewer-empty"><h2>' +
-        (isLive(job.status) ? "Waiting for coordinates" : "No coordinates") +
-        "</h2><p>Paste a PDB id or UniProt on the left. This does not re-score.</p></div>";
+        (isLive(job.status) ? "Waiting for PDB" : "No PDB") +
+        "</h2></div>";
     host.innerHTML = proteinBenchHtml("structure", side, viewer);
     mountBench("structure");
   }
@@ -4299,10 +4313,14 @@
     fd.append("model", snap.model);
     fd.append("recipe", snap.recipe);
     fd.append("mutant_mode", snap.mutants ? "upload" : "saturation");
-    if (form.fasta.files[0]) fd.append("fasta", form.fasta.files[0]);
-    if (form.pdb.files[0]) fd.append("pdb", form.pdb.files[0]);
-    if (form.mutants.files[0]) fd.append("mutants", form.mutants.files[0]);
-    if (form.msa.files[0]) fd.append("msa", form.msa.files[0]);
+    var fasta = fileFromInput(form.fasta);
+    var pdb = fileFromInput(form.pdb);
+    var mutants = fileFromInput(form.mutants);
+    var msa = fileFromInput(form.msa);
+    if (fasta) fd.append("fasta", fasta);
+    if (pdb) fd.append("pdb", pdb);
+    if (mutants) fd.append("mutants", mutants);
+    if (msa) fd.append("msa", msa);
     if (!snap.mutants) {
       fd.append("mutant_sites", snap.mutant_sites || "1");
       if (snap.positions) fd.append("positions", snap.positions);
@@ -4618,6 +4636,7 @@
         var btn = ev.target.closest("[data-example]");
         if (!btn || btn.disabled) return;
         loadExamplePreset(btn.getAttribute("data-example")).catch(function (err) {
+          setExampleStatus("");
           showFormError(err.message || "Could not load the demo example.");
         });
       });

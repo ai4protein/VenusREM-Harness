@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VRH Dashboard</title>
-  <link rel="stylesheet" href="app.css?v=20260911g">
+  <link rel="stylesheet" href="app.css?v=20260912e">
 </head>
 <body>
   <div id="app">
@@ -17,7 +17,7 @@
       <nav class="tabs" aria-label="Dashboard sections">
         <a href="#/runs" id="tab-runs" class="tab is-active">Projects</a>
         <a href="#/predict" id="tab-predict" class="tab">New prediction</a>
-        <a href="#/review" id="tab-review" class="tab is-disabled" aria-disabled="true" title="Wait until scoring finishes">Review</a>
+        <a href="#/review" id="tab-review" class="tab is-disabled" aria-disabled="true" title="Finish a run first">Review</a>
         <a href="#/benchmarks" id="tab-benchmarks" class="tab">Benchmarks</a>
       </nav>
       <div class="header-right">
@@ -28,9 +28,7 @@
       </div>
     </header>
 
-    <div class="banner" role="note">
-      Prediction scores rank variants: higher is better. They are not physical ΔΔG measurements and have no kcal/mol unit.
-    </div>
+    <div class="banner" role="note">Higher is better. Not ΔΔG.</div>
 
     <div id="flash" class="flash" hidden></div>
 
@@ -38,7 +36,6 @@
       <section id="page-runs" class="page" hidden>
         <div class="page-head">
           <h1>Runs</h1>
-          <p class="muted">Open a run to watch scoring. Review opens after it finishes.</p>
         </div>
         <div id="runs-body" class="panel">Loading runs…</div>
       </section>
@@ -47,13 +44,10 @@
         <div class="page-head page-head-job">
           <div>
             <h1>New prediction</h1>
-            <p class="muted">Define the target, choose evidence, then score candidates for review.</p>
           </div>
-          <div class="example-row" id="example-row" role="group" aria-label="Load a demo">
-            <span class="example-label">Examples</span>
-            <button type="button" class="example-btn" data-example="sequence">Sequence</button>
-            <button type="button" class="example-btn" data-example="structure">+ Structure</button>
-            <button type="button" class="example-btn" data-example="full">Full vrh</button>
+          <div class="example-row" id="example-row" role="group" aria-label="2L6Q demo">
+            <button type="button" class="example-btn" id="btn-demo" data-example="full">Demo</button>
+            <span class="example-status" id="example-status"></span>
           </div>
         </div>
 
@@ -80,19 +74,16 @@
           </section>
 
           <section class="form-input-step">
-            <div class="section-kicker">Target &amp; evidence</div>
-            <h2>What do you know about this protein?</h2>
-            <p class="field-hint">A sequence is enough to start. Structure and MSA improve model coverage when available.</p>
+            <h2>Input</h2>
             <div class="input-slots" id="intake-box">
               <div class="input-slot" id="slot-sequence" data-slot="fasta">
                 <h3>Sequence</h3>
                 <label class="slot-drop">
                   <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
-                  <strong>Drop FASTA</strong>
-                  <span>or click to upload</span>
+                  <strong>FASTA</strong>
                 </label>
-                <label class="slot-id">Protein ID <span class="label-note">UniProt or PDB</span>
-                  <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 or 2L6Q" autocomplete="off">
+                <label class="slot-id">ID
+                  <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 / 2L6Q" autocomplete="off">
                 </label>
                 <div class="slot-chips" id="slot-sequence-chips"></div>
               </div>
@@ -100,15 +91,14 @@
                 <h3>Structure</h3>
                 <label class="slot-drop">
                   <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
-                  <strong>Drop PDB / CIF</strong>
-                  <span>or click to upload</span>
+                  <strong>PDB</strong>
                 </label>
                 <label class="slot-id">Fetch
                   <select name="fetch_structure" id="f-fetch">
-                    <option value="auto" selected>Auto (RCSB + AFDB)</option>
-                    <option value="afdb">AlphaFold DB only</option>
-                    <option value="rcsb">RCSB only</option>
-                    <option value="none">Don't fetch</option>
+                    <option value="auto" selected>Auto</option>
+                    <option value="afdb">AFDB</option>
+                    <option value="rcsb">RCSB</option>
+                    <option value="none">Off</option>
                   </select>
                 </label>
                 <input type="hidden" name="pdb_id" id="f-pdb-id">
@@ -119,31 +109,29 @@
                 <h3>MSA</h3>
                 <label class="slot-drop">
                   <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-                  <strong>Drop MSA</strong>
-                  <span>optional — skip → α=0</span>
+                  <strong>MSA</strong>
                 </label>
                 <div class="slot-chips" id="slot-msa-chips"></div>
               </div>
             </div>
             <div id="input-gate" class="input-gate" aria-live="polite"></div>
             <details class="advanced scope-details">
-              <summary><span>Limit mutation scope</span><small>Optional · default is all positions × 19 substitutions</small></summary>
-              <p class="scope-copy"><strong>Default:</strong> predict every single-amino-acid substitution at every residue. Only change this section when you want a smaller candidate set or already have a mutant list.</p>
+              <summary><span>Scope</span><small>all sites × 19</small></summary>
               <label class="file-field">
-                <span>Use a predefined mutant list</span>
+                <span>Mutant CSV</span>
                 <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
                 <span class="file-name" data-for="file-mutants"></span>
               </label>
               <fieldset id="saturation-fields" class="field sat-box">
-                <legend>Or limit saturation mutagenesis</legend>
+                <legend>Saturation</legend>
                 <div class="field-row">
-                  <label>Mutation order <span class="label-note">1 = single substitutions</span>
-                    <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1 or 1,2">
+                  <label>Sites
+                    <input type="text" name="mutant_sites" id="f-sites" value="1" placeholder="1">
                   </label>
-                  <label>Specific positions <span class="label-note">optional</span>
+                  <label>Positions
                     <input type="text" name="positions" id="f-positions" placeholder="10,11,12">
                   </label>
-                  <label>Residue range <span class="label-note">optional</span>
+                  <label>Range
                     <input type="text" name="residue_range" id="f-range" placeholder="10-20">
                   </label>
                 </div>
@@ -165,7 +153,7 @@
               </div>
               <p id="strategy-hint" class="field-hint"></p>
               <div class="cli-block">
-                <div class="cli-label">Equivalent CLI</div>
+                <div class="cli-label">CLI</div>
                 <pre id="cli-preview" class="cli"></pre>
               </div>
             </details>
@@ -174,7 +162,7 @@
 
           <p id="form-error" class="form-error" hidden></p>
           <div class="form-actions">
-            <button type="submit" id="btn-submit" class="btn btn-primary">Start scoring</button>
+            <button type="submit" id="btn-submit" class="btn btn-primary btn-lg">Start scoring</button>
           </div>
         </form>
 
@@ -182,11 +170,9 @@
 
       <section id="page-benchmarks" class="page" hidden>
         <div class="benchmark-page-head">
-          <p class="section-kicker">Benchmark evidence</p>
-          <h1>Cross-benchmark leaderboard</h1>
-          <p>Compare foundation models with and without VRH across protein fitness benchmarks.</p>
+          <h1>Benchmarks</h1>
         </div>
-        <div class="panel board-panel" id="pg-board" aria-live="polite">Loading benchmark evidence…</div>
+        <div class="panel board-panel" id="pg-board" aria-live="polite">Loading…</div>
       </section>
 
       <section id="page-workspace" class="page" hidden>
@@ -217,6 +203,6 @@
   <noscript>
     <p class="noscript">VRH Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260911g"></script>
+  <script src="app.js?v=20260912e"></script>
 </body>
 </html>

@@ -17,9 +17,7 @@ DEMO_FILE_KINDS = {
 }
 
 DEMO_PRESETS = (
-    {"id": "sequence", "label": "Sequence", "files": ("fasta",)},
-    {"id": "structure", "label": "+ Structure", "files": ("fasta", "pdb")},
-    {"id": "full", "label": "Full vrh", "files": ("fasta", "pdb", "msa")},
+    {"id": "full", "label": "Demo", "files": ("fasta", "pdb", "msa")},
 )
 
 
