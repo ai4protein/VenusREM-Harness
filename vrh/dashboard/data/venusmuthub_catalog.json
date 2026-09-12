@@ -7,6 +7,7 @@
   "assays": 905,
   "n": 905,
   "source": "VenusMutHub assay_manifest.csv",
+  "setting": "Zero-shot · substitutions",
   "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.",
   "metrics": [
     {

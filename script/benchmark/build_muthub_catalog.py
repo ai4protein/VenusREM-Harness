@@ -125,6 +125,7 @@ def catalog_snapshot(rows: list[dict[str, str]], source: Path) -> dict[str, obje
         "assays": n_assays,
         "n": n_assays,
         "source": "VenusMutHub assay_manifest.csv",
+        "setting": "Zero-shot · substitutions",
         "description": description,
         "metrics": METRICS,
         "properties": properties,

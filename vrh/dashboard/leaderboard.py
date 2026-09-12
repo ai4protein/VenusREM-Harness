@@ -234,6 +234,10 @@ _MUTHUB_DEFAULT = {
     "setting": "Zero-shot · substitutions",
     "metric": "Average Spearman",
     "source": "VenusMutHub assay_manifest.csv",
+    "manifest": "data/VenusMutHub/assay_manifest.csv",
+    "n_mutants": 27846,
+    "median_seq_len": 226,
+    "paired_score_table": None,
     "properties": [
         {"id": "overall", "label": "Overall", "n": 905},
         {"id": "stability", "label": "Stability", "n": 540},
@@ -361,6 +365,10 @@ def _hub_product_benchmark(default: dict[str, Any]) -> dict[str, Any]:
         "metric",
         "source",
         "source_url",
+        "manifest",
+        "n_mutants",
+        "median_seq_len",
+        "paired_score_table",
         "properties",
         "metrics",
     ):

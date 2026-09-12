@@ -78,3 +78,13 @@ def test_venusmuthub_is_not_planned() -> None:
     muthub = _muthub()
     assert muthub["status"] != "planned"
     assert "VenusMutHub" not in catalog["planned_benchmarks"]
+
+
+def test_venusmuthub_catalog_fields() -> None:
+    muthub = _muthub()
+    assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
+    assert "assay_manifest" in muthub["source"]
+    assert muthub["n_mutants"] == 27846
+    assert muthub["median_seq_len"] == 226
+    assert muthub.get("paired_score_table") in (None, "")
+    assert muthub["setting"] == "Zero-shot · substitutions"
