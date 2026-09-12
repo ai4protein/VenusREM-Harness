@@ -41,6 +41,8 @@ def doctor_report() -> dict[str, Any]:
     except Exception:
         problems.append("torch")
 
+    from vrh.dashboard.deps import setup_hints
+
     cache = default_cache_dir()
     return {
         "version": __version__,
@@ -52,6 +54,8 @@ def doctor_report() -> dict[str, Any]:
         "cache": str(cache),
         "demo": str(demo_dataset_dir()),
         "problems": problems,
+        "hints": setup_hints(problems),
+        "ready": not problems,
     }
 
 
@@ -63,11 +67,14 @@ _SERIES_LABELS = {
     "progen": "ProGen",
     "proteinmpnn": "ProteinMPNN",
     "rita": "RITA",
+    "protssn": "ProtSSN",
+    "carp": "CARP / MIF-ST",
+    "s3f": "S2F / S3F",
     "other": "Other",
 }
 
 _SERIES_VARIANT_ORDER = {
-    "venusrem2": ("venusrem2",),
+    "venusrem2": ("venusrem2", "venusrem"),
     "prosst": (
         "prosst",
         "prosst-20",
@@ -115,11 +122,26 @@ _SERIES_VARIANT_ORDER = {
         "protein_mpnn-soluble-v_48_030",
     ),
     "rita": ("rita-s", "rita-m", "rita-l", "rita"),
-    "other": ("protssn", "carp", "mifst", "s2f", "s3f", "protgpt2", "auto"),
+    "protssn": (
+        "protssn",
+        "protssn-k10-h512",
+        "protssn-k10-h768",
+        "protssn-k10-h1280",
+        "protssn-k20-h512",
+        "protssn-k20-h768",
+        "protssn-k20-h1280",
+        "protssn-k30-h512",
+        "protssn-k30-h768",
+        "protssn-k30-h1280",
+    ),
+    "carp": ("carp-600k", "carp-38m", "carp-76m", "carp", "mifst"),
+    "s3f": ("s2f", "s3f"),
+    "other": ("protgpt2", "auto"),
 }
 
 _VARIANT_LABELS = {
     "venusrem2": "VenusREM2",
+    "venusrem": "VenusREM",
     "prosst": "Default (K=2048)",
     "prosst-20": "K=20",
     "prosst-128": "K=128",
@@ -164,8 +186,20 @@ _VARIANT_LABELS = {
     "rita-s": "RITA S",
     "rita-m": "RITA M",
     "rita-l": "RITA L",
-    "protssn": "ProtSSN",
-    "carp": "CARP-640M",
+    "protssn": "Ensemble",
+    "protssn-k10-h512": "k=10 h=512",
+    "protssn-k10-h768": "k=10 h=768",
+    "protssn-k10-h1280": "k=10 h=1280",
+    "protssn-k20-h512": "k=20 h=512",
+    "protssn-k20-h768": "k=20 h=768",
+    "protssn-k20-h1280": "k=20 h=1280",
+    "protssn-k30-h512": "k=30 h=512",
+    "protssn-k30-h768": "k=30 h=768",
+    "protssn-k30-h1280": "k=30 h=1280",
+    "carp": "640M",
+    "carp-600k": "600k",
+    "carp-38m": "38M",
+    "carp-76m": "76M",
     "mifst": "MIF-ST",
     "s2f": "S2F",
     "s3f": "S3F",
@@ -176,7 +210,7 @@ _VARIANT_LABELS = {
 
 def infer_model_series(name: str) -> str:
     raw = (name or "").lower()
-    if raw in {"venusrem2", "venusrem"}:
+    if raw in {"venusrem2", "venusrem", "venusrem1"} or raw.startswith("venusrem"):
         return "venusrem2"
     if raw.startswith("prosst"):
         return "prosst"
@@ -188,6 +222,12 @@ def infer_model_series(name: str) -> str:
         return "proteinmpnn"
     if raw.startswith("rita"):
         return "rita"
+    if raw.startswith("protssn"):
+        return "protssn"
+    if raw.startswith("carp") or raw in {"mifst", "mif_st", "mif-st"}:
+        return "carp"
+    if raw.startswith("s2f") or raw.startswith("s3f"):
+        return "s3f"
     if raw.startswith("esm"):
         return "esm"
     return "other"
@@ -253,7 +293,7 @@ def list_model_payload() -> list[dict[str, Any]]:
                     "input_kind": "structure",
                     "extras": "prosst",
                     "notes": "wt only; six official ProSST checkpoints; MSA optional (none → α=0)",
-                    "aliases": ["venusrem", "prosst_ensemble"],
+                    "aliases": ["prosst_ensemble"],
                     "supports_mask": False,
                     "supports_tf": False,
                     "size_hint": MODEL_SIZE_HINTS.get("venusrem2"),

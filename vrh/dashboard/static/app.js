@@ -47,7 +47,7 @@
     },
   ];
 
-  var SERIES_ORDER = ["venusrem2", "esm", "prosst", "saprot", "progen", "proteinmpnn", "rita", "other"];
+  var SERIES_ORDER = ["venusrem2", "esm", "prosst", "saprot", "progen", "proteinmpnn", "rita", "protssn", "carp", "s3f", "other"];
   var SERIES_LABELS = {
     venusrem2: "VenusREM2",
     esm: "ESM",
@@ -56,10 +56,14 @@
     progen: "ProGen",
     proteinmpnn: "ProteinMPNN",
     rita: "RITA",
+    protssn: "ProtSSN",
+    carp: "CARP / MIF-ST",
+    s3f: "S2F / S3F",
     other: "Other",
   };
   var VARIANT_LABELS = {
     venusrem2: "VenusREM2",
+    venusrem: "VenusREM",
     "prosst": "Default (K=2048)",
     "prosst-20": "K=20",
     "prosst-128": "K=128",
@@ -104,8 +108,20 @@
     "rita-s": "RITA S",
     "rita-m": "RITA M",
     "rita-l": "RITA L",
-    protssn: "ProtSSN",
-    carp: "CARP-640M",
+    protssn: "Ensemble",
+    "protssn-k10-h512": "k=10 h=512",
+    "protssn-k10-h768": "k=10 h=768",
+    "protssn-k10-h1280": "k=10 h=1280",
+    "protssn-k20-h512": "k=20 h=512",
+    "protssn-k20-h768": "k=20 h=768",
+    "protssn-k20-h1280": "k=20 h=1280",
+    "protssn-k30-h512": "k=30 h=512",
+    "protssn-k30-h768": "k=30 h=768",
+    "protssn-k30-h1280": "k=30 h=1280",
+    carp: "640M",
+    "carp-600k": "600k",
+    "carp-38m": "38M",
+    "carp-76m": "76M",
     mifst: "MIF-ST",
     s2f: "S2F",
     s3f: "S3F",
@@ -114,6 +130,7 @@
   };
   var FALLBACK_MODELS = [
     { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
+    { name: "venusrem", description: "VenusREM v1 (ProSST-2048, fixed α=0.8)", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
     { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, input_kind: "sequence", size_hint: "first download ~30 MB" },
     { name: "esm2-35m", description: "ESM-2 35M", supports_mask: true, input_kind: "sequence" },
     { name: "esm2-150m", description: "ESM-2 150M", supports_mask: true, input_kind: "sequence" },
@@ -159,6 +176,18 @@
     { name: "rita-l", description: "RITA_l", input_kind: "sequence" },
     { name: "rita", description: "RITA-XL", input_kind: "sequence" },
     { name: "protssn", description: "ProtSSN structure GNN ensemble", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k10-h512", description: "ProtSSN k=10 h=512", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k10-h768", description: "ProtSSN k=10 h=768", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k10-h1280", description: "ProtSSN k=10 h=1280", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k20-h512", description: "ProtSSN k=20 h=512", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k20-h768", description: "ProtSSN k=20 h=768", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k20-h1280", description: "ProtSSN k=20 h=1280", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k30-h512", description: "ProtSSN k=30 h=512", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k30-h768", description: "ProtSSN k=30 h=768", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "protssn-k30-h1280", description: "ProtSSN k=30 h=1280", supports_mask: true, needs_pdb: true, input_kind: "structure" },
+    { name: "carp-600k", description: "CARP-600k", supports_mask: true, input_kind: "sequence" },
+    { name: "carp-38m", description: "CARP-38M", supports_mask: true, input_kind: "sequence" },
+    { name: "carp-76m", description: "CARP-76M", supports_mask: true, input_kind: "sequence" },
     { name: "carp", description: "CARP-640M", supports_mask: true, input_kind: "sequence" },
     { name: "mifst", description: "MIF-ST masked inverse folding", needs_pdb: true, input_kind: "structure" },
     { name: "s2f", description: "S2F", input_kind: "sequence" },
@@ -279,6 +308,12 @@
       description: "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.",
       status: "catalog",
       n: 905,
+      setting: "Zero-shot · substitutions",
+      source: "VenusMutHub assay_manifest.csv",
+      manifest: "data/VenusMutHub/assay_manifest.csv",
+      n_mutants: 27846,
+      median_seq_len: 226,
+      paired_score_table: null,
       properties: [
         { id: "overall", label: "Overall", n: 905 },
         { id: "stability", label: "Stability", n: 540 },
@@ -395,7 +430,8 @@
       structure: 64,
     },
     exampleId: "",
-    examplePrefillDone: false,
+    exampleBusy: false,
+    exampleLoadId: 0,
   };
 
   var EXAMPLE_PRESETS = {
@@ -848,9 +884,37 @@
     }
   }
 
+  function pageBase() {
+    if (window.__VRH_BASE__) return window.__VRH_BASE__;
+    var href = window.location.href.split("#")[0].split("?")[0];
+    if (/\.[a-zA-Z0-9]+$/.test(href)) {
+      href = href.replace(/\/[^/]+$/, "/");
+    } else if (href.charAt(href.length - 1) !== "/") {
+      href += "/";
+    }
+    return href;
+  }
+
+  function apiUrl(path) {
+    var rel = String(path || "").replace(/^\//, "");
+    return new URL(rel, pageBase()).toString();
+  }
+
+  function friendlyError(text) {
+    var raw = String(text || "").trim();
+    if (!raw) return "Request failed.";
+    if (/<html[\s>]|nginx/i.test(raw) && /404/i.test(raw)) {
+      return "Could not reach the dashboard API. Open the URL that ends with /proxy/<port>/ and keep the trailing slash.";
+    }
+    if (/<html[\s>]/i.test(raw)) {
+      raw = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    }
+    return raw;
+  }
+
   async function api(path, options) {
     var opts = options || {};
-    var res = await fetch(path, opts);
+    var res = await fetch(apiUrl(path), opts);
     if (!res.ok) {
       var text = "";
       try {
@@ -866,7 +930,7 @@
       } catch (err2) {
         /* keep text */
       }
-      var err = new Error(text || res.status + " " + res.statusText);
+      var err = new Error(friendlyError(text || res.status + " " + res.statusText));
       err.status = res.status;
       err.body = text;
       throw err;
@@ -994,6 +1058,24 @@
       setHidden(els.appVersion, false);
     }
     updateSelectTab();
+    renderSetupBanner();
+  }
+
+  function renderSetupBanner() {
+    var host = $("setup-banner");
+    if (!host) return;
+    var hints = (state.health && state.health.hints) || [];
+    if (!hints.length) {
+      host.innerHTML = "";
+      setHidden(host, true);
+      return;
+    }
+    host.innerHTML = hints
+      .map(function (hint) {
+        return '<p>' + esc(hint).replace(/\n/g, "<br>") + "</p>";
+      })
+      .join("");
+    setHidden(host, false);
   }
 
   async function refreshHealth() {
@@ -1043,21 +1125,24 @@
     proteinmpnn: "ProteinMPNN",
     progen: "ProGen",
     rita: "RITA",
-    s3f: "S3F",
+    s3f: "S2F / S3F",
     protssn: "ProtSSN",
-    carp: "CARP",
-    mifst: "MIF-ST",
+    carp: "CARP / MIF-ST",
+    mifst: "CARP / MIF-ST",
     other: "Other",
   };
 
   function inferModelSeries(name) {
     var raw = String(name || "").toLowerCase();
-    if (raw === "venusrem2" || raw === "venusrem") return "venusrem2";
+    if (raw === "venusrem2" || raw === "venusrem" || raw === "venusrem1" || raw.indexOf("venusrem") === 0) return "venusrem2";
     if (raw.indexOf("prosst") === 0) return "prosst";
     if (raw.indexOf("saprot") === 0) return "saprot";
     if (raw.indexOf("progen") === 0) return "progen";
     if (raw.indexOf("protein_mpnn") === 0 || raw.indexOf("proteinmpnn") === 0) return "proteinmpnn";
     if (raw.indexOf("rita") === 0) return "rita";
+    if (raw.indexOf("protssn") === 0) return "protssn";
+    if (raw.indexOf("carp") === 0 || raw === "mifst" || raw === "mif_st" || raw === "mif-st") return "carp";
+    if (raw.indexOf("s2f") === 0 || raw.indexOf("s3f") === 0) return "s3f";
     if (raw.indexOf("esm") === 0) return "esm";
     return "other";
   }
@@ -1455,8 +1540,7 @@
     if (raw.indexOf("esm") === 0) return "esm";
     if (raw.indexOf("s3f") === 0 || raw.indexOf("s2f") === 0) return "s3f";
     if (raw.indexOf("protssn") === 0) return "protssn";
-    if (raw.indexOf("carp") === 0) return "carp";
-    if (raw.indexOf("mifst") === 0) return "mifst";
+    if (raw.indexOf("carp") === 0 || raw.indexOf("mifst") === 0 || raw.indexOf("mif_st") === 0) return "carp";
     return inferModelSeries(raw);
   }
 
@@ -1480,7 +1564,7 @@
 
   function benchmarkLegend(pairs, featured) {
     var seen = {};
-    var order = ["venusrem2", "esm", "prosst", "saprot", "proteinmpnn", "progen", "rita", "s3f", "protssn", "carp", "mifst", "other"];
+    var order = ["venusrem2", "esm", "prosst", "saprot", "proteinmpnn", "progen", "rita", "s3f", "protssn", "carp", "other"];
     if (featured) seen.venusrem2 = true;
     (pairs || []).forEach(function (row) {
       seen[benchmarkFamily(row, false)] = true;
@@ -1527,15 +1611,48 @@
     return "Ready";
   }
 
+  function catalogCount(value) {
+    if (value == null || value === "") return "—";
+    var num = Number(value);
+    if (!isFinite(num)) return esc(value);
+    return String(Math.round(num));
+  }
+
+  function catalogSourcePath(benchmark) {
+    return benchmark.manifest || benchmark.source || "";
+  }
+
   function renderCatalogAwaiting(benchmark) {
     var properties = benchmark.properties || [];
     var offline = benchmark.status === "offline";
+    var activeProperty = activeBenchmarkProperty(benchmark);
     var chips = properties.filter(function (item) { return item.id !== "overall"; }).map(function (item) {
-      return '<div><span>' + esc(item.label) + '</span><strong>' + (item.n != null ? esc(item.n) : "—") + '</strong></div>';
+      var on = !offline && item.id === activeProperty;
+      return '<div' + (on ? ' class="is-on"' : "") + "><span>" + esc(item.label) + "</span><strong>" +
+        (item.n != null ? esc(item.n) : "—") + "</strong></div>";
     }).join("");
-    var copy = offline ? "Offline." : "Scores not packaged.";
-    return '<section class="benchmark-awaiting' + (offline ? " is-offline" : "") + '"><p>' + copy + "</p>" +
-      (chips ? '<div class="benchmark-awaiting-grid">' + chips + "</div>" : "") + "</section>";
+    if (offline) {
+      return '<section class="benchmark-awaiting is-offline"><p>Offline.</p>' +
+        (chips ? '<div class="benchmark-awaiting-grid">' + chips + "</div>" : "") + "</section>";
+    }
+    var source = catalogSourcePath(benchmark);
+    var metrics = (benchmark.metrics || []).map(function (item) { return item.label || item.id; }).filter(Boolean);
+    if (!metrics.length) metrics = ["Spearman", "NDCG", "AUC", "MCC", "Top recall"];
+    var lead = benchmark.description ||
+      "Assay catalog is loaded. Paired Raw / +VRH model scores will appear after the evaluation snapshot is packaged.";
+    var stats = '<dl class="benchmark-catalog-stats">' +
+      "<div><dt>Assays</dt><dd>" + catalogCount(benchmark.n) + "</dd></div>" +
+      (benchmark.n_mutants != null ? "<div><dt>Mutants</dt><dd>" + catalogCount(benchmark.n_mutants) + "</dd></div>" : "") +
+      (benchmark.median_seq_len != null ? "<div><dt>Median length</dt><dd>" + catalogCount(benchmark.median_seq_len) + "</dd></div>" : "") +
+      "<div><dt>Models</dt><dd>—</dd></div></dl>";
+    var grid = chips ? '<div class="benchmark-catalog-properties">' + chips + "</div>" : "";
+    var meta = '<dl class="benchmark-catalog-meta">' +
+      (source ? "<div><dt>Source</dt><dd>" + esc(source) + "</dd></div>" : "") +
+      "<div><dt>When scores land</dt><dd>Paired Raw / +VRH rows for " + esc(metrics.join(", ")) +
+      ". Same columns as ProteinGym; no model numbers are invented.</dd></div>" +
+      "<div><dt>Raw / +VRH</dt><dd>Disabled until pairs exist.</dd></div></dl>";
+    return '<section class="benchmark-awaiting is-catalog"><p class="benchmark-catalog-lead">' +
+      esc(lead) + "</p>" + stats + grid + meta + "</section>";
   }
 
   function benchmarkFeaturedHtml(row, property, scale, rank, total) {
@@ -1615,7 +1732,9 @@
         (body ? benchmarkAxis(scale) : "") +
         (body ? benchmarkLegend(pairs, featured) : "");
     var summary = !hasScores
-      ? (benchmark.status === "offline" ? "Offline" : "Scores not packaged")
+      ? (benchmark.status === "offline"
+        ? "Offline"
+        : catalogCount(benchmark.n) + " assays · catalog · Raw/+VRH disabled until pairs exist")
       : total + " models · " +
         (variant === "raw" ? "Raw " : "+VRH ") + esc(activeMetric.label) + " · " + esc(activeProperty.label) +
         (featured && rank ? " · VenusREM2 #" + rank : "");
@@ -1791,17 +1910,30 @@
     return null;
   }
 
-  function markExampleButtons() {
-    var buttons = document.querySelectorAll("#example-row [data-example]");
-    for (var i = 0; i < buttons.length; i++) {
-      var id = buttons[i].getAttribute("data-example");
-      buttons[i].classList.toggle("is-on", id === state.exampleId);
-    }
+  function refreshExampleChrome() {
+    var btn = $("btn-demo");
+    if (!btn) return;
+    btn.classList.toggle("is-on", state.exampleId === "full");
+    btn.classList.toggle("is-busy", !!state.exampleBusy);
+    btn.setAttribute("aria-pressed", state.exampleId || state.exampleBusy ? "true" : "false");
+    btn.title = state.exampleBusy
+      ? "Cancel demo"
+      : state.exampleId
+        ? "Clear demo"
+        : "Load 2L6Q sequence, structure, and MSA";
   }
 
-  function formIsEmpty() {
-    var snap = formSnapshot();
-    return !snap.fasta && !snap.pdb && !snap.msa && !snap.seq_id && !snap.mutants;
+  function clearDemoForm() {
+    var target = $("f-seq-id");
+    if (target) target.value = "";
+    var hiddenPdb = $("f-pdb-id");
+    var hiddenUni = $("f-uniprot");
+    if (hiddenPdb) hiddenPdb.value = "";
+    if (hiddenUni) hiddenUni.value = "";
+    clearInputFile($("file-fasta"));
+    clearInputFile($("file-pdb"));
+    clearInputFile($("file-msa"));
+    clearInputFile($("file-mutants"));
   }
 
   async function fetchExampleFile(kind) {
@@ -1823,13 +1955,6 @@
     return file;
   }
 
-  function setExampleBusy(busy) {
-    var buttons = document.querySelectorAll("#example-row [data-example]");
-    for (var i = 0; i < buttons.length; i++) buttons[i].disabled = !!busy;
-    var note = $("example-status");
-    if (note && busy) note.textContent = "Loading 2L6Q…";
-  }
-
   function setExampleStatus(text) {
     var note = $("example-status");
     if (note) note.textContent = text || "";
@@ -1842,53 +1967,65 @@
     }
   }
 
-  async function loadExamplePreset(presetId) {
-    var files = EXAMPLE_PRESETS.full;
-    setExampleBusy(true);
+  function clearExamplePreset() {
+    state.exampleLoadId += 1;
+    state.exampleBusy = false;
+    state.exampleId = "";
+    clearDemoForm();
+    setExampleStatus("");
+    refreshExampleChrome();
+    updateFileLabels();
+    renderIntakeFiles();
+    fillModels();
+    setModel("venusrem2");
+    showFormError("");
+  }
+
+  async function loadExamplePreset() {
+    var loadId = (state.exampleLoadId += 1);
+    state.exampleBusy = true;
+    state.exampleId = "";
+    refreshExampleChrome();
+    setExampleStatus("Loading…");
     try {
-      var target = $("f-seq-id");
-      if (target) target.value = "";
-      var hiddenPdb = $("f-pdb-id");
-      var hiddenUni = $("f-uniprot");
-      if (hiddenPdb) hiddenPdb.value = "";
-      if (hiddenUni) hiddenUni.value = "";
-      clearInputFile($("file-fasta"));
-      clearInputFile($("file-pdb"));
-      clearInputFile($("file-msa"));
-      clearInputFile($("file-mutants"));
+      clearDemoForm();
+      updateFileLabels();
+      renderIntakeFiles();
+      var files = EXAMPLE_PRESETS.full;
       var i;
       for (i = 0; i < files.length; i++) {
-        setInputFile(exampleInputFor(files[i]), await fetchExampleFile(files[i]));
+        var file = await fetchExampleFile(files[i]);
+        if (loadId !== state.exampleLoadId) return;
+        setInputFile(exampleInputFor(files[i]), file);
       }
+      if (loadId !== state.exampleLoadId) return;
       state.exampleId = "full";
-      state.examplePrefillDone = true;
-      markExampleButtons();
+      state.exampleBusy = false;
       setRecipe("full");
       updateFileLabels();
       renderIntakeFiles();
       fillModels();
       setModel("esm2-8m");
       showFormError("");
-      setExampleStatus("2L6Q · FASTA, PDB, MSA");
-    } finally {
-      setExampleBusy(false);
-      markExampleButtons();
+      setExampleStatus("");
+      refreshExampleChrome();
+    } catch (err) {
+      if (loadId !== state.exampleLoadId) return;
+      state.exampleBusy = false;
+      state.exampleId = "";
+      clearDemoForm();
+      refreshExampleChrome();
+      setExampleStatus("");
+      throw err;
     }
   }
 
-  async function maybePrefillDemo() {
-    if (state.examplePrefillDone) return;
-    if (!formIsEmpty()) {
-      state.examplePrefillDone = true;
-      return;
+  function toggleExamplePreset() {
+    if (state.exampleBusy || state.exampleId) {
+      clearExamplePreset();
+      return Promise.resolve();
     }
-    try {
-      await loadExamplePreset("full");
-    } catch (err) {
-      state.examplePrefillDone = true;
-      setExampleStatus("");
-      flash(err.message || "Could not load 2L6Q.");
-    }
+    return loadExamplePreset();
   }
 
   function assignDroppedFiles(fileList, slot) {
@@ -1934,6 +2071,15 @@
       !snap.pdb && (snap.pdb_id || snap.uniprot_id) ? "Fetch · " + (snap.pdb_id || snap.uniprot_id) : "",
     ]);
     renderSlotChips("slot-msa-chips", [snap.msa ? "MSA · " + snap.msa : ""]);
+    markAttach("file-fasta", snap.fasta);
+    markAttach("file-pdb", snap.pdb);
+    markAttach("file-msa", snap.msa);
+  }
+
+  function markAttach(id, on) {
+    var input = $(id);
+    var lab = input && input.closest(".slot-attach");
+    if (lab) lab.classList.toggle("has-file", !!on);
   }
 
   function runPhase(job) {
@@ -4423,11 +4569,17 @@
         : "") +
       (problems.length
         ? '<div class="error-box">' +
-          problems
-            .map(function (p) {
-              return esc(p);
-            })
-            .join("\n") +
+          (data.hints && data.hints.length
+            ? data.hints
+                .map(function (hint) {
+                  return esc(hint);
+                })
+                .join("\n\n")
+            : problems
+                .map(function (p) {
+                  return esc(p);
+                })
+                .join("\n")) +
           "</div>"
         : '<p class="muted">No problems reported.</p>');
   }
@@ -4484,7 +4636,7 @@
       showPage("page-predict");
       fillModels();
       updateCli();
-      maybePrefillDemo();
+      refreshExampleChrome();
     } else if (route.page === "benchmarks") {
       var nextBench = route.benchmark || "proteingym";
       if (nextBench !== state.benchmarkId) {
@@ -4635,7 +4787,7 @@
       exampleRow.addEventListener("click", function (ev) {
         var btn = ev.target.closest("[data-example]");
         if (!btn || btn.disabled) return;
-        loadExamplePreset(btn.getAttribute("data-example")).catch(function (err) {
+        toggleExamplePreset().catch(function (err) {
           setExampleStatus("");
           showFormError(err.message || "Could not load the demo example.");
         });

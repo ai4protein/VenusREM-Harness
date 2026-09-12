@@ -68,10 +68,26 @@ def test_venusrem2_full_argv_does_not_require_msa():
     assert "--aa_seq_aln_dir" not in argv
 
 
+def test_venusrem_v1_argv_fixes_alpha():
+    argv = build_argv(
+        model="venusrem",
+        recipe="full",
+        out_dir="/tmp/out",
+        fasta="/tmp/q.fasta",
+        pdb="/tmp/q.pdb",
+    )
+    assert "venusrem" in argv
+    assert argv[argv.index("--alpha") + 1] == "0.8"
+    assert argv[argv.index("--scoring_mode") + 1] == "log_odds"
+
+
 def test_health_and_models(client):
     health = client.get("/api/health").json()
     assert health["ok"] is True
     assert "version" in health
+    assert "ready" in health
+    assert isinstance(health.get("problems"), list)
+    assert isinstance(health.get("hints"), list)
     models = client.get("/api/models").json()["models"]
     names = {row["name"] for row in models}
     assert models[0]["name"] == "venusrem2"
@@ -90,14 +106,22 @@ def test_health_and_models(client):
     by_series = {}
     for row in models:
         by_series.setdefault(row["series"], set()).add(row["name"])
-    assert "venusrem2" in by_series["venusrem2"]
+    assert {"venusrem2", "venusrem"} <= by_series["venusrem2"]
+    venusrem = next(row for row in models if row["name"] == "venusrem")
+    assert venusrem["label"] == "VenusREM"
+    assert venusrem["needs_pdb"] is True
     assert {"esm2", "esm2-8m", "esm1b", "esm_if", "esmc"} <= by_series["esm"]
     assert {"prosst", "prosst-20", "prosst-4096"} <= by_series["prosst"]
     assert {"saprot", "saprot-35m-af2"} <= by_series["saprot"]
     assert {"progen2", "progen2-s", "progen3"} <= by_series["progen"]
     assert {"protein_mpnn", "protein_mpnn-soluble-v_48_020"} <= by_series["proteinmpnn"]
     assert {"rita", "rita-s"} <= by_series["rita"]
-    assert {"protssn", "auto"} <= by_series["other"]
+    assert {"protssn", "protssn-k20-h512", "protssn-k30-h1280"} <= by_series["protssn"]
+    assert {"carp", "carp-600k", "carp-38m", "carp-76m", "mifst"} <= by_series["carp"]
+    assert {"s2f", "s3f"} <= by_series["s3f"]
+    assert "auto" in by_series["other"]
+    assert "mifst" not in by_series.get("other", set())
+    assert "s3f" not in by_series.get("other", set())
     recipes = client.get("/api/recipes").json()["recipes"]
     assert any(item["id"] == "full" for item in recipes)
     doctor = client.get("/api/doctor").json()
@@ -297,6 +321,10 @@ def test_proteingym_leaderboard(client):
     assert muthub["n"] == 905
     assert muthub["status"] in {"catalog", "ready"}
     assert [item["id"] for item in muthub["properties"]][:3] == ["overall", "stability", "activity"]
+    if muthub["status"] == "catalog":
+        assert muthub["pairs"] == []
+        assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
+        assert muthub["n_mutants"] == 27846
     assert virohub["n"] == 89
     assert virohub["status"] in {"catalog", "ready"}
     assert "cell_entry" in [item["id"] for item in virohub["properties"]]
@@ -366,6 +394,27 @@ def test_create_run_seq_id_fetch_fails(client, monkeypatch):
     )
     assert res.status_code == 400
     assert "P0A6Y8" in res.text
+
+
+def test_friendly_torch_hint():
+    from vrh.dashboard.deps import friendly_import_error, hint_for
+
+    message = hint_for("torch")
+    assert "PyTorch is not installed" in message
+    assert "pip install torch" in message
+    err = ModuleNotFoundError("No module named 'torch'")
+    err.name = "torch"
+    assert "PyTorch is not installed" in friendly_import_error(err)
+
+
+def test_create_run_explains_missing_torch(client, monkeypatch):
+    monkeypatch.setattr(
+        "vrh.dashboard.app.scoring_blocked_message",
+        lambda: "PyTorch is not installed, so this dashboard can open but cannot score mutants yet.",
+    )
+    res = client.post("/api/runs", data={"model": "esm2-8m", "recipe": "full", "demo": "1"})
+    assert res.status_code == 400
+    assert "PyTorch is not installed" in res.json()["detail"]
 
 
 def test_create_run_rejects_bad_seq_id(client):

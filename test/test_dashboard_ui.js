@@ -329,6 +329,9 @@ check("html flow chrome", () => {
   assert.ok(html.includes('data-example="full"'));
   assert.ok(!html.includes('data-example="sequence"'));
   assert.ok(!html.includes('data-example="structure"'));
+  assert.ok(src.includes("toggleExamplePreset"));
+  assert.ok(src.includes("clearExamplePreset"));
+  assert.ok(!src.includes("maybePrefillDemo"));
   assert.strictEqual(context.EXAMPLE_PRESETS.full.join(","), "fasta,pdb,msa");
   assert.strictEqual(context.EXAMPLE_PRESETS.sequence.join(","), "fasta,pdb,msa");
   assert.strictEqual(context.EXAMPLE_PRESETS.structure.join(","), "fasta,pdb,msa");
@@ -467,11 +470,26 @@ check("model picker groups by series", () => {
   assert.strictEqual(context.inferModelSeries("protein_mpnn-soluble-v_48_020"), "proteinmpnn");
   assert.strictEqual(context.inferModelSeries("rita-s"), "rita");
   assert.strictEqual(context.inferModelSeries("venusrem2"), "venusrem2");
+  assert.strictEqual(context.inferModelSeries("venusrem"), "venusrem2");
+  assert.strictEqual(context.inferModelSeries("protssn-k20-h512"), "protssn");
+  assert.strictEqual(context.inferModelSeries("carp-38m"), "carp");
+  assert.strictEqual(context.inferModelSeries("mifst"), "carp");
+  assert.strictEqual(context.inferModelSeries("s2f"), "s3f");
+  assert.strictEqual(context.inferModelSeries("s3f"), "s3f");
   const groups = context.groupModelSeries();
   const ids = groups.map((g) => g.id);
   assert.ok(ids.includes("venusrem2"));
   assert.ok(ids.includes("esm"));
   assert.ok(ids.includes("prosst"));
+  const rem = groups.find((g) => g.id === "venusrem2");
+  assert.ok(rem.variants.some((v) => v.name === "venusrem2"));
+  assert.ok(rem.variants.some((v) => v.name === "venusrem"));
+  const carp = groups.find((g) => g.id === "carp");
+  assert.ok(carp && carp.variants.some((v) => v.name === "carp"));
+  assert.ok(carp.variants.some((v) => v.name === "mifst"));
+  const sf = groups.find((g) => g.id === "s3f");
+  assert.ok(sf && sf.variants.some((v) => v.name === "s2f"));
+  assert.ok(sf.variants.some((v) => v.name === "s3f"));
   const esm = groups.find((g) => g.id === "esm");
   assert.ok(esm.variants.some((v) => v.name === "esm2-8m"));
   assert.ok(esm.variants.some((v) => v.name === "esm_if"));
@@ -499,10 +517,14 @@ check("catalog hubs keep filter chrome and honest empty scores", () => {
   const viroMeta = context.benchmarkTabMeta(virohub);
   assert.ok(viroMeta === "89 assays" || viroMeta === "Offline");
   context.renderProductBenchmark(host, muthub, catalog);
-  assert.ok(host.innerHTML.includes("not packaged"));
-  assert.ok(host.innerHTML.includes("taxonomy only") || host.innerHTML.includes("not packaged"));
+  assert.ok(host.innerHTML.includes("is-catalog"));
+  assert.ok(host.innerHTML.includes("data/VenusMutHub/assay_manifest.csv"));
+  assert.ok(host.innerHTML.includes("Disabled until pairs exist"));
   assert.ok(host.innerHTML.includes("PPI binding"));
   assert.ok(host.innerHTML.includes("905"));
+  assert.ok(host.innerHTML.includes("27846"));
+  assert.ok(host.innerHTML.includes("Spearman"));
+  assert.ok(!host.innerHTML.includes("Scores not packaged."));
   assert.ok(!host.innerHTML.includes("Schema ready"));
   assert.ok(!host.innerHTML.includes("Data pending"));
   assert.ok(!host.innerHTML.includes("unavailable offline"));
@@ -520,6 +542,8 @@ check("catalog hubs keep filter chrome and honest empty scores", () => {
   assert.ok(css.includes(".bbio-callout"));
   assert.ok(css.includes("z-index: 6"));
   assert.ok(css.includes(".benchmark-awaiting.is-offline"));
+  assert.ok(css.includes(".benchmark-awaiting.is-catalog"));
+  assert.ok(css.includes(".benchmark-catalog-properties"));
 });
 
 check("benchmark filter chrome is two compact rows", () => {

@@ -3,8 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store">
   <title>VRH Dashboard</title>
-  <link rel="stylesheet" href="app.css?v=20260912e">
+  <script>
+    window.__VRH_BASE__ = (function () {
+      var href = location.href.split("#")[0].split("?")[0];
+      if (/\.[a-zA-Z0-9]+$/.test(href)) href = href.replace(/\/[^/]+$/, "/");
+      else if (href.charAt(href.length - 1) !== "/") href += "/";
+      return href;
+    })();
+  </script>
+  <link rel="stylesheet" href="app.css?v=20260912r">
 </head>
 <body>
   <div id="app">
@@ -29,6 +38,7 @@
     </header>
 
     <div class="banner" role="note">Higher is better. Not ΔΔG.</div>
+    <div id="setup-banner" class="banner-setup" hidden></div>
 
     <div id="flash" class="flash" hidden></div>
 
@@ -46,7 +56,7 @@
             <h1>New prediction</h1>
           </div>
           <div class="example-row" id="example-row" role="group" aria-label="2L6Q demo">
-            <button type="button" class="example-btn" id="btn-demo" data-example="full">Demo</button>
+            <button type="button" class="example-btn" id="btn-demo" data-example="full" aria-pressed="false" title="Load 2L6Q sequence, structure, and MSA">Demo</button>
             <span class="example-status" id="example-status"></span>
           </div>
         </div>
@@ -57,7 +67,7 @@
 
         <form id="predict-form" class="panel form-panel" autocomplete="off">
           <section class="form-model-step">
-            <h2>Model</h2>
+            <h2 class="form-heading">Model <a class="help-q" href="#/benchmarks" aria-label="Not sure which model to choose? See the Benchmarks page."><span aria-hidden="true">?</span><span class="help-q-tip">Not sure which model to choose? See the Benchmarks page.</span></a></h2>
             <div id="model-series" class="model-series"></div>
             <select id="model-select" name="model" hidden></select>
             <p id="model-meta" class="field-hint"></p>
@@ -77,46 +87,52 @@
             <h2>Input</h2>
             <div class="input-slots" id="intake-box">
               <div class="input-slot" id="slot-sequence" data-slot="fasta">
-                <h3>Sequence</h3>
-                <label class="slot-drop">
-                  <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
-                  <strong>FASTA</strong>
-                </label>
-                <label class="slot-id">ID
+                <label class="slot-name" for="f-seq-id">Sequence</label>
+                <div class="slot-row">
                   <input type="text" name="seq_id" id="f-seq-id" placeholder="P0A6Y8 / 2L6Q" autocomplete="off">
-                </label>
+                  <label class="slot-attach" title="Upload FASTA">
+                    <input type="file" name="fasta" id="file-fasta" accept=".fa,.fasta,.faa,.txt,.fna">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <span class="sr-only">Upload FASTA</span>
+                  </label>
+                </div>
                 <div class="slot-chips" id="slot-sequence-chips"></div>
               </div>
               <div class="input-slot" id="slot-structure" data-slot="pdb">
-                <h3>Structure</h3>
-                <label class="slot-drop">
-                  <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
-                  <strong>PDB</strong>
-                </label>
-                <label class="slot-id">Fetch
+                <label class="slot-name" for="f-fetch">Structure</label>
+                <div class="slot-row">
                   <select name="fetch_structure" id="f-fetch">
                     <option value="auto" selected>Auto</option>
                     <option value="afdb">AFDB</option>
                     <option value="rcsb">RCSB</option>
                     <option value="none">Off</option>
                   </select>
-                </label>
+                  <label class="slot-attach" title="Upload PDB">
+                    <input type="file" name="pdb" id="file-pdb" accept=".pdb,.ent,.cif">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <span class="sr-only">Upload PDB</span>
+                  </label>
+                </div>
                 <input type="hidden" name="pdb_id" id="f-pdb-id">
                 <input type="hidden" name="uniprot_id" id="f-uniprot">
                 <div class="slot-chips" id="slot-structure-chips"></div>
               </div>
               <div class="input-slot" id="slot-msa" data-slot="msa">
-                <h3>MSA</h3>
-                <label class="slot-drop">
-                  <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
-                  <strong>MSA</strong>
-                </label>
+                <span class="slot-name">MSA</span>
+                <div class="slot-row">
+                  <span class="slot-placeholder">optional</span>
+                  <label class="slot-attach" title="Upload MSA">
+                    <input type="file" name="msa" id="file-msa" accept=".a2m,.a3m,.fasta,.fa,.sto">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <span class="sr-only">Upload MSA</span>
+                  </label>
+                </div>
                 <div class="slot-chips" id="slot-msa-chips"></div>
               </div>
             </div>
             <div id="input-gate" class="input-gate" aria-live="polite"></div>
             <details class="advanced scope-details">
-              <summary><span>Scope</span><small>all sites × 19</small></summary>
+              <summary>Scope <small>all sites × 19</small></summary>
               <label class="file-field">
                 <span>Mutant CSV</span>
                 <input type="file" name="mutants" id="file-mutants" accept=".csv,.tsv,.txt">
@@ -203,6 +219,6 @@
   <noscript>
     <p class="noscript">VRH Dashboard needs JavaScript enabled.</p>
   </noscript>
-  <script src="app.js?v=20260912e"></script>
+  <script src="app.js?v=20260912r"></script>
 </body>
 </html>
