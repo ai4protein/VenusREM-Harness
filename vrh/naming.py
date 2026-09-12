@@ -13,12 +13,17 @@ from typing import Any, Optional
 
 RECIPE_NAME = "vrh"
 OFFICIAL_SYSTEM_NAME = "VenusREM2"
+VENUSREM_V1_NAME = "VenusREM"
+VENUSREM_V1_KEYS = {"venusrem", "venusrem1", "venus-rem", "venusrem-v1"}
 _PROSST_KEYS = {
     "prosst",
     "prosst-2048",
     "prosst_2048",
     "prosst2048",
     "venusrem",
+    "venusrem1",
+    "venus-rem",
+    "venusrem-v1",
     "venusrem2",
     "prosst_ensemble",
 }
@@ -36,9 +41,14 @@ def _prosst_ids(args: Any) -> list[str]:
     return [n for n in _names(args) if "prosst" in n.lower()]
 
 
+def is_venusrem_v1(model_key: Optional[str]) -> bool:
+    key = (model_key or "").lower().replace("_", "-")
+    return key in VENUSREM_V1_KEYS
+
+
 def is_prosst_key(model_key: Optional[str]) -> bool:
     key = (model_key or "").lower().replace("_", "-")
-    return key in _PROSST_KEYS or key.startswith("prosst-")
+    return key in _PROSST_KEYS or key.startswith("prosst-") or is_venusrem_v1(model_key)
 
 
 def is_prosst_run(model_key: Optional[str], args: Any) -> bool:
@@ -74,6 +84,8 @@ def default_score_label(
     short = short_backbone_id(model_id, model_key)
     if is_official_venusrem2(model_key, args):
         return f"{OFFICIAL_SYSTEM_NAME}__{short}"
+    if is_venusrem_v1(model_key):
+        return VENUSREM_V1_NAME
     return f"{short}__{RECIPE_NAME}"
 
 
@@ -106,6 +118,8 @@ def run_banner(model_key: Optional[str], args: Any) -> str:
     if is_official_venusrem2(model_key, args):
         n = len(_prosst_ids(args))
         return f"{OFFICIAL_SYSTEM_NAME} scoring run (ProSST ensemble, {n} checkpoints + {RECIPE_NAME})"
+    if is_venusrem_v1(model_key):
+        return f"{VENUSREM_V1_NAME} scoring run (ProSST-2048, fixed α=0.8, log_odds)"
     if is_prosst_run(model_key, args):
         return f"{RECIPE_NAME} scoring run on ProSST (not the official {OFFICIAL_SYSTEM_NAME} ensemble)"
     key = model_key or "plm"

@@ -13,6 +13,7 @@ from vrh.naming import (
     fill_model_out_names,
     is_ensemble_model_key,
     is_prosst_key,
+    is_venusrem_v1,
 )
 
 
@@ -69,6 +70,12 @@ def apply_model_defaults(
     if is_prosst_key(model_name) and getattr(args, "backbone_mode", "auto") == "auto":
         args.backbone_mode = "prosst"
 
+    if is_venusrem_v1(model_name):
+        if getattr(args, "alpha", "entropy") in (None, "entropy"):
+            args.alpha = "0.8"
+        if getattr(args, "scoring_mode", "calibrated_margin") in (None, "calibrated_margin"):
+            args.scoring_mode = "log_odds"
+
     fill_model_out_names(args, model_name)
 
     # --model KEY selects the checkpoint. Dedicated argparse flags
@@ -90,9 +97,16 @@ def apply_model_defaults(
     elif baseline_type == "carp" and dedicated:
         args.carp_model_name = dedicated
 
-    if baseline_type == "protssn" and not getattr(args, "protssn_model_dir", None):
-        cached = resolve_existing_dir("protssn", cache_dir=cache)
-        args.protssn_model_dir = cached or ensure_dir(os.path.join(cache, "protssn"))
+    if baseline_type == "protssn":
+        from vrh.models.variant_ids import parse_protssn_config
+
+        if not getattr(args, "protssn_model_dir", None):
+            cached = resolve_existing_dir("protssn", cache_dir=cache)
+            args.protssn_model_dir = cached or ensure_dir(os.path.join(cache, "protssn"))
+        parsed = parse_protssn_config(model_name) or parse_protssn_config(dedicated)
+        if parsed:
+            args.protssn_no_ensemble = True
+            args.protssn_k, args.protssn_h = parsed
 
     if baseline_type == "protein_mpnn":
         from vrh.models.scoring_strategy import TEACHER_FORCE, normalize_scoring_strategy

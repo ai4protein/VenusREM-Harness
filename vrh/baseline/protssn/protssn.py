@@ -631,7 +631,9 @@ def load_protssn_models(
     plm = PLMForProtSSN(esm_model, esm_tokenizer)
 
     if use_ensemble:
-        configs = [(kk, hh) for kk in [10, 20, 30] for hh in [512, 768, 1280]]
+        from vrh.models.variant_ids import PROTSSN_CONFIGS
+
+        configs = list(PROTSSN_CONFIGS)
     else:
         configs = [(k, h)]
 

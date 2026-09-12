@@ -32,10 +32,18 @@ def test_resolve_benchmark_and_model_targets():
 
 def test_resolve_model_key_keeps_ensemble():
     assert resolve_model_key("venusrem2") == "venusrem2"
+    assert resolve_model_key("venusrem") == "venusrem"
     assert resolve_model_key("prosst") == "prosst"
     assert resolve_model_key("prosst-4096") == "prosst-4096"
     assert resolve_model_key("auto") is None
     assert resolve_model_key("s2f") is None
+
+
+def test_venusrem_v1_downloads_prosst_2048_only():
+    arts = model_artifacts("venusrem")
+    repos = [a.source for a in arts if a.kind == "hf_repo"]
+    assert repos == ["AI4Protein/ProSST-2048"]
+    assert "AI4Protein/ProSST-20" not in repos
 
 
 def test_venusrem2_artifacts_cover_six_prosst():
@@ -54,6 +62,22 @@ def test_s3f_artifact_uses_zenodo():
     assert arts[0].kind == "url"
     assert "zenodo.org" in arts[0].source
     assert arts[0].source.endswith("s3f.pth?download=1") or "s3f.pth" in arts[0].source
+
+
+def test_protssn_single_downloads_one_gnn():
+    arts = model_artifacts("protssn-k20-h512")
+    labels = [a.label for a in arts]
+    assert "protssn_k20_h512.pt" in labels
+    assert "protssn_k10_h512.pt" not in labels
+    ens = [a.label for a in model_artifacts("protssn")]
+    assert "protssn_k10_h512.pt" in ens
+    assert "protssn_k30_h1280.pt" in ens
+
+
+def test_carp_small_artifact():
+    arts = model_artifacts("carp-38m")
+    assert arts[0].kind == "url"
+    assert "carp_38M.pt" in arts[0].source
 
 
 def test_model_all_list_includes_core_backbones():

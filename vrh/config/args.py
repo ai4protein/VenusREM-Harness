@@ -433,6 +433,8 @@ def create_parser() -> ArgumentParser:
     extras.add_argument("--protssn_model_dir", type=str, default=None, help="ProtSSN GNN weights directory")
     extras.add_argument("--protssn_norm_dir", type=str, default=None, help="ProtSSN norm-file directory (default: bundled)")
     extras.add_argument("--protssn_no_ensemble", action="store_true", help="use one ProtSSN model instead of the 9-model ensemble")
+    extras.add_argument("--protssn_k", type=int, default=20, choices=[10, 20, 30], help="ProtSSN k-neighbors when --protssn_no_ensemble or --model protssn-k*-h*")
+    extras.add_argument("--protssn_h", type=int, default=512, choices=[512, 768, 1280], help="ProtSSN hidden dim when --protssn_no_ensemble or --model protssn-k*-h*")
     extras.add_argument("--esm_if_chain", type=str, default="A", help="PDB chain for ESM-IF (default: A)")
     extras.add_argument("--protein_mpnn_checkpoint", type=str, default=None, help="ProteinMPNN .pt or directory")
     extras.add_argument("--protein_mpnn_chain", type=str, default="A", help="PDB chain for ProteinMPNN (default: A)")
@@ -485,7 +487,7 @@ def create_parser() -> ArgumentParser:
         type=str,
         default="carp_640M",
         choices=["carp_600k", "carp_38M", "carp_76M", "carp_640M"],
-        help="legacy; prefer --model carp",
+        help="legacy; prefer --model carp / carp-600k / carp-38m / carp-76m",
     )
     extras.add_argument("--s2f_config", type=str, default=None, help="S2F / S3F YAML config (default: bundled)")
     extras.add_argument("--s2f_checkpoint", type=str, default=None, help="S2F / S3F checkpoint (.pt)")

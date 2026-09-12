@@ -56,16 +56,38 @@ EXPECTED_MODELS = {
     "protein_mpnn-soluble-v_48_030",
     "protgpt2",
     "protssn",
+    "protssn-k10-h512",
+    "protssn-k10-h768",
+    "protssn-k10-h1280",
+    "protssn-k20-h512",
+    "protssn-k20-h768",
+    "protssn-k20-h1280",
+    "protssn-k30-h512",
+    "protssn-k30-h768",
+    "protssn-k30-h1280",
+    "carp-600k",
+    "carp-38m",
+    "carp-76m",
     "rita",
     "rita-s",
     "rita-m",
     "rita-l",
     "s2f",
     "s3f",
+    "venusrem",
     "saprot",
     "saprot-35m-af2",
     "saprot-650m-pdb",
 }
+
+
+def test_parse_protssn_and_carp_keys():
+    from vrh.models.variant_ids import parse_protssn_config, protssn_variant_name
+
+    assert parse_protssn_config("protssn-k20-h512") == (20, 512)
+    assert parse_protssn_config("protssn_k10_h1280") == (10, 1280)
+    assert parse_protssn_config("protssn") is None
+    assert protssn_variant_name(30, 768) == "protssn-k30-h768"
 
 
 def test_list_models_covers_builtins():
@@ -79,6 +101,8 @@ def test_get_model_roundtrip():
         cls = get_model(name)
         assert cls.spec.name == name or name in cls.spec.aliases
     assert get_model("venusrem2").spec.name == "prosst"
+    assert get_model("venusrem").spec.name == "venusrem"
+    assert get_model("venusrem1").spec.name == "venusrem"
     assert get_model("prosst_ensemble").spec.name == "prosst"
     assert get_model("prosst-2048").spec.name == "prosst-2048"
     assert get_model("prosst-4096").spec.name == "prosst-4096"
@@ -87,6 +111,10 @@ def test_get_model_roundtrip():
     assert get_model("esmif").spec.name == "esm_if"
     assert get_model("pmpnn_soluble_v_48_002").spec.name == "protein_mpnn-soluble-v_48_002"
     assert get_model("protssn-ensemble").spec.name == "protssn"
+    assert get_model("protssn-k20-h512").spec.name == "protssn-k20-h512"
+    assert get_model("protssn_k30_h768").spec.name == "protssn-k30-h768"
+    assert get_model("carp-38m").spec.name == "carp-38m"
+    assert get_model("carp_600k").spec.name == "carp-600k"
     assert get_model("prosst-ensemble").spec.name == "prosst"
     assert get_model("proteinmpnn-020").spec.name == "protein_mpnn"
     assert get_model("proteinmpnn-v_48_002").spec.name == "protein_mpnn-v_48_002"
@@ -185,6 +213,23 @@ def test_apply_model_defaults_size_specific_keys():
     assert args.scoring_strategy == "teacher-force"
     assert args.protein_mpnn_scoring_mode == "teacher_force"
 
+    args = make_args(model="protssn-k30-h768", protssn_no_ensemble=False)
+    apply_model_defaults(args, "protssn-k30-h768")
+    assert args.baseline_type == "protssn"
+    assert args.protssn_no_ensemble is True
+    assert args.protssn_k == 30
+    assert args.protssn_h == 768
+    assert args.model_name == ["protssn_k30_h768"]
+
+    args = make_args(model="protssn", protssn_no_ensemble=False)
+    apply_model_defaults(args, "protssn")
+    assert args.protssn_no_ensemble is False
+
+    args = make_args(model="carp-38m")
+    apply_model_defaults(args, "carp-38m")
+    assert args.carp_model_name == "carp_38M"
+    assert args.model_name == ["carp_38M"]
+
 
 def test_venusrem2_expands_prosst_ensemble():
     from vrh.naming import PROSST_ENSEMBLE_IDS, is_official_venusrem2
@@ -194,6 +239,14 @@ def test_venusrem2_expands_prosst_ensemble():
     assert list(args.model_name) == list(PROSST_ENSEMBLE_IDS)
     assert is_official_venusrem2("venusrem2", args)
     assert args.model_out_name[0].startswith("VenusREM2__")
+
+    args = make_args(model="venusrem")
+    apply_model_defaults(args, "venusrem")
+    assert args.model_name == ["AI4Protein/ProSST-2048"]
+    assert args.alpha == "0.8"
+    assert args.scoring_mode == "log_odds"
+    assert args.backbone_mode == "prosst"
+    assert args.model_out_name == ["VenusREM"]
 
     args = make_args(model="prosst_ensemble")
     apply_model_defaults(args, "prosst_ensemble")
@@ -251,6 +304,11 @@ def test_experiment_csv_backbone_keys_resolve():
         "pmpnn_soluble_v_48_020",
         "pmpnn_soluble_v_48_030",
         "protssn",
+        "protssn_k20_h512",
+        "protssn_k10_h1280",
+        "carp_600k",
+        "carp_38m",
+        "carp_76m",
         "rita_s",
         "rita_m",
         "rita_l",
@@ -292,6 +350,10 @@ def test_score_label_vrh_vs_venusrem2_ensemble():
     assert is_official_venusrem2("venusrem2", ens)
     assert default_score_label("venusrem2", ens, "AI4Protein/ProSST-2048") == "VenusREM2__ProSST-2048"
     assert "VenusREM2" in run_banner("venusrem2", ens)
+
+    v1 = make_args(model="venusrem", model_name=["AI4Protein/ProSST-2048"])
+    assert default_score_label("venusrem", v1, "AI4Protein/ProSST-2048") == "VenusREM"
+    assert "fixed" in run_banner("venusrem", v1)
 
 
 def test_apply_model_defaults_auto_cache_for_mpnn_and_protssn():

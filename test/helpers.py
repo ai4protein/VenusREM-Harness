@@ -29,6 +29,8 @@ def make_args(**overrides):
         protssn_model_dir=None,
         protssn_norm_dir=None,
         protssn_no_ensemble=True,
+        protssn_k=20,
+        protssn_h=512,
         esm_if_chain="A",
         protein_mpnn_checkpoint=None,
         protein_mpnn_chain="A",

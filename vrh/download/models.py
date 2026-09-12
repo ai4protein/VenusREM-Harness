@@ -33,6 +33,7 @@ from vrh.models.weights import (
     resolve_existing_weight,
     resolve_prosst_static_file,
 )
+from vrh.models.variant_ids import PROTSSN_CONFIGS, parse_protssn_config
 from vrh.naming import (
     PROSST_ENSEMBLE_IDS,
     PROSST_ENSEMBLE_SIZES,
@@ -83,8 +84,6 @@ MPNN_URL = "https://raw.githubusercontent.com/dauparas/ProteinMPNN/main/{folder}
 CARP_ZENODO = "https://zenodo.org/record/6564798/files/{name}.pt?download=1"
 MIF_ZENODO = "https://zenodo.org/record/6573779/files/mifst.pt?download=1"
 
-PROTSSN_CONFIGS = tuple((k, h) for k in (10, 20, 30) for h in (512, 768, 1280))
-
 SIZE_HINTS = {
     "esm2": 2_500_000_000,
     "esm2-650m": 2_500_000_000,
@@ -98,6 +97,7 @@ SIZE_HINTS = {
     "saprot-35m-af2": 150_000_000,
     "saprot-650m-pdb": 2_500_000_000,
     "venusrem2": 8_000_000_000,
+    "venusrem": 1_400_000_000,
     "prosst": 1_400_000_000,
     "prosst-20": 1_400_000_000,
     "prosst-128": 1_400_000_000,
@@ -126,11 +126,17 @@ SIZE_HINTS = {
     "esmc-600m": 2_400_000_000,
     "protssn": 3_000_000_000,
     "carp": 2_500_000_000,
+    "carp-640m": 2_500_000_000,
+    "carp-76m": 300_000_000,
+    "carp-38m": 150_000_000,
+    "carp-600k": 5_000_000,
     "mifst": 2_700_000_000,
     "s3f": 2_800_000_000,
     "esm_if": 140_000_000,
     "protein_mpnn": 20_000_000,
 }
+for _k, _h in PROTSSN_CONFIGS:
+    SIZE_HINTS[f"protssn-k{_k}-h{_h}"] = 2_600_000_000
 
 
 @dataclass(frozen=True)
@@ -239,7 +245,7 @@ def model_artifacts(model_key: str) -> list[Artifact]:
             Artifact("hf_repo", spec.name, repo, extra={"repo": repo}),
             Artifact("foldseek", "foldseek", f"hf://{FOLDSEEK_HF_REPO}/{FOLDSEEK_HF_FILE}"),
         ]
-    if baseline == "prosst" or key.startswith("prosst"):
+    if baseline == "prosst" or key.startswith("prosst") or key in {"venusrem", "venusrem1", "venus-rem", "venusrem-v1"}:
         size = _prosst_k(key, default_id)
         repo = default_id or f"AI4Protein/ProSST-{size}"
         return [
@@ -257,6 +263,9 @@ def model_artifacts(model_key: str) -> list[Artifact]:
         url = MPNN_URL.format(folder=folder, remote=remote)
         return [Artifact("url", local, url, dest_hint=f"protein_mpnn/{local}", extra={"rel": ("protein_mpnn", local)})]
     if baseline == "protssn":
+        configs = [parse_protssn_config(key) or parse_protssn_config(default_id)]
+        if configs == [None]:
+            configs = list(PROTSSN_CONFIGS)
         arts = [
             Artifact(
                 "hf_file",
@@ -265,7 +274,7 @@ def model_artifacts(model_key: str) -> list[Artifact]:
                 dest_hint=f"protssn/protssn_k{k}_h{h}.pt",
                 extra={"repo": "tyang816/ProtSSN", "filename": f"protssn_k{k}_h{h}.pt", "rel": ("protssn", f"protssn_k{k}_h{h}.pt")},
             )
-            for k, h in PROTSSN_CONFIGS
+            for k, h in configs
         ]
         arts.append(
             Artifact("hf_repo", "ESM-2 650M (ProtSSN encoder)", "facebook/esm2_t33_650M_UR50D", extra={"repo": "facebook/esm2_t33_650M_UR50D"})

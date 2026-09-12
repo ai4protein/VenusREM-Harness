@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from vrh.models.base import ModelAdapter, ModelSpec
 from vrh.models.registry import register_model
+from vrh.models.variant_ids import CARP_VARIANTS, PROTSSN_CONFIGS, protssn_variant_id, protssn_variant_name
 
 
 def _load_via_dispatch(
@@ -78,7 +79,17 @@ _make_adapter(
     default_model_id="AI4Protein/ProSST-2048",
     extras="prosst",
     notes="wt-marginals only; single ProSST + vrh is not VenusREM2",
-    aliases=("venusrem", "venusrem2", "prosst_ensemble", "prosst-ensemble"),
+    aliases=("venusrem2", "prosst_ensemble", "prosst-ensemble"),
+)
+_make_adapter(
+    "venusrem",
+    "auto",
+    description="VenusREM v1 (ProSST-2048, fixed α=0.8)",
+    default_model_id="AI4Protein/ProSST-2048",
+    extras="prosst",
+    needs_pdb=True,
+    notes="wt only; ProSST-2048 + fixed α=0.8 + log_odds (not VenusREM2)",
+    aliases=("venusrem1", "venus-rem", "venusrem-v1"),
 )
 for _k in (20, 128, 512, 1024, 2048, 4096):
     _v1 = "wt only; VenusREM v1 backbone" if _k == 2048 else "wt-marginals only"
@@ -170,10 +181,23 @@ _make_adapter(
     "protssn",
     description="ProtSSN structure GNN ensemble",
     needs_pdb=True,
-    notes="9-model ensemble by default; --protssn_no_ensemble for one GNN",
+    notes="9-model ensemble (k=10/20/30 × h=512/768/1280); singles via --model protssn-k20-h512",
     aliases=("protssn-ensemble", "protssn_ensemble"),
     supports_mask=True,
 )
+for _k, _h in PROTSSN_CONFIGS:
+    _name = protssn_variant_name(_k, _h)
+    _id = protssn_variant_id(_k, _h)
+    _make_adapter(
+        _name,
+        "protssn",
+        description=f"ProtSSN k={_k} h={_h}",
+        default_model_id=_id,
+        needs_pdb=True,
+        notes="single GNN; --protssn_no_ensemble implied",
+        aliases=(_id, f"protssn-k{_k}h{_h}"),
+        supports_mask=True,
+    )
 _make_adapter(
     "esm_if",
     "esm_if",
@@ -318,9 +342,20 @@ _make_adapter(
     default_model_id="carp_640M",
     extras="carp",
     notes="Requires sequence_models; downloads from Zenodo; scores via mask",
-    aliases=("carp-640m", "carp_640m"),
+    aliases=("carp-640m", "carp_640m", "carp_640M"),
     supports_mask=True,
 )
+for _name, _id, _desc in CARP_VARIANTS:
+    _make_adapter(
+        _name,
+        "carp",
+        description=_desc,
+        default_model_id=_id,
+        extras="carp",
+        notes="Requires sequence_models; downloads from Zenodo; scores via mask",
+        aliases=(_id, _id.lower(), _name.replace("-", "_")),
+        supports_mask=True,
+    )
 _make_adapter(
     "mifst",
     "mifst",

@@ -223,13 +223,14 @@ vrh --base_dir data/my_assay $CACHE --out_scores_dir result/vrh
 | `--model` | Backbone | Requirements |
 |-----------|----------|--------------|
 | `venusrem2` | official ProSST ensemble (K=20/128/512/1024/2048/4096) | `struc_seq/` + `[prosst]` |
+| `venusrem` | VenusREM v1: ProSST-2048 + fixed α=0.8 + log_odds | `struc_seq/` + `[prosst]` |
 | `prosst`, `prosst-20`, `prosst-128`, `prosst-512`, `prosst-1024`, `prosst-2048`, `prosst-4096` | single ProSST-K (aliases: `prosst_k4096`, …) | `struc_seq/` + `[prosst]` |
 | `esm2` | ESM-2 650M (default). Also `esm2-8m`, `esm2-35m`, `esm2-150m`, `esm2-3b` | FASTA |
 | `esm1b`, `esm1v` | ESM-1b; ESM-1v 5-seed | FASTA |
 | `saprot`, `saprot-35m-af2`, `saprot-650m-pdb` | SaProt AF2 650M / 35M / PDB 650M | PDB (Foldseek on first use) |
-| `carp` | CARP-640M | FASTA + `[carp]` |
+| `carp`, `carp-600k`, `carp-38m`, `carp-76m` | CARP-640M (default) and smaller Zenodo checkpoints | FASTA + `[carp]` |
 | `esm3`, `esmc`, `esmc-600m` | ESM3 small / ESM-C 300M / 600M | FASTA + `[esm3]` |
-| `protssn`, `protssn-ensemble` | ProtSSN 9-model ensemble (`--protssn_no_ensemble` for one) | PDB |
+| `protssn`, `protssn-ensemble` | ProtSSN 9-model ensemble. Singles: `protssn-k20-h512` (k=10/20/30 × h=512/768/1280) | PDB |
 | `s3f` | S3F | PDB + `[s3f]` |
 | `esm_if`, `esmif`, `mifst` | ESM-IF1; MIF-ST | PDB (`[carp]` for MIF-ST) |
 | `protein_mpnn`, `proteinmpnn-020` | ProteinMPNN `v_48_020` (tf). Also `proteinmpnn-002` / `010` / `030` and `proteinmpnn-soluble-*` | PDB |

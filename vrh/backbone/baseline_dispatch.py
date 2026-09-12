@@ -112,6 +112,8 @@ def load_baseline(baseline_type, model_name, args, device, logger) -> BaselineSt
             device=device,
             norm_dir=args.protssn_norm_dir,
             use_ensemble=not args.protssn_no_ensemble,
+            k=getattr(args, "protssn_k", 20),
+            h=getattr(args, "protssn_h", 512),
             logger=logger,
         )
         state.tokenizer = tokenizer

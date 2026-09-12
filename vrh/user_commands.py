@@ -49,6 +49,7 @@ MODEL_SIZE_HINTS = {
     "esm1b": "first download: ESM-1b 650M, about 2.5 GB",
     "esm1v": "first download: ESM-1v 5-seed ensemble, about 5 × 650M",
     "venusrem2": "first download: 6 ProSST checkpoints, several GB",
+    "venusrem": "first download: ProSST-2048 from Hugging Face (VenusREM v1)",
     "prosst_ensemble": "first download: 6 ProSST checkpoints, several GB",
     "prosst": "first download: ProSST-2048 from Hugging Face",
     "prosst-2048": "first download: ProSST-2048 from Hugging Face (VenusREM v1 backbone)",
@@ -120,6 +121,10 @@ def model_size_hint(model_key: str) -> Optional[str]:
         return "first download: ProGen2 from Hugging Face"
     if key.startswith("esm2"):
         return "first download: ESM-2 checkpoint from Hugging Face"
+    if key.startswith("protssn-k"):
+        return "first download: one ProtSSN GNN + ESM-2 650M encoder"
+    if key.startswith("carp"):
+        return "first download: CARP weights from Zenodo (`pip install 'vrh[carp]'`)"
     return None
 
 
@@ -132,6 +137,7 @@ def print_model_table() -> None:
     print("vrh backbones. FWD = allowed --scoring_strategy (wt / mask / tf).")
     print("venusrem2 = official ProSST ensemble (VenusREM2), wt only.")
     print("Aliases work as --model: saprot, esmif, protssn-ensemble,")
+    print("  protssn-k{10,20,30}-h{512,768,1280}, carp-600k / 38m / 76m,")
     print("  prosst-{k}, esm2-{size}m, proteinmpnn-{xx} (e.g. proteinmpnn-020).")
     print("CSV *_mask / *_wt is --scoring_strategy, not a second --model.")
     print()
