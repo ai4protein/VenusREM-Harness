@@ -224,7 +224,10 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
 
     @app.get("/api/runs/{run_id}/log")
     def get_log(run_id: str):
-        path = store.log_path(run_id)
+        try:
+            path = store.log_path(run_id)
+        except ValueError:
+            raise HTTPException(404, "no log") from None
         if not path.is_file():
             raise HTTPException(404, "no log")
         return PlainTextResponse(path.read_text(encoding="utf-8", errors="replace"))

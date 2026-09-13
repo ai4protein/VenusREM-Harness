@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from vrh.dashboard.app import create_app
 from vrh.dashboard.jobs import JobRunner, build_argv, recipe_argv
 from vrh.dashboard.recipes import recipe_public
-from vrh.dashboard.store import RunStore
+from vrh.dashboard.store import RunStore, is_safe_run_id
 
 
 def _fake_execute(job, store):
@@ -609,3 +609,23 @@ def test_log_tee_isatty(tmp_path):
         assert should_use_color() is False
     finally:
         sys.stdout = old
+
+
+def test_run_id_rejects_path_traversal(tmp_path, client):
+    store = RunStore(tmp_path)
+    assert is_safe_run_id("abc123")
+    assert is_safe_run_id("queued-delete")
+    assert not is_safe_run_id("..")
+    assert not is_safe_run_id("../.ssh")
+    assert not is_safe_run_id("foo/bar")
+    assert store.load_job("../.ssh") is None
+    try:
+        store.run_dir("../.ssh")
+    except ValueError as exc:
+        assert "invalid run id" in str(exc)
+    else:
+        raise AssertionError("run_dir accepted a traversal id")
+    assert client.get("/api/runs/..%2F.ssh").status_code == 404
+    assert client.get("/api/runs/..%2F.ssh/log").status_code == 404
+    deleted = client.delete("/api/runs/..%2F.ssh")
+    assert deleted.status_code in {400, 404, 405}

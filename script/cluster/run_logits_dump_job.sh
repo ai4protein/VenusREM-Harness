@@ -2,10 +2,17 @@
 # Cluster entrypoint. Args: [benchmark] <job-key>
 #   run_logits_dump_job.sh pg carp-600k
 #   run_logits_dump_job.sh vmh__protssn-k10-h512
+#
+# Paths come from the environment (or this script's location). Do not commit
+# machine-specific home directories.
+#   VRH_ROOT     repo checkout on the worker
+#   CONDA_ROOT   conda install prefix (default: $HOME/miniconda3)
+#   HF_HOME      Hugging Face cache (default: $HOME/.cache/huggingface)
 set -euo pipefail
 
-ROOT="${VRH_ROOT:-/inspire/hdd/global_user/USER/workspace/research/VenusREM-Harness}"
-CONDA_ROOT="${CONDA_ROOT:-/inspire/hdd/global_user/USER/miniconda3}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${VRH_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+CONDA_ROOT="${CONDA_ROOT:-${HOME}/miniconda3}"
 
 if [[ $# -eq 1 && "$1" == *"__"* ]]; then
   BENCHMARK="${1%%__*}"
@@ -24,7 +31,7 @@ source "${CONDA_ROOT}/etc/profile.d/conda.sh"
 conda activate vrh
 
 export HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
-export HF_HOME="${HF_HOME:-/inspire/hdd/global_user/USER/.cache/huggingface}"
+export HF_HOME="${HF_HOME:-${HOME}/.cache/huggingface}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME}"
 export VRH="${VRH:-vrh}"
 export BENCHMARK

@@ -55,5 +55,5 @@
     ]
   },
   "name_template": "vrh-logits-{job}",
-  "command_template": "bash /inspire/hdd/global_user/USER/workspace/research/VenusREM-Harness/script/cluster/run_logits_dump_job.sh {job}"
+  "command_template": "bash __VRH_ROOT__/script/cluster/run_logits_dump_job.sh {job}"
 }
