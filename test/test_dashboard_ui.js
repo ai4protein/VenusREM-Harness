@@ -603,6 +603,7 @@ check("benchmark pages show ten models and a jump dock", () => {
   const page1 = (host.innerHTML.match(/<article class="bbio-row/g) || []).length;
   assert.strictEqual(page1, 10);
   assert.ok(host.innerHTML.includes("data-benchmark-page"));
+  assert.strictEqual((host.innerHTML.match(/class="benchmark-pager"/g) || []).length, 1);
   assert.ok(host.innerHTML.includes("1–10 / 58") || host.innerHTML.includes("1–10 of 58"));
   assert.ok(host.innerHTML.includes("0.271"));
   context.state.benchmarkPage = 2;

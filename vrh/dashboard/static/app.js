@@ -1897,9 +1897,8 @@
       '<label class="benchmark-search"><span class="sr-only">Find model</span>' +
       '<input type="search" data-benchmark-query value="' + esc(state.benchmarkQuery || "") +
       '" placeholder="ESM, ProSST, SaProt…"' + (hasScores ? "" : " disabled") + '></label></div></div>' +
-      pager +
       '<section class="benchmark-chart">' + chart + "</section>" +
-      (pager ? pager : "");
+      pager;
     hydrateBenchmarkRows(host);
   }
 
