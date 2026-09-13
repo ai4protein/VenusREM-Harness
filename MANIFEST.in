@@ -1,7 +1,6 @@
 include LICENSE
 include README.md
 include pyproject.toml
-include data/.keep
 recursive-include vrh *
 global-exclude __pycache__
 global-exclude *.py[cod]
@@ -15,9 +14,7 @@ prune data
 prune docs
 prune experiments
 prune script
+# GitHub README screenshots only — never the sdist / wheel.
 prune img
 prune tools
 prune .github
-global-exclude *.png
-global-exclude *.jpg
-global-exclude *.jpeg

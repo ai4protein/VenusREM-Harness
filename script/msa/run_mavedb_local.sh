@@ -54,7 +54,7 @@ generate_configs() {
         -d "$DATABASE" \
         -b "${BITSCORES// /,}" \
         -n 5 \
-        src/single_config_monomer.txt \
+        script/msa/single_config_monomer.txt \
         > "$logfile" 2>&1 &
     local pid=$!
 

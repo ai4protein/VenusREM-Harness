@@ -38,4 +38,6 @@ def plot_attention_map(csv_file, output_file=None, figsize=(20, 10)):
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
     plt.show()
 
-plot_attention_map('scores/phi29_42.csv', output_file='amino_acid_attention_map.png')
+
+if __name__ == "__main__":
+    plot_attention_map('scores/phi29_42.csv', output_file='amino_acid_attention_map.png')

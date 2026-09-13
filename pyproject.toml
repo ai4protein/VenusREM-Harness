@@ -143,7 +143,8 @@ remharness = "vrh.cli:main"
 [project.entry-points."venusrem2.models"]
 
 [tool.setuptools]
-# Do not auto-include leftover on-disk weights (ProSST static/*.joblib, AE.pt).
+# Do not auto-include leftover on-disk weights (ProSST static/*.joblib, AE.pt)
+# or repo-root img/ (README screenshots; also pruned in MANIFEST.in).
 include-package-data = false
 
 [tool.setuptools.packages.find]
@@ -170,6 +171,7 @@ vrh = [
   "baseline/prosst/static/**",
   "**/*.joblib",
   "legacy/**",
+  "single_config_monomer.txt",
 ]
 
 # Library install: `uv pip install .` into an existing env. Do not add a

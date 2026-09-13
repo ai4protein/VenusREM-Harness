@@ -26,7 +26,7 @@ timeout 15 evcouplings \
     -d "$DATABASE" \
     -b "${BITSCORES// /,}" \
     -n 5 \
-    src/single_config_monomer.txt > /dev/null 2>&1 || true
+    script/msa/single_config_monomer.txt > /dev/null 2>&1 || true
 
 # Step 2: run each bitscore sequentially (no resource contention)
 all_configs=""

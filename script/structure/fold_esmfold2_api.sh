@@ -14,7 +14,7 @@
 dataset=${1:-case}
 backends=${2:-v1,v2}
 
-python src/esmfold2.py \
+python script/structure/esmfold2.py \
     --aa_seq_dir data/${dataset}/aa_seq \
     --out_dir    data/${dataset}/esmfold_pdbs \
     --backends   ${backends} \

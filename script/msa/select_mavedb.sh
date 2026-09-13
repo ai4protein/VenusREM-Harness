@@ -1,6 +1,6 @@
 #!/bin/bash
 # Step 1: select best MSA for each unique protein that has output
-python src/data/select_msa.py \
+python script/msa/select_msa.py \
     --is_multi \
     --input_dir output/mavedb \
     --output_dir data/mavedb

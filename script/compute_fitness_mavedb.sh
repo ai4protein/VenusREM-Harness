@@ -7,7 +7,7 @@ export HF_ENDPOINT=https://hf-mirror.com
 protein_dir=mavedb
 
 # Step 1: Generate struc_seq from pdbs (skips already processed)
-python src/data/get_struc_seq.py \
+python script/structure/get_struc_seq.py \
     --pdb_dir data/$protein_dir/pdbs \
     --output_dir data/$protein_dir/struc_seq \
     --num_processes 24 \

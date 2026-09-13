@@ -19,7 +19,7 @@ Install (one-time, only if v2 is enabled):
 
 Run:
     export BIOHUB_TOKEN=<your-token>          # only needed for v2
-    python src/esmfold2.py \\
+    python script/structure/esmfold2.py \\
         --aa_seq_dir data/case/aa_seq \\
         --out_dir   data/case/esmfold_pdbs \\
         --backends  v1,v2 \\
