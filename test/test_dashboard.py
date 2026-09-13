@@ -420,6 +420,27 @@ def test_create_run_explains_missing_torch(client, monkeypatch):
     assert "PyTorch is not installed" in res.json()["detail"]
 
 
+def test_fetch_sequence_api(client, monkeypatch):
+    def fake_fasta(seq_id, dest, **_kwargs):
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(">P0A6Y8\nACDE\n", encoding="utf-8")
+        return str(dest)
+
+    monkeypatch.setattr("vrh.data.fetch_sequence.fetch_query_fasta", fake_fasta)
+    res = client.post("/api/fetch_sequence", data={"seq_id": "P0A6Y8"})
+    assert res.status_code == 200, res.text
+    payload = res.json()
+    assert payload["id"] == "P0A6Y8"
+    assert payload["name"] == "P0A6Y8.fasta"
+    assert "ACDE" in payload["fasta"]
+
+
+def test_fetch_sequence_api_rejects_bad_id(client):
+    res = client.post("/api/fetch_sequence", data={"seq_id": "not-an-id"})
+    assert res.status_code == 400
+
+
 def test_create_run_rejects_bad_seq_id(client):
     res = client.post(
         "/api/runs",

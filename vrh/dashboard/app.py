@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional
 
 from vrh import __version__
@@ -258,6 +259,27 @@ def create_app(root: Optional[Path] = None, runner: Optional[JobRunner] = None):
         if path is None or not path.is_file():
             raise HTTPException(404, f"{kind} not found")
         return FileResponse(path, media_type=media, filename=path.name)
+
+    @app.post("/api/fetch_sequence")
+    async def fetch_sequence(seq_id: Optional[str] = Form(None)):
+        seq_id = _blank(seq_id)
+        if not seq_id:
+            raise HTTPException(400, "Need a UniProt accession or PDB id")
+        from vrh.data.fetch_sequence import fetch_query_fasta
+        from vrh.data.fetch_structure import normalize_pdb_id, normalize_uniprot
+
+        acc = normalize_uniprot(seq_id) or normalize_pdb_id(seq_id)
+        if not acc:
+            raise HTTPException(400, f"Not a UniProt accession or PDB id: {seq_id}")
+        try:
+            with TemporaryDirectory() as tmp:
+                path = fetch_query_fasta(seq_id, Path(tmp) / "query.fasta")
+                text = Path(path).read_text(encoding="utf-8", errors="replace")
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(400, f"{type(exc).__name__}: {exc}") from exc
+        return {"id": acc, "name": f"{acc}.fasta", "fasta": text}
 
     @app.post("/api/runs/{run_id}/fetch_structure")
     async def fetch_structure(

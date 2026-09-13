@@ -50,7 +50,9 @@ this.modelLockReason = modelLockReason;
 this.preferredModel = preferredModel;
 this.inferModelSeries = inferModelSeries;
 this.groupModelSeries = groupModelSeries;
-this.inputGateMessage = inputGateMessage;
+this.inputGateRows = inputGateRows;
+this.inputGateHtml = inputGateHtml;
+this.canFetchSequence = canFetchSequence;
 this.highlightPositions = highlightPositions;
 this.experimentMutationPositions = experimentMutationPositions;
 this.selectionResis = selectionResis;
@@ -222,6 +224,32 @@ check("review geometry is locked before route loading", () => {
   assert.ok(routeSource.indexOf("setBenchMode(isWorkbenchRoute)") < routeSource.indexOf("await loadWorkspace(route.id)"));
 });
 
+check("predict uses the same full-width chrome as review", () => {
+  const css = fs.readFileSync(cssPath, "utf8");
+  const routeStart = src.indexOf("async function onRoute()");
+  const routeEnd = src.indexOf("function patchOverview", routeStart);
+  const routeSource = src.slice(routeStart, routeEnd);
+  assert.ok(src.includes("function setWideMode"));
+  assert.ok(routeSource.includes('setWideMode(route.page === "predict")'));
+  assert.ok(css.includes("body.is-wide #main"));
+  assert.ok(css.includes("body.is-wide #page-predict:not([hidden])"));
+  assert.ok(css.includes("minmax(0, 55%) minmax(0, 45%)"));
+  const page = fs.readFileSync(htmlPath, "utf8");
+  assert.ok(page.includes('form="predict-form"'));
+  assert.ok(page.indexOf("btn-demo") < page.indexOf("btn-submit"));
+  assert.ok(page.includes('id="btn-seq-fetch"') && page.includes("disabled"));
+});
+
+check("sequence fetch lights up only for real ids", () => {
+  assert.strictEqual(context.canFetchSequence(""), false);
+  assert.strictEqual(context.canFetchSequence("hello"), false);
+  assert.strictEqual(context.canFetchSequence("not-an-id"), false);
+  assert.strictEqual(context.canFetchSequence("2024"), false);
+  assert.strictEqual(context.canFetchSequence("P0A6Y8"), true);
+  assert.strictEqual(context.canFetchSequence("2L6Q"), true);
+  assert.strictEqual(context.canFetchSequence("AF-P0A6Y8-F1"), true);
+});
+
 check("residue bar sits on the review page", () => {
   context.state.job = { sequence: "ACDEY" };
   context.state.picked = { resi: 3, resn: "D", chain: "A" };
@@ -355,8 +383,15 @@ check("fasta-only unlocks sequence models only", () => {
   assert.strictEqual(context.modelUnlocked({ name: "venusrem2", needs_pdb: true }, fasta), false);
   assert.ok(context.modelLockReason({ name: "venusrem2", needs_pdb: true }, fasta).includes("PDB"));
   assert.strictEqual(context.preferredModel(fasta), "esm2");
-  const msg = context.inputGateMessage(fasta);
-  assert.ok(msg.includes("Sequence only"));
+  const rows = context.inputGateRows(fasta);
+  assert.strictEqual(rows[0].on, true);
+  assert.strictEqual(rows[1].on, false);
+  assert.strictEqual(rows[2].on, false);
+  const table = context.inputGateHtml(fasta);
+  assert.ok(table.includes("input-check-table"));
+  assert.ok(table.includes("FASTA"));
+  assert.ok(table.includes("a.fa"));
+  assert.ok(!table.includes("Add sequence or structure"));
 });
 
 check("intake classifies dropped files", () => {

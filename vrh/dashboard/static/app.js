@@ -699,6 +699,16 @@
     return parts.join(" ");
   }
 
+  function canFetchSequence(raw) {
+    var v = String(raw || "").trim();
+    if (!v) return false;
+    var uni = v.replace(/^AF-/i, "").split("-")[0];
+    if (/^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$/i.test(uni)) {
+      return true;
+    }
+    return /^[0-9][A-Za-z0-9]{3}$/.test(v) && !/^20[0-2][0-9]$/.test(v);
+  }
+
   function classifyAccession(raw) {
     var v = String(raw || "").trim();
     if (!v) return { pdb_id: "", uniprot_id: "" };
@@ -803,32 +813,96 @@
     return "";
   }
 
-  function inputChip(on, label) {
-    return '<span class="gate-chip' + (on ? " is-on" : " is-off") + '">' + esc(label) + "</span>";
+  function inputGateRows(snap) {
+    snap = snap || formSnapshot();
+    var fastaOn = !!(snap.fasta || snap.seq_id);
+    var pdbOn = structureReady(snap);
+    var msaOn = hasMsaInput(snap);
+    return [
+      { id: "fasta", label: "FASTA", on: fastaOn, detail: snap.fasta || snap.seq_id || "" },
+      {
+        id: "pdb",
+        label: "PDB",
+        on: pdbOn,
+        detail: snap.pdb || snap.pdb_id || snap.uniprot_id || "",
+      },
+      { id: "msa", label: "MSA", on: msaOn, detail: snap.msa || "" },
+    ];
   }
 
-  function inputGateMessage(snap) {
-    snap = snap || formSnapshot();
-    if (!hasSequenceInput(snap) && !hasStructureInput(snap)) return "Add sequence or structure.";
-    if (!structureReady(snap)) return "Sequence only.";
-    return "Structure ready.";
+  function inputGateHtml(snap) {
+    var rows = inputGateRows(snap);
+    var body = rows
+      .map(function (row) {
+        return (
+          "<tr class=\"" +
+          (row.on ? "is-on" : "is-off") +
+          "\">" +
+          "<th scope=\"row\">" +
+          esc(row.label) +
+          "</th>" +
+          "<td class=\"check-cell\">" +
+          (row.on ? "<span class=\"check-mark\" aria-label=\"ready\">✓</span>" : "") +
+          "</td>" +
+          "<td class=\"src-cell\">" +
+          (row.detail ? esc(row.detail) : "—") +
+          "</td></tr>"
+        );
+      })
+      .join("");
+    return (
+      '<table class="input-check-table" aria-label="Input checklist">' +
+      "<thead><tr><th>Input</th><th>Ready</th><th>Source</th></tr></thead>" +
+      "<tbody>" +
+      body +
+      "</tbody></table>"
+    );
+  }
+
+  function updateSeqFetchBtn() {
+    var btn = $("btn-seq-fetch");
+    var el = $("f-seq-id");
+    if (!btn) return;
+    var ok = canFetchSequence(el && el.value) && !btn.classList.contains("is-busy");
+    btn.disabled = !ok;
+    btn.title = ok ? "Fetch FASTA from UniProt or RCSB" : "Enter a UniProt accession or PDB id";
+  }
+
+  async function fetchSequenceNow() {
+    var el = $("f-seq-id");
+    var btn = $("btn-seq-fetch");
+    if (!btn || btn.classList.contains("is-busy") || !canFetchSequence(el && el.value)) return;
+    btn.classList.add("is-busy");
+    btn.disabled = true;
+    btn.textContent = "Fetching…";
+    try {
+      var fd = new FormData();
+      fd.append("seq_id", el.value.trim());
+      var data = await apiJson("/api/fetch_sequence", { method: "POST", body: fd });
+      var file = new File([data.fasta], data.name || "query.fasta", { type: "text/plain" });
+      setInputFile($("file-fasta"), file);
+      updateFileLabels();
+      renderIntakeFiles();
+      updateInputGate();
+      updateCli();
+      showFormError("");
+    } catch (err) {
+      showFormError(err.message || "Could not fetch sequence.");
+    } finally {
+      btn.classList.remove("is-busy");
+      btn.textContent = "Fetch";
+      updateSeqFetchBtn();
+    }
   }
 
   function updateInputGate() {
-    var snap = formSnapshot();
-    var html =
-      '<div class="gate-chips">' +
-      inputChip(!!(snap.fasta || snap.seq_id), "FASTA") +
-      inputChip(structureReady(snap), "PDB") +
-      inputChip(hasMsaInput(snap), "MSA") +
-      "</div><p class=\"gate-msg\">" +
-      esc(inputGateMessage(snap)) +
-      "</p>";
+    var html = inputGateHtml(formSnapshot());
     var a = $("input-gate");
     var b = $("model-gate");
     if (a) a.innerHTML = html;
     if (b) b.innerHTML = html;
     updateRecipeHint();
+    updateSeqFetchBtn();
   }
 
   function updateRecipeHint() {
@@ -2193,28 +2267,8 @@
     updateCli();
   }
 
-  function renderSlotChips(id, items) {
-    var host = $(id);
-    if (!host) return;
-    host.innerHTML = items
-      .filter(Boolean)
-      .map(function (text) {
-        return '<span class="slot-chip">' + esc(text) + "</span>";
-      })
-      .join("");
-  }
-
   function renderIntakeFiles() {
     var snap = formSnapshot();
-    renderSlotChips("slot-sequence-chips", [
-      snap.fasta ? "FASTA · " + snap.fasta : "",
-      snap.seq_id || "",
-    ]);
-    renderSlotChips("slot-structure-chips", [
-      snap.pdb ? "PDB · " + snap.pdb : "",
-      !snap.pdb && (snap.pdb_id || snap.uniprot_id) ? "Fetch · " + (snap.pdb_id || snap.uniprot_id) : "",
-    ]);
-    renderSlotChips("slot-msa-chips", [snap.msa ? "MSA · " + snap.msa : ""]);
     markAttach("file-fasta", snap.fasta);
     markAttach("file-pdb", snap.pdb);
     markAttach("file-msa", snap.msa);
@@ -2316,6 +2370,10 @@
   function setBenchMode(on) {
     document.body.classList.toggle("is-bench", !!on);
     if (!on) document.body.classList.remove("is-splitting");
+  }
+
+  function setWideMode(on) {
+    document.body.classList.toggle("is-wide", !!on);
   }
 
   function mountBench(kind) {
@@ -4763,6 +4821,7 @@
     // Review inherited the centered page layout until renderWorkspace() ran,
     // which made the populated workbench visibly jump to full width.
     setBenchMode(isWorkbenchRoute);
+    setWideMode(route.page === "predict");
     state.route = route;
     setTabs(route.page);
     if (route.page !== "workspace" && route.page !== "review") teardownViewer();
@@ -4915,6 +4974,7 @@
       fillModels();
       updateModelMeta();
       updateCli();
+      updateSeqFetchBtn();
     });
     els.form.addEventListener("change", function () {
       updateFileLabels();
@@ -4922,7 +4982,15 @@
       fillModels();
       updateModelMeta();
       updateCli();
+      updateSeqFetchBtn();
     });
+    var seqFetch = $("btn-seq-fetch");
+    if (seqFetch) {
+      seqFetch.addEventListener("click", function () {
+        fetchSequenceNow();
+      });
+    }
+    updateSeqFetchBtn();
     els.form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       submitJob(false);

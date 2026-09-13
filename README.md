@@ -136,20 +136,31 @@ Opens a local console at http://127.0.0.1:8765. This is a preview, not a hosted 
 
 ## Dashboard
 
-Local predict / select console (preview). Typical loop:
-
-1. **Predict mutants** — submit a FASTA (and optional PDB / mutant CSV), or a PDB / UniProt id to fetch RCSB + AlphaFold DB.
-2. **Inspect the table** — ranked scores from the current run.
-3. **Structure** — PyMOL-style 3D view (cartoon / sticks / surface). Crystal PDBs have no pLDDT (B-factor is a temperature factor); fetch an AFDB model to color by confidence.
-4. **Select top-K** — export the chosen variants.
-
-CLI scoring still writes `result/scores/`. Dashboard sessions also keep working files under `~/.cache/vrh/dashboard`.
+Local predict / select / benchmark console (preview) at http://127.0.0.1:8765.
 
 ```bash
 vrh dashboard
 ```
 
-`vrh dashboard` ships with the default install. Extra backbones still need their extras (`[prosst]`, `[s3f]`, …).
+Typical loop:
+
+1. **New prediction** — FASTA, PDB, and optional MSA. Paste a UniProt / PDB id and **Fetch**, or upload files. **Demo** loads the bundled 2L6Q assay.
+2. **Review** — ranked table, 3D structure, and per-residue evidence. Tick variants and export a CSV shortlist.
+3. **Benchmarks** — ProteinGym paired raw vs +vrh (MutHub / ViroHub when those tables are present). Filter by metric, property, and input type.
+
+<p align="center"><img src="img/predict.png" alt="New prediction: inputs on the left, model families on the right" width="100%"></p>
+
+**New prediction.** Sequence / structure / MSA on the left; model family on the right. The checklist ticks FASTA, PDB, and MSA once a file is uploaded or an id is fetched.
+
+<p align="center"><img src="img/review.png" alt="Review: ranked mutants, structure, and residue evidence" width="100%"></p>
+
+**Review.** Ranked candidates next to a PyMOL-style viewer. Crystal PDBs have no pLDDT (B-factor is a temperature factor); fetch an AFDB model to color by confidence.
+
+<p align="center"><img src="img/benchmark.png" alt="Benchmarks: ProteinGym raw vs +vrh leaderboard" width="100%"></p>
+
+**Benchmarks.** Same-backbone raw vs +vrh bars. Scores rank variants; they are not ΔΔG.
+
+CLI scoring still writes `result/scores/`. Dashboard sessions keep working files under `~/.cache/vrh/dashboard`. Extra backbones still need their extras (`[prosst]`, `[s3f]`, …).
 
 ## Data
 
