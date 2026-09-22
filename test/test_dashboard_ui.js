@@ -439,9 +439,9 @@ check("product benchmark compares the same base with VRH", () => {
   assert.strictEqual(benchmark.id, "proteingym");
   assert.strictEqual(benchmark.pairs.length, 4);
   const prosst = benchmark.pairs.find((row) => row.key === "prosst_ensemble");
-  assert.strictEqual(prosst.base, 0.529);
+  assert.strictEqual(prosst.base, 0.524);
   assert.strictEqual(prosst.enhanced, 0.556);
-  assert.strictEqual(prosst.delta, 0.027);
+  assert.strictEqual(prosst.delta, 0.032);
   assert.strictEqual(context.catalogPairs(benchmark).length, 3);
   assert.ok(context.catalogPairs(benchmark).every((row) => row.key !== "prosst_ensemble"));
   assert.strictEqual(context.featuredPair(benchmark).key, "prosst_ensemble");
@@ -554,7 +554,7 @@ check("catalog hubs keep filter chrome and honest empty scores", () => {
   context.state.catalog = catalog;
   const virohub = catalog.benchmarks.find((item) => item.id === "venusvirohub");
   assert.ok(muthub && muthub.status === "ready" && muthub.n === 905);
-  assert.ok(Array.isArray(muthub.pairs) && muthub.pairs.length === 59);
+  assert.ok(Array.isArray(muthub.pairs) && muthub.pairs.length === 71);
   assert.ok(muthub.pairs.some((row) => row.key === "prosst_ensemble"));
   assert.ok(virohub && virohub.status === "offline" && virohub.n === 89);
   assert.ok(Array.isArray(virohub.pairs) && virohub.pairs.length === 0);
@@ -639,7 +639,7 @@ check("benchmark pages show ten models and a jump dock", () => {
   assert.strictEqual(page1, 10);
   assert.ok(host.innerHTML.includes("data-benchmark-page"));
   assert.strictEqual((host.innerHTML.match(/class="benchmark-pager"/g) || []).length, 1);
-  assert.ok(host.innerHTML.includes("1–10 / 58") || host.innerHTML.includes("1–10 of 58"));
+  assert.ok(host.innerHTML.includes("1–10 / 70") || host.innerHTML.includes("1–10 of 70"));
   assert.ok(host.innerHTML.includes("0.271"));
   context.state.benchmarkPage = 2;
   context.renderProductBenchmark(host, muthub, catalog);

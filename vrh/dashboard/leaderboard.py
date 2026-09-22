@@ -146,7 +146,7 @@ _PAPER_ROWS = [
         },
     },
     {
-        "name": "SaProt (650M)",
+        "name": "SaProt (650M_AF2)",
         "model": "saprot",
         "inputs": ["seq", "str"],
         "scores": {
@@ -211,7 +211,7 @@ def _benchmark_inputs(model_key: str) -> list[str]:
     key = model_key.lower()
     if key.startswith(("proteinmpnn", "pmpnn_")) or key == "esmif":
         return ["str"]
-    if key.startswith(("prosst", "saprot", "s3f")) or key in {"protssn", "mifst"}:
+    if key.startswith(("prosst", "saprot", "s3f", "protssn")) or key == "mifst":
         return ["seq", "str"]
     return ["seq"]
 
@@ -419,11 +419,11 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "metrics": raw_data["metrics"],
         "pairs": pairs,
         "function_scores": {
-            "activity": 0.539,
-            "binding": 0.499,
-            "expression": 0.562,
-            "organismal fitness": 0.483,
-            "stability": 0.698,
+            "activity": 0.541,
+            "binding": 0.495,
+            "expression": 0.557,
+            "organismal fitness": 0.494,
+            "stability": 0.691,
         },
     }
 

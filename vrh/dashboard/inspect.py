@@ -141,7 +141,7 @@ _SERIES_VARIANT_ORDER = {
 
 _VARIANT_LABELS = {
     "venusrem2": "VenusREM2",
-    "venusrem": "VenusREM",
+    "venusrem": "VenusREM (ProSST-2048, fixed α=0.8)",
     "prosst": "Default (K=2048)",
     "prosst-20": "K=20",
     "prosst-128": "K=128",
@@ -210,7 +210,7 @@ _VARIANT_LABELS = {
 
 def infer_model_series(name: str) -> str:
     raw = (name or "").lower()
-    if raw in {"venusrem2", "venusrem", "venusrem1"} or raw.startswith("venusrem"):
+    if raw == "venusrem2" or raw.startswith("venusrem2") or raw == "venusrem":
         return "venusrem2"
     if raw.startswith("prosst"):
         return "prosst"

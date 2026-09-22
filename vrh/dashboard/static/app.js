@@ -63,7 +63,7 @@
   };
   var VARIANT_LABELS = {
     venusrem2: "VenusREM2",
-    venusrem: "VenusREM",
+    venusrem: "VenusREM (ProSST-2048, fixed α=0.8)",
     "prosst": "Default (K=2048)",
     "prosst-20": "K=20",
     "prosst-128": "K=128",
@@ -270,7 +270,7 @@
     source: "VRH paired evaluation on 217 ProteinGym substitution assays",
     source_url: "https://proteingym.org/benchmarks",
     pairs: [
-      { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base_name: "ProSST-Ensemble (K=all)", enhanced_name: "ProSST-Ensemble (K=all, vrh)", base: 0.529, enhanced: 0.556, delta: 0.027, protocol: "Six-checkpoint score-level ensemble; same internal pipeline" },
+      { key: "prosst_ensemble", family: "ProSST-Ensemble (K=all)", base_name: "ProSST-Ensemble (K=all)", enhanced_name: "ProSST-Ensemble (K=all, vrh)", base: 0.524, enhanced: 0.556, delta: 0.032, protocol: "Six-checkpoint score-level ensemble; same internal pipeline" },
       { key: "esm2_650m_wt", family: "esm2_650m_wt", base_name: "esm2_650m_wt", enhanced_name: "esm2_650m_wt", base: 0.418, enhanced: 0.472, delta: 0.054, protocol: "Same model backbone; full vrh recipe." },
       { key: "saprot_wt", family: "saprot_wt", base_name: "saprot_wt", enhanced_name: "saprot_wt", base: 0.424, enhanced: 0.465, delta: 0.041, protocol: "Same model backbone; full vrh recipe." },
       { key: "esm1v_wt", family: "esm1v_wt", base_name: "esm1v_wt", enhanced_name: "esm1v_wt", base: 0.410, enhanced: 0.465, delta: 0.055, protocol: "Same model backbone; full vrh recipe." },
@@ -282,7 +282,7 @@
       { name: "VenusREM2 · adaptive mix", score: 0.542, note: "entropy-α MSA" },
       { name: "VenusREM2 · raw", score: 0.524, note: "uncalibrated ProSST ensemble" },
     ],
-    function_scores: { activity: 0.539, binding: 0.499, expression: 0.562, "organismal fitness": 0.483, stability: 0.698 },
+    function_scores: { activity: 0.541, binding: 0.495, expression: 0.557, "organismal fitness": 0.494, stability: 0.691 },
   }];
   FALLBACK_CATALOG.benchmarks[0].properties = [
     { id: "overall", label: "Overall" },
@@ -1229,7 +1229,7 @@
 
   function inferModelSeries(name) {
     var raw = String(name || "").toLowerCase();
-    if (raw === "venusrem2" || raw === "venusrem" || raw === "venusrem1" || raw.indexOf("venusrem") === 0) return "venusrem2";
+    if (raw === "venusrem2" || raw.indexOf("venusrem2") === 0 || raw === "venusrem") return "venusrem2";
     if (raw.indexOf("prosst") === 0) return "prosst";
     if (raw.indexOf("saprot") === 0) return "saprot";
     if (raw.indexOf("progen") === 0) return "progen";
@@ -1540,6 +1540,15 @@
     });
   }
 
+  function metricHasCategory(benchmark, metric, property) {
+    if (!property || property === "overall") return true;
+    return (benchmark.pairs || []).some(function (row) {
+      var block = row.properties_by_metric && row.properties_by_metric[metric];
+      if (block && block[property] != null) return true;
+      return metric === "spearman" && row.properties && row.properties[property] != null;
+    });
+  }
+
   function pairMatchesFilters(row, property) {
     property = property || activeBenchmarkProperty(currentBenchmark());
     var input = state.benchmarkInput || "all";
@@ -1802,7 +1811,8 @@
     var tipPos = pct < 18 ? "is-start" : pct > 82 ? "is-end" : "";
     return '<article class="bbio-row' + (featured ? " is-ours" : "") + " is-" + family +
       '" style="--bbio:' + color + '" data-family="' + esc(family) + '" data-lazy-row>' +
-      '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
+      '<div class="bbio-head"><span class="bbio-rank">' + (rank ? "#" + rank : "") + "</span>" +
+      '<strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
       '<div class="bbio-id"><b><i class="bbio-swatch"></i>' + esc(name) + (featured ? " <em>ours</em>" : "") + "</b>" +
       (sub ? "<span>" + esc(sub) + "</span>" : "") + "</div>" +
       '<div class="bbio-meta">' + benchmarkTags(inputs) + "</div></div>" +
@@ -1879,7 +1889,8 @@
     var mode = variant === "raw" ? "Raw" : "+VRH";
     return '<aside class="bbio-callout is-ours" style="--bbio:' + color + '">' +
       '<p class="bbio-callout-kicker">' + esc(rankNote) + " · " + mode + "</p>" +
-      '<div class="bbio-head"><strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
+      '<div class="bbio-head"><span class="bbio-rank">' + (rank ? "#" + rank : "") + "</span>" +
+      '<strong class="bbio-score">' + Number(score).toFixed(3) + "</strong>" +
       '<div class="bbio-id"><b><i class="bbio-swatch"></i>VenusREM2 <em>ours</em></b>' +
       "<span>" + (variant === "raw" ? "Raw ensemble" : signed(delta, 3) + " vs Raw") +
       "</span></div><div class=\"bbio-meta\">" + benchmarkTags(["seq", "str", "evo"]) + "</div></div>" +
@@ -1911,11 +1922,16 @@
         '" data-benchmark-metric="' + esc(item.id) + '"' + (hasScores ? "" : " disabled") + '>' + esc(item.label) + '</button>';
     }).join("");
     var property = activeBenchmarkProperty(benchmark);
+    if (hasScores && !metricHasCategory(benchmark, metric, property)) {
+      property = "overall";
+      state.benchmarkProperty = "overall";
+    }
     var activeProperty = properties.filter(function (item) { return item.id === property; })[0] || properties[0];
     property = activeProperty.id;
     var propertyTabs = properties.map(function (item) {
+      var unsupported = hasScores && item.id !== "overall" && !metricHasCategory(benchmark, metric, item.id);
       return '<button type="button" class="benchmark-filter-pill' + (item.id === property ? " is-on" : "") +
-        '" data-benchmark-property="' + esc(item.id) + '">' + esc(item.label) +
+        '" data-benchmark-property="' + esc(item.id) + '"' + (unsupported ? " disabled" : "") + '>' + esc(item.label) +
         (item.n != null ? ' <span>' + esc(item.n) + "</span>" : "") + '</button>';
     }).join("");
     var variant = state.benchmarkVariant || "vrh";
@@ -1932,8 +1948,8 @@
     });
     var total = pool.length;
     var rank = featured ? featuredRank(benchmark, featured) : null;
-    var body = pageRows.map(function (row, index) {
-      return benchmarkPairRow(row, (page - 1) * BENCHMARK_PAGE_SIZE + index + 1, property, scale);
+    var body = pageRows.map(function (row) {
+      return benchmarkPairRow(row, featuredRank(benchmark, row), property, scale);
     }).join("");
     var featuredHtml = featured ? benchmarkFeaturedHtml(featured, property, scale, rank, total) : "";
     var pager = hasScores ? benchmarkPagerHtml(pairs.length, page) : "";

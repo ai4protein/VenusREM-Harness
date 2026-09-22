@@ -108,8 +108,10 @@ def test_health_and_models(client):
         by_series.setdefault(row["series"], set()).add(row["name"])
     assert {"venusrem2", "venusrem"} <= by_series["venusrem2"]
     venusrem = next(row for row in models if row["name"] == "venusrem")
-    assert venusrem["label"] == "VenusREM"
+    assert venusrem["series"] == "venusrem2"
+    assert venusrem["label"] == "VenusREM (ProSST-2048, fixed α=0.8)"
     assert venusrem["needs_pdb"] is True
+    assert "venusrem" not in by_series["prosst"]
     assert {"esm2", "esm2-8m", "esm1b", "esm_if", "esmc"} <= by_series["esm"]
     assert {"prosst", "prosst-20", "prosst-4096"} <= by_series["prosst"]
     assert {"saprot", "saprot-35m-af2"} <= by_series["saprot"]
@@ -309,7 +311,7 @@ def test_proteingym_leaderboard(client):
     assert len(api["benchmarks"]) == 3
     benchmark = api["benchmarks"][0]
     assert benchmark["id"] == "proteingym"
-    assert benchmark["model_count"] == 59
+    assert benchmark["model_count"] == 71
     assert [item["id"] for item in benchmark["properties"]] == [
         "overall", "activity", "binding", "expression", "organismal", "stability"
     ]
@@ -323,7 +325,7 @@ def test_proteingym_leaderboard(client):
     assert [item["id"] for item in muthub["properties"]][:3] == ["overall", "stability", "activity"]
     assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
     assert muthub["n_mutants"] == 27846
-    assert len(muthub["pairs"]) == 59
+    assert len(muthub["pairs"]) == 71
     muthub_pairs = {row["key"]: row for row in muthub["pairs"]}
     assert muthub_pairs["prosst_ensemble"]["enhanced"] == 0.258
     assert muthub_pairs["proteinmpnn"]["enhanced"] == 0.271
@@ -336,20 +338,18 @@ def test_proteingym_leaderboard(client):
         item["label"] for item in api["benchmarks"] if item["status"] == "planned"
     ]
     pairs = {row["key"]: row for row in benchmark["pairs"]}
-    assert pairs["prosst_ensemble"]["base"] == 0.529
+    assert pairs["prosst_ensemble"]["base"] == 0.524
     assert pairs["prosst_ensemble"]["enhanced"] == 0.556
-    assert pairs["prosst_ensemble"]["delta"] == 0.027
+    assert pairs["prosst_ensemble"]["delta"] == 0.032
     assert pairs["prosst_ensemble"]["metrics"]["ndcg"] == {
-        "base": 0.793, "vrh": 0.808, "delta": 0.015
+        "base": 0.791, "vrh": 0.808, "delta": 0.017
     }
     assert pairs["prosst_ensemble"]["inputs"] == ["seq", "str"]
     assert pairs["prosst_ensemble"]["properties"]["activity"] == {
-        "base": 0.485, "vrh": 0.539, "delta": 0.054
+        "base": 0.480, "vrh": 0.541, "delta": 0.061
     }
-    assert pairs["prosst_ensemble"]["properties_by_metric"]["ndcg"]["activity"] == {
-        "base": 0.790, "vrh": 0.815, "delta": 0.025
-    }
-    assert pairs["esm2_650m_wt"]["enhanced"] == 0.472
+    assert list(pairs["prosst_ensemble"]["properties_by_metric"]["ndcg"]) == ["overall"]
+    assert pairs["esm2_650m_wt"]["enhanced"] == 0.468
     assert "official_reference" not in pairs["prosst_ensemble"]
     assert all(len(row["metrics"]) == 5 for row in benchmark["pairs"])
     assert all(

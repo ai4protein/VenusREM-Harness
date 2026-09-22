@@ -10,8 +10,10 @@ from vrh.dashboard.leaderboard import proteingym_catalog
 
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
-FIG4 = REPO / "docs" / "figure" / "data" / "fig4_venusmuthub_multimetric.csv"
-TEX = REPO / "docs" / "0overleaf" / "tables" / "table_leaderboard_vmh_category.tex"
+CANONICAL = (
+    REPO
+    / "docs/audits/experiment_cleanup_20260919/alignment_71/canonical_multimetric_current.csv"
+)
 SNAPSHOT = REPO / "vrh" / "dashboard" / "data" / "venusmuthub_vrh.json"
 PROPERTY_IDS = (
     "overall",
@@ -67,7 +69,7 @@ def test_venusmuthub_score_status() -> None:
     muthub = _muthub()
     assert SNAPSHOT.is_file()
     assert muthub["status"] == "ready"
-    assert len(muthub["pairs"]) == 59
+    assert len(muthub["pairs"]) == 71
     assert all(row.get("metrics") for row in muthub["pairs"])
     assert all(len(row["metrics"]) == 5 for row in muthub["pairs"])
 
@@ -105,7 +107,7 @@ def test_venusmuthub_paper_spot_checks() -> None:
     assert mpnn["base"] == 0.221
     assert mpnn["properties"]["stability"]["vrh"] == 0.399
     assert mpnn["properties"]["overall"]["vrh"] == 0.271
-    assert mpnn["metrics"]["ndcg"]["vrh"] == 0.850
+    assert mpnn["metrics"]["ndcg"]["vrh"] == 0.851
     assert mpnn["inputs"] == ["str"]
     assert rem2["inputs"] == ["seq", "str"]
 
@@ -130,13 +132,15 @@ def test_venusmuthub_keys_match_proteingym() -> None:
     assert "esm1b_mask" in {row["key"] for row in mut["pairs"]}
 
 
-def test_venusmuthub_snapshot_matches_fig4_ndcg() -> None:
-    with FIG4.open(newline="", encoding="utf-8") as handle:
-        fig4 = next(row for row in csv.DictReader(handle) if row["Model"].startswith("ProteinMPNN (v_48_020)"))
+def test_venusmuthub_snapshot_matches_canonical_ndcg() -> None:
+    with CANONICAL.open(newline="", encoding="utf-8") as handle:
+        source = next(
+            row for row in csv.DictReader(handle)
+            if row["dataset"] == "vmh" and row["model"] == "proteinmpnn"
+        )
     mpnn = _pairs()["proteinmpnn"]
-    assert mpnn["metrics"]["ndcg"]["base"] == round(float(fig4["NDCG_Raw"]), 3)
-    assert mpnn["metrics"]["ndcg"]["vrh"] == round(float(fig4["NDCG_REM2"]), 3)
-    assert TEX.is_file()
+    assert mpnn["metrics"]["ndcg"]["base"] == round(float(source["NDCG_Raw"]), 3)
+    assert mpnn["metrics"]["ndcg"]["vrh"] == round(float(source["NDCG_REM2"]), 3)
     packaged = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     assert packaged["status"] == "ready"
-    assert len(packaged["pairs"]) == 59
+    assert len(packaged["pairs"]) == 71

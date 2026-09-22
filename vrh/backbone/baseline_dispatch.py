@@ -583,6 +583,7 @@ def create_baseline_forward_fn(
             protein_alphabet=state.extra["carp_alphabet"],
             device=device,
             logger=logger, protein_name=protein_name,
+            scoring_strategy=scoring_strategy,
         )
 
     elif baseline_type in ("mifst", "mif_st"):

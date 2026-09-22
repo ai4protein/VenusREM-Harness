@@ -28,7 +28,7 @@ def test_virohub_catalog_ready():
     virohub = _virohub()
     assert virohub["status"] == "ready"
     assert virohub["n"] == 89
-    assert len(virohub["pairs"]) == 59
+    assert len(virohub["pairs"]) == 71
     assert "VenusViroHub" not in catalog["planned_benchmarks"]
 
 
@@ -61,8 +61,10 @@ def test_virohub_properties_and_metric_grid():
     for pair in virohub["pairs"]:
         assert set(pair["metrics"]) == set(METRIC_IDS)
         assert set(pair["properties_by_metric"]) == set(METRIC_IDS)
+        assert set(pair["properties_by_metric"]["spearman"]) == set(PROPERTY_IDS)
         for metric_id in METRIC_IDS:
-            assert set(pair["properties_by_metric"][metric_id]) == set(PROPERTY_IDS)
+            if metric_id != "spearman":
+                assert list(pair["properties_by_metric"][metric_id]) == ["overall"]
             for values in pair["properties_by_metric"][metric_id].values():
                 assert values["delta"] == round(values["vrh"] - values["base"], 3)
         for values in pair["metrics"].values():

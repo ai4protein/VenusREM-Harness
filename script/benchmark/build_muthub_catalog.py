@@ -127,8 +127,10 @@ DISPLAY_TO_KEY = {
     "RITA-M": "rita_m",
     "RITA-S": "rita_s",
     "RITA-XL": "rita_xl",
-    "SaProt (mask)": "saprot_mask",
-    "SaProt (wt)": "saprot_wt",
+    "SaProt (mask)": "saprot_mask",  # legacy alias of SaProt (650M_AF2, mask)
+    "SaProt (wt)": "saprot_wt",  # legacy alias of SaProt (650M_AF2, wt)
+    "SaProt (650M_AF2, mask)": "saprot_mask",
+    "SaProt (650M_AF2, wt)": "saprot_wt",
     "S3F (wt)": "s3f_wt",
     "S3F (mask)": "s3f_mask",
     "MIF-ST": "mifst",

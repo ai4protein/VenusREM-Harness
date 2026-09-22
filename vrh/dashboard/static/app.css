@@ -3155,14 +3155,26 @@ body.is-wide #predict-form.panel {
   display: grid;
   content-visibility: auto;
   contain-intrinsic-size: auto 56px;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 2.8em 52px minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
   column-gap: 10px;
   row-gap: 3px;
   align-items: center;
   padding: 4px 8px;
   border-radius: 6px;
+  overflow: visible;
   transition: opacity 0.16s ease, background-color 0.16s ease;
+}
+.bbio-rank {
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: end;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 .bbio-row.is-ours { padding-top: 6px; padding-bottom: 6px; }
 .bbio-head {
@@ -3224,7 +3236,7 @@ body.is-wide #predict-form.panel {
   justify-content: flex-end;
   gap: 4px;
 }
-.bbio-plot { position: relative; min-width: 0; grid-column: 1 / -1; }
+.bbio-plot { position: relative; min-width: 0; grid-column: 1 / -1; overflow: visible; z-index: 1; }
 .bbio-bar {
   height: 6px;
   overflow: visible;
@@ -3239,8 +3251,8 @@ body.is-wide #predict-form.panel {
 }
 .bbio-tip {
   position: absolute;
-  bottom: calc(100% + 6px);
-  z-index: 4;
+  bottom: calc(100% + 8px);
+  z-index: 40;
   transform: translateX(-50%);
   opacity: 0;
   pointer-events: none;
@@ -3322,7 +3334,9 @@ body.is-wide #predict-form.panel {
   .benchmark-chart:hover .bbio-callout { opacity: 0.55; }
   .benchmark-chart:hover .bbio-row:hover,
   .benchmark-chart:hover .bbio-callout:hover {
-    z-index: 6;
+    z-index: 30;
+    content-visibility: visible;
+    overflow: visible;
     opacity: 1;
     background: rgba(28, 25, 21, 0.035);
   }
@@ -3382,11 +3396,12 @@ body.is-wide #predict-form.panel {
 }
 .bbio-callout .bbio-head {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 2.8em 52px minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: 10px;
+  column-gap: 10px;
   margin-bottom: 3px;
 }
+.bbio-callout .bbio-rank { color: var(--bbio); }
 .bbio-callout-kicker {
   margin: 0 0 4px;
   color: var(--muted);

@@ -1,10 +1,10 @@
 """
 CARP baseline adapter for VenusREM2.
 
-CARP (Convolutional Autoregressive Protein) is a masked protein language model
-based on ByteNet with dilated convolutions. This adapter scores single protein
-sequences using masked-marginals, then projects per-residue log-probs to ESM2
-vocabulary for VenusREM2 compatibility.
+CARP (Convolutional Autoregressive Protein) is a ByteNet LM. One unmasked
+forward already yields per-site logits (``--scoring_strategy wt``, default),
+matching the 640M dumps. ``mask`` still runs the ProteinGym-style per-site
+mask loop. Logits are projected to the ESM2 vocab for VenusREM2.
 
 Models are hosted on Zenodo and auto-downloaded via torch.hub on first use.
 
@@ -19,6 +19,8 @@ import os
 import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer
+
+from vrh.models.scoring_strategy import MASKED_MARGINALS, normalize_scoring_strategy
 
 STANDARD_AA = "ACDEFGHIKLMNPQRSTVWY"
 
@@ -102,6 +104,19 @@ def _build_esm_projection_map(protein_alphabet: str, esm_tokenizer):
     return carp_idx_to_esm_id
 
 
+def _project_carp_logits(all_logits, protein_alphabet: str, esm_tokenizer) -> torch.Tensor:
+    log_probs = F.log_softmax(all_logits, dim=-1)
+    carp_to_esm = _build_esm_projection_map(protein_alphabet, esm_tokenizer)
+    projected = torch.full(
+        (all_logits.size(0), esm_tokenizer.vocab_size),
+        -1e9,
+        device=all_logits.device,
+    )
+    for carp_idx, esm_id in carp_to_esm.items():
+        projected[:, esm_id] = log_probs[:, carp_idx]
+    return projected
+
+
 @torch.no_grad()
 def forward_carp(
     model,
@@ -112,41 +127,34 @@ def forward_carp(
     device: torch.device,
     logger=None,
     protein_name: Optional[str] = None,
+    scoring_strategy: Optional[str] = None,
 ) -> torch.Tensor:
-    """
-    Score a protein sequence using CARP with masked-marginals.
+    """Return ``[L, esm_vocab]`` log-probs.
 
-    For each position i, mask that position and run a forward pass.
-    Collect the logits at the masked position. This gives per-position
-    marginal probabilities conditioned on the rest of the sequence.
-
-    Returns: torch.Tensor of shape [L, esm_vocab_size] with log-probabilities
-             projected to ESM2 vocab.
+    Default / ``wt``: one unmasked forward (same as the 640M dumps).
+    ``mask``: one forward per site with that site replaced by ``#``.
     """
+    strategy = normalize_scoring_strategy(scoring_strategy)
     L = len(sequence)
-    esm_vocab_size = esm_tokenizer.vocab_size
-    mask_idx = protein_alphabet.index("#")
-
     if logger is not None:
-        logger.debug(f"CARP forward: seq_len={L}", protein=protein_name)
+        logger.debug(f"CARP forward: seq_len={L} strategy={strategy}", protein=protein_name)
 
     input_ids = collater([[sequence]])[0].to(device)  # [1, L]
+    if strategy == MASKED_MARGINALS:
+        mask_idx = protein_alphabet.index("#")
+        all_logits = torch.zeros(L, len(protein_alphabet), device=device)
+        for i in range(L):
+            masked = input_ids.clone()
+            masked[0, i] = mask_idx
+            output = model(masked, logits=True)
+            all_logits[i] = output["logits"][0, i]
+    else:
+        output = model(input_ids, logits=True)
+        all_logits = output["logits"][0]
+        if all_logits.size(0) != L:
+            all_logits = all_logits[:L]
 
-    all_logits = torch.zeros(L, len(protein_alphabet), device=device)
-    for i in range(L):
-        masked = input_ids.clone()
-        masked[0, i] = mask_idx
-        output = model(masked, logits=True)
-        all_logits[i] = output["logits"][0, i]
-
-    log_probs = F.log_softmax(all_logits, dim=-1)  # [L, 30]
-
-    carp_to_esm = _build_esm_projection_map(protein_alphabet, esm_tokenizer)
-    projected = torch.full((L, esm_vocab_size), -1e9, device=device)
-    for carp_idx, esm_id in carp_to_esm.items():
-        projected[:, esm_id] = log_probs[:, carp_idx]
-
+    projected = _project_carp_logits(all_logits, protein_alphabet, esm_tokenizer)
     if logger is not None:
         logger.debug(f"CARP done: output shape {projected.shape}", protein=protein_name)
-
     return projected
