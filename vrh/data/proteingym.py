@@ -1,13 +1,9 @@
 """Download ProteinGym substitutions into the vrh --base_dir layout.
 
-v1 listed these Hugging Face archives under ``AI4Protein/VenusREM``::
-
-    aa_seq.tar.gz  aa_seq_aln_a2m.tar.gz  pdbs.tar.gz
-    struc_seq.tar.gz  substitutions.tar.gz
-
-Only the MSA tarballs are public today. Missing pieces fall back to
-ProteinGym v1.3 (substitutions + AF2 PDBs). Sequences are written from the
-reference table. ProSST tokens are optional: vrh builds them from PDB.
+Optional Hugging Face MSA archives come from ``VRH_LEGACY_PROTEINGYM_REPO``.
+Missing pieces fall back to ProteinGym v1.3 (substitutions + AF2 PDBs).
+Sequences are written from the reference table. ProSST tokens are optional:
+vrh builds them from PDB.
 """
 
 from __future__ import annotations
@@ -25,8 +21,6 @@ import zipfile
 from pathlib import Path
 from typing import Iterable, Optional
 
-HF_DATASET = "AI4Protein/VenusREM"
-HF_BASE = f"https://huggingface.co/datasets/{HF_DATASET}/resolve/main"
 HF_ARCHIVES = {
     "aa_seq": "aa_seq.tar.gz",
     "substitutions": "substitutions.tar.gz",
@@ -44,6 +38,15 @@ PG_REFERENCE = (
     "main/reference_files/DMS_substitutions.csv"
 )
 EXPECTED_ASSAYS = 217
+
+
+def hf_dataset() -> str:
+    return (os.environ.get("VRH_LEGACY_PROTEINGYM_REPO") or "").strip()
+
+
+def hf_base() -> str:
+    repo = hf_dataset()
+    return f"https://huggingface.co/datasets/{repo}/resolve/main" if repo else ""
 
 
 def bundled_reference_csv() -> Optional[Path]:
@@ -198,12 +201,15 @@ def download_hf_archive(filename: str, dest: Path, force: bool = False) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.is_file() and dest.stat().st_size > 0 and not force:
         return dest
+    repo = hf_dataset()
+    if not repo:
+        raise FileNotFoundError("VRH_LEGACY_PROTEINGYM_REPO is not set")
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
-        return download_url(f"{HF_BASE}/{filename}", dest, force=force)
+        return download_url(f"{hf_base()}/{filename}", dest, force=force)
     path = hf_hub_download(
-        repo_id=HF_DATASET,
+        repo_id=repo,
         filename=filename,
         repo_type="dataset",
         local_dir=str(dest.parent),
@@ -216,7 +222,10 @@ def download_hf_archive(filename: str, dest: Path, force: bool = False) -> Path:
 
 
 def hf_archive_available(filename: str) -> bool:
-    req = urllib.request.Request(f"{HF_BASE}/{filename}", method="HEAD")
+    base = hf_base()
+    if not base:
+        return False
+    req = urllib.request.Request(f"{base}/{filename}", method="HEAD")
     try:
         with urllib.request.urlopen(req, timeout=20) as response:
             return 200 <= getattr(response, "status", 200) < 300
@@ -261,13 +270,15 @@ def download_proteingym(
 
     if dry_run:
         plan.append(f"dest: {dest}")
-        plan.append(f"HF dataset: {HF_DATASET} (v1 MSA + optional archives)")
+        repo = hf_dataset()
+        if repo:
+            plan.append(f"optional HF MSA dataset: {repo}")
         plan.append(f"fallback substitutions: {PG_SUBSTITUTIONS}")
         plan.append(f"fallback AF2 PDBs: {PG_STRUCTURES}")
-        if want_a2m:
-            plan.append(f"MSA a2m: {HF_BASE}/{HF_ARCHIVES['aa_seq_aln_a2m']}")
-        if want_a3m:
-            plan.append(f"MSA a3m: {HF_BASE}/{HF_ARCHIVES['aa_seq_aln_a3m']}")
+        if repo and want_a2m:
+            plan.append(f"MSA a2m: {hf_base()}/{HF_ARCHIVES['aa_seq_aln_a2m']}")
+        if repo and want_a3m:
+            plan.append(f"MSA a3m: {hf_base()}/{HF_ARCHIVES['aa_seq_aln_a3m']}")
         log("\n".join(plan))
         return counts
 
@@ -389,8 +400,8 @@ def build_download_parser() -> argparse.ArgumentParser:
         prog="vrh download",
         description=(
             "Fetch ProteinGym substitutions into data/proteingym_v1. "
-            "MSAs come from Hugging Face (AI4Protein/VenusREM); "
-            "substitutions and AF2 PDBs fall back to ProteinGym v1.3."
+            "Substitutions and AF2 PDBs come from official ProteinGym v1.3. "
+            "Optional MSA tarballs use VRH_LEGACY_PROTEINGYM_REPO."
         ),
     )
     parser.add_argument(

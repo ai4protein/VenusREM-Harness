@@ -3,7 +3,7 @@
 
 Sources (no invented numbers):
   - docs/figure/data/fig4_venusmuthub_multimetric.csv  (5 metrics, overall)
-  - docs/0overleaf/tables/table_leaderboard_vmh_category.tex  (Spearman by task)
+  - docs/paper_tables/table_leaderboard_vmh_category.tex  (Spearman by task)
   - data/VenusMutHub/assay_manifest.csv  (assay counts)
 """
 
@@ -21,7 +21,7 @@ from vrh.dashboard.leaderboard import _benchmark_inputs
 
 REPO = Path(__file__).resolve().parents[2]
 CSV_PATH = REPO / "docs" / "figure" / "data" / "fig4_venusmuthub_multimetric.csv"
-TEX_PATH = REPO / "docs" / "0overleaf" / "tables" / "table_leaderboard_vmh_category.tex"
+TEX_PATH = REPO / "docs" / "paper_tables" / "table_leaderboard_vmh_category.tex"
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
 PG_SNAPSHOT = REPO / "vrh" / "dashboard" / "data" / "proteingym_rem2.json"
 OUT_PATH = REPO / "vrh" / "dashboard" / "data" / "venusmuthub_vrh.json"

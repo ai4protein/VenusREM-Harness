@@ -1,13 +1,12 @@
-# VenusREM-Harness
+# REM-Harness
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-Academic-green)](LICENSE)
-[![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM--Harness-black)](https://github.com/tyang816/VenusREM-Harness)
 ![Status](https://img.shields.io/badge/dashboard-preview-orange)
 
 A General Harness for Protein Foundation Model Fitness Prediction
 
-**VenusREM-Harness** (`vrh` / `remharness`) is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
+**REM-Harness** (`vrh` / `remharness`) is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
 - Calibrate any frozen PLM (ESM-2, SaProt, ProSST, ProteinMPNN, …).
 - Score substitution mutants from FASTA, PDB, or a dataset directory.
@@ -24,25 +23,17 @@ Python import: `vrh`. Default backbone: ESM-2 650M.
 > vrh scores are for ranking, not ΔΔG. Experimental validation is required
 > before any wet-lab decision. The dashboard is a local preview and may change.
 
-## News
-
-- **2026.09** Local dashboard preview (`vrh dashboard`) at http://127.0.0.1:8765.
-- **2026.09** Package and CLI released as `vrh` (`remharness` is the same command).
-- **2026.07** VenusREM frozen on `v1.0.0`.
-- **2025.07** VenusREM in [Bioinformatics](https://academic.oup.com/bioinformatics/article/41/Supplement_1/i401/8199374).
-- **2025.04** Ranked 1st on the [ProteinGym](https://proteingym.org/benchmarks) substitution leaderboard.
-
 ## Installation
 
 vrh does **not** depend on PyTorch in `pyproject.toml`. That keeps pip / uv from replacing a working CUDA wheel with the CPU build on PyPI. Bring your own `torch>=2.1` from [pytorch.org](https://pytorch.org/get-started/locally/). ESM-2 650M needs about ≥10 GB VRAM; `vrh demo` (ESM-2 8M) can run on CPU.
 
 `pip install vrh` is CLI + dashboard (`remharness` is an alias). Other deps use lower bounds only. Backbone stacks (ProSST, S3F, CARP, ESM-3) stay opt-in.
 
-**Existing env** (torch already installed):
+**Existing env** (torch already installed), from this repository:
 
 ```bash
-pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
-# or: uv pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
+pip install -e .
+# or: uv pip install -e .
 vrh doctor          # or: remharness doctor
 ```
 
@@ -50,7 +41,7 @@ vrh doctor          # or: remharness doctor
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124   # pick your CUDA
-pip install "vrh @ git+https://github.com/tyang816/VenusREM-Harness.git"
+pip install -e .
 vrh demo
 vrh dashboard
 ```
@@ -59,15 +50,13 @@ vrh dashboard
 
 ```bash
 # when you actually use that model — these extras can clash with a custom torch
-pip install "vrh[prosst]"    # VenusREM2 / ProSST (torch-geometric / torch-scatter)
-pip install "vrh[s3f]"       # S3F / S2F (Python <3.11)
-pip install "vrh[carp]"
-pip install "vrh[esm3]"
+pip install -e ".[prosst]"    # VenusREM2 / ProSST (torch-geometric / torch-scatter)
+pip install -e ".[s3f]"       # S3F / S2F (Python <3.11)
+pip install -e ".[carp]"
+pip install -e ".[esm3]"
 ```
 
-If `torch-geometric` is already in the env, use `pip install "vrh[prosst]" --no-deps` or skip the extra.
-
-Editable: `pip install -e .` then add a backbone extra as needed.
+If `torch-geometric` is already in the env, use `pip install -e ".[prosst]" --no-deps` or skip the extra.
 
 | Extra | Use |
 |-------|-----|
@@ -177,12 +166,12 @@ data/my_assay/
   struc_seq/             # optional; built from pdbs/ if missing
 ```
 
-**Downloads.** Hugging Face data stay at [`tyang816/VenusREM2`](https://huggingface.co/datasets/tyang816/VenusREM2) (not this Git repo). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/vrh/weights` or `$VRH_CACHE`.
+**Downloads.** ProteinGym substitutions and AF2 PDBs fall back to official ProteinGym v1.3. Extra Hugging Face dataset mirrors are optional (`VRH_HF_DATA_REPOS`). Private repos: `HF_TOKEN` or `hf auth login`. Weights: `~/.cache/vrh/weights` or `$VRH_CACHE`.
 
 ```bash
 vrh download                 # ProteinGym → data/proteingym_v1
 vrh download VenusMutHub
-vrh download VenusViroHub
+vrh download ViroHub
 vrh download benchmark-all
 vrh download example
 vrh download esm2
@@ -234,7 +223,6 @@ vrh --base_dir data/my_assay $CACHE --out_scores_dir result/vrh
 | `--model` | Backbone | Requirements |
 |-----------|----------|--------------|
 | `venusrem2` | official ProSST ensemble (K=20/128/512/1024/2048/4096) | `struc_seq/` + `[prosst]` |
-| `venusrem` | VenusREM v1: ProSST-2048 + fixed α=0.8 + log_odds | `struc_seq/` + `[prosst]` |
 | `prosst`, `prosst-20`, `prosst-128`, `prosst-512`, `prosst-1024`, `prosst-2048`, `prosst-4096` | single ProSST-K (aliases: `prosst_k4096`, …) | `struc_seq/` + `[prosst]` |
 | `esm2` | ESM-2 650M (default). Also `esm2-8m`, `esm2-35m`, `esm2-150m`, `esm2-3b` | FASTA |
 | `esm1b`, `esm1v` | ESM-1b; ESM-1v 5-seed | FASTA |
@@ -324,15 +312,6 @@ Default: dynamic α, β = 1 − α, `calibrated_margin`. `--alpha 0.8` is a fixe
 | + MSA + CCD + RSA | calibrated_margin | dynamic | above_mean | - | 0.455 |
 | **Full vrh** | calibrated_margin | dynamic | above_mean | above_mean | **0.457** |
 
-## VenusREM
-
-VenusREM is frozen on **`v1.0.0`**. Closest command here:
-
-```bash
-vrh --model prosst-2048 --base_dir data/proteingym_v1 \
-    --alpha 0.8 --scoring_mode log_odds
-```
-
 ## Development
 
 ```bash
@@ -343,50 +322,26 @@ pytest test/ -v
 
 Dashboard tests live in `test/test_dashboard.py` and `test/test_dashboard_flows.py`.
 
-**Publish to PyPI.** First upload creates the `vrh` project. Preferred: [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) so no API token sits in the repo.
-
-1. On [pypi.org](https://pypi.org) → Publishing → add a pending publisher: project `vrh`, owner `tyang816`, repo `VenusREM-Harness`, workflow `publish-pypi.yml`, environment `pypi`.
-2. In GitHub: Settings → Environments → create `pypi`.
-3. Bump `version` in `pyproject.toml` and `vrh/__init__.py` together, then tag:
+**Package build.** Bump `version` in `pyproject.toml` and `vrh/__init__.py` together, then:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+python -m build
 ```
 
-The tag workflow builds the wheel and uploads it. After that, anyone can `pip install vrh`. A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.
+A TestPyPI dry run: `python -m build && twine upload --repository testpypi dist/*`.
 
 ## Citation
 
-VenusREM2:
+Please cite this work as:
 
 ```bibtex
-@article{tan2026venusrem2,
+@article{anonymous2026remharness,
     title={A General Harness for Protein Foundation Model Fitness Prediction},
 }
 ```
 
-VenusREM:
-
-```bibtex
-@article{tan2025venusrem,
-    author = {Tan, Yang and Wang, Ruilin and Wu, Banghao and Hong, Liang and Zhou, Bingxin},
-    title = {From high-throughput evaluation to wet-lab studies: advancing mutation effect prediction with a retrieval-enhanced model},
-    journal = {Bioinformatics},
-    volume = {41},
-    number = {Supplement_1},
-    pages = {i401-i409},
-    year = {2025},
-    month = {07},
-    doi = {10.1093/bioinformatics/btaf189},
-    url = {https://doi.org/10.1093/bioinformatics/btaf189},
-}
-```
-
-Related: [VenusFactory2](https://github.com/ai4protein/VenusFactory2), [web server](https://venusfactory.bio/), [technical report](https://arxiv.org/abs/2603.27303).
-
 ## License
 
-Academic, non-profit, and government research: free under the [VenusREM2 Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact [tanyang.august@sjtu.edu.cn](mailto:tanyang.august@sjtu.edu.cn).
+Academic, non-profit, and government research: free under the [REM-Harness Academic License](LICENSE). Commercial or fee-for-service use needs a separate license — contact omitted for double-blind review.
 
 Computational scores are for ranking only and are not a substitute for wet-lab validation. Experimental confirmation is required before any laboratory or clinical use.

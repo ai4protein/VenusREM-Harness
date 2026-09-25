@@ -84,8 +84,7 @@ def test_venusmuthub_is_not_planned() -> None:
 def test_venusmuthub_catalog_fields() -> None:
     muthub = _muthub()
     assert muthub["manifest"] == "data/VenusMutHub/assay_manifest.csv"
-    assert "fig4_venusmuthub_multimetric.csv" in muthub["source"]
-    assert "table_leaderboard_vmh_category.tex" in muthub["source"]
+    assert "VenusMutHub paper tables" in muthub["source"]
     assert muthub["n_mutants"] == 27846
     assert muthub["median_seq_len"] == 226
     assert muthub.get("paired_score_table")

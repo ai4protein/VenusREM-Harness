@@ -9,16 +9,37 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
-FOLDSEEK_HF_REPO = "tyang816/Foldseek_bin"
 FOLDSEEK_HF_FILE = "foldseek"
-FOLDSEEK_URL = (
-    "https://huggingface.co/tyang816/Foldseek_bin/resolve/main/foldseek?download=true"
-)
-
-S3F_HF_REPO = "tyang816/S3F_weights"
 S3F_HF_FILE = "s3f.pth"
 S3F_ZENODO_URL = "https://zenodo.org/records/14257708/files/s3f.pth?download=1"
-PROSST_STATIC_REPO = "tyang816/ProSST"
+
+
+def _env_text(*keys: str, default: str = "") -> str:
+    for key in keys:
+        value = (os.environ.get(key) or "").strip()
+        if value:
+            return value
+    return default
+
+
+def foldseek_hf_repo() -> str:
+    return _env_text("VRH_FOLDSEEK_HF_REPO")
+
+
+def foldseek_url() -> str:
+    return _env_text("VRH_FOLDSEEK_URL")
+
+
+def s3f_hf_repo() -> str:
+    return _env_text("VRH_S3F_HF_REPO")
+
+
+def prosst_static_repo() -> str:
+    return _env_text("VRH_PROSST_STATIC_REPO")
+
+
+def protssn_hf_repo() -> str:
+    return _env_text("VRH_PROTSSN_REPO")
 PROSST_STATIC_NAMES = (
     "AE.pt",
     "20.joblib",
@@ -40,7 +61,7 @@ def default_cache_dir(explicit: Optional[str] = None) -> str:
     else:
         from vrh.env import first_env
 
-        env = first_env("VRH_CACHE", "REM2_CACHE", "VENUSREM2_CACHE", "VENUSREM_CACHE", "VENUS_ORBIT_CACHE")
+        env = first_env("VRH_CACHE", "REM2_CACHE", "VENUSREM2_CACHE")
         if env:
             path = os.path.expanduser(env)
         else:
@@ -70,17 +91,14 @@ def _unique_existing_dirs(paths: list[str]) -> list[str]:
 
 
 def legacy_weight_cache_dirs() -> list[str]:
-    """Read-only fallback roots (old vrh / VenusREM-Orbit caches). Do not write here."""
+    """Read-only fallback roots (older local caches). Do not write here."""
     roots = [
         os.environ.get("REM2_CACHE") or "",
         os.environ.get("VENUSREM2_CACHE") or "",
-        os.environ.get("VENUS_ORBIT_CACHE") or "",
         os.path.join(os.path.expanduser("~"), ".cache", "rem2", "weights"),
         os.path.join(os.path.expanduser("~"), ".cache", "rem2"),
         os.path.join(os.path.expanduser("~"), ".cache", "venusrem2", "weights"),
         os.path.join(os.path.expanduser("~"), ".cache", "venusrem2"),
-        os.path.join(os.path.expanduser("~"), ".cache", "venus_orbit", "weights"),
-        os.path.join(os.path.expanduser("~"), ".cache", "venus_orbit"),
     ]
     return _unique_existing_dirs(roots)
 
@@ -286,23 +304,27 @@ def ensure_foldseek_bin(cache_dir: Optional[str] = None, explicit: Optional[str]
         return log_cache_hit("foldseek", existing, logger)
     looked = weight_candidates("bin", "foldseek", cache_dir=cache_dir)
     if not (os.path.isfile(dest) and os.path.getsize(dest) > 0):
-        try:
-            _hf_download(
-                FOLDSEEK_HF_REPO,
-                FOLDSEEK_HF_FILE,
-                dest_dir,
-                logger=logger,
-                name="foldseek",
-                looked_in=looked,
-            )
-        except Exception as exc:
-            from vrh.models.download_policy import DownloadRefused
+        repo = foldseek_hf_repo()
+        url = foldseek_url()
+        if repo:
+            try:
+                _hf_download(
+                    repo,
+                    FOLDSEEK_HF_FILE,
+                    dest_dir,
+                    logger=logger,
+                    name="foldseek",
+                    looked_in=looked,
+                )
+            except Exception as exc:
+                from vrh.models.download_policy import DownloadRefused
 
-            if isinstance(exc, DownloadRefused):
-                raise
-            ensure_url_file(
-                FOLDSEEK_URL, dest, logger=logger, name="foldseek", looked_in=looked
-            )
+                if isinstance(exc, DownloadRefused):
+                    raise
+                if url:
+                    ensure_url_file(url, dest, logger=logger, name="foldseek", looked_in=looked)
+        elif url:
+            ensure_url_file(url, dest, logger=logger, name="foldseek", looked_in=looked)
         # hf_hub_download may write to dest_dir/foldseek
         if not os.path.isfile(dest):
             # sometimes nested
@@ -314,8 +336,8 @@ def ensure_foldseek_bin(cache_dir: Optional[str] = None, explicit: Optional[str]
                     break
     if not os.path.isfile(dest):
         raise FileNotFoundError(
-            "Failed to download foldseek binary. "
-            f"Expected at {dest} from {FOLDSEEK_HF_REPO}"
+            "Failed to download foldseek binary. Install foldseek, place it in "
+            f"{dest}, or set VRH_FOLDSEEK_URL / VRH_FOLDSEEK_HF_REPO."
         )
     _ensure_executable(dest)
     return dest
@@ -356,23 +378,25 @@ def ensure_s3f_checkpoint(
     dest_dir = ensure_dir(os.path.join(cache, "s3f"))
     dest = os.path.join(dest_dir, "s3f.pth")
     url = os.environ.get("S3F_CHECKPOINT_URL") or S3F_ZENODO_URL
-    try:
-        return _hf_download(
-            S3F_HF_REPO,
-            S3F_HF_FILE,
-            dest_dir,
-            logger=logger,
-            name="S3F checkpoint",
-            looked_in=candidates,
-        )
-    except Exception as hf_exc:
-        from vrh.models.download_policy import DownloadRefused
+    repo = s3f_hf_repo()
+    if repo:
+        try:
+            return _hf_download(
+                repo,
+                S3F_HF_FILE,
+                dest_dir,
+                logger=logger,
+                name="S3F checkpoint",
+                looked_in=candidates,
+            )
+        except Exception as hf_exc:
+            from vrh.models.download_policy import DownloadRefused
 
-        if isinstance(hf_exc, DownloadRefused):
-            raise
-        return ensure_url_file(
-            url, dest, logger=logger, name="S3F checkpoint", looked_in=candidates
-        )
+            if isinstance(hf_exc, DownloadRefused):
+                raise
+    return ensure_url_file(
+        url, dest, logger=logger, name="S3F checkpoint", looked_in=candidates
+    )
 
 
 def ensure_esm_if_checkpoint(cache_dir: Optional[str] = None, logger=None) -> str:
@@ -448,7 +472,7 @@ def resolve_prosst_static_file(
     cache_dir: Optional[str] = None,
     logger=None,
 ) -> str:
-    """AE.pt / {K}.joblib: bundled copy, vrh cache, then ``tyang816/ProSST``."""
+    """AE.pt / {K}.joblib: bundled copy, vrh cache, then ``VRH_PROSST_STATIC_REPO``."""
     filename = Path(name).name
     bundled = bundled_prosst_static(filename)
     if bundled:
@@ -456,10 +480,16 @@ def resolve_prosst_static_file(
     existing = resolve_existing_weight("prosst", "static", filename, cache_dir=cache_dir)
     if existing:
         return log_cache_hit(f"ProSST {filename}", existing, logger)
+    repo = prosst_static_repo()
+    if not repo:
+        raise FileNotFoundError(
+            f"ProSST {filename} is not bundled or cached. Place it under "
+            "the vrh weight cache or set VRH_PROSST_STATIC_REPO."
+        )
     cache = default_cache_dir(cache_dir)
     local_dir = ensure_dir(os.path.join(cache, "prosst"))
     return _hf_download(
-        PROSST_STATIC_REPO,
+        repo,
         f"static/{filename}",
         local_dir,
         logger=logger,

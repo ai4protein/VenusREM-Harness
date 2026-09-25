@@ -102,7 +102,6 @@ def test_get_model_roundtrip():
         assert cls.spec.name == name or name in cls.spec.aliases
     assert get_model("venusrem2").spec.name == "prosst"
     assert get_model("venusrem").spec.name == "venusrem"
-    assert get_model("venusrem1").spec.name == "venusrem"
     assert get_model("prosst_ensemble").spec.name == "prosst"
     assert get_model("prosst-2048").spec.name == "prosst-2048"
     assert get_model("prosst-4096").spec.name == "prosst-4096"
@@ -246,7 +245,7 @@ def test_venusrem2_expands_prosst_ensemble():
     assert args.alpha == "0.8"
     assert args.scoring_mode == "log_odds"
     assert args.backbone_mode == "prosst"
-    assert args.model_out_name == ["VenusREM"]
+    assert args.model_out_name == ["legacy-fixed-alpha"]
 
     args = make_args(model="prosst_ensemble")
     apply_model_defaults(args, "prosst_ensemble")
@@ -351,9 +350,9 @@ def test_score_label_vrh_vs_venusrem2_ensemble():
     assert default_score_label("venusrem2", ens, "AI4Protein/ProSST-2048") == "VenusREM2__ProSST-2048"
     assert "VenusREM2" in run_banner("venusrem2", ens)
 
-    v1 = make_args(model="venusrem", model_name=["AI4Protein/ProSST-2048"])
-    assert default_score_label("venusrem", v1, "AI4Protein/ProSST-2048") == "VenusREM"
-    assert "fixed" in run_banner("venusrem", v1)
+    legacy = make_args(model="venusrem", model_name=["AI4Protein/ProSST-2048"])
+    assert default_score_label("venusrem", legacy, "AI4Protein/ProSST-2048") == "legacy-fixed-alpha"
+    assert "fixed" in run_banner("venusrem", legacy)
 
 
 def test_apply_model_defaults_auto_cache_for_mpnn_and_protssn():
@@ -437,18 +436,18 @@ def test_fixture_files_exist(fasta_path, pdb_path, mutant_csv, msa_path, struc_f
     assert "," in struc_fasta_path.read_text().splitlines()[1]
 
 
-def test_resolve_existing_weight_falls_back_to_orbit_cache(tmp_path, monkeypatch):
+def test_resolve_existing_weight_falls_back_to_legacy_cache(tmp_path, monkeypatch):
     from vrh.models.weights import resolve_existing_weight
 
-    vrh = tmp_path / "venusrem2" / "weights"
-    orbit = tmp_path / "venus_orbit" / "weights"
-    (orbit / "protein_mpnn").mkdir(parents=True)
-    ckpt = orbit / "protein_mpnn" / "v_48_020.pt"
-    ckpt.write_bytes(b"orbit-weight")
+    vrh = tmp_path / "vrh" / "weights"
+    legacy = tmp_path / "legacy_cache" / "weights"
+    (legacy / "protein_mpnn").mkdir(parents=True)
+    ckpt = legacy / "protein_mpnn" / "v_48_020.pt"
+    ckpt.write_bytes(b"legacy-weight")
     vrh.mkdir(parents=True)
     monkeypatch.setattr(
         "vrh.models.weights.legacy_weight_cache_dirs",
-        lambda: [str(orbit)],
+        lambda: [str(legacy)],
     )
     found = resolve_existing_weight(
         "protein_mpnn", "v_48_020.pt", cache_dir=str(vrh)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build the packaged VenusViroHub Raw/REM2 dashboard snapshot.
+"""Build the packaged ViroHub Raw/REM2 dashboard snapshot.
 
-Reads Feishu leaderboard CSVs and writes the compact JSON consumed by
+Reads leaderboard CSVs and writes the compact JSON consumed by
 ``_load_hub_snapshot("venusvirohub")``. Standard library only.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TABLES = REPO_ROOT / "data/venusvirohub/iclr_appendix/feishu_tables"
+DEFAULT_TABLES = REPO_ROOT / "data/venusvirohub/iclr_appendix/leaderboard_tables"
 DEFAULT_SNAPSHOT = REPO_ROOT / "vrh/dashboard/data/venusvirohub_rem2.json"
 
 COMPARE_METRICS = {
@@ -163,13 +163,13 @@ def build_snapshot(tables: Path) -> dict:
 
     snapshot = {
         "id": "venusvirohub",
-        "benchmark": "VenusViroHub",
-        "label": "VenusViroHub",
-        "title": "VenusViroHub substitutions",
+        "benchmark": "ViroHub",
+        "label": "ViroHub",
+        "title": "ViroHub substitutions",
         "status": "ready",
         "assays": 89,
         "n": 89,
-        "source": "VenusViroHub Feishu leaderboard · 89 viral DMS assays",
+        "source": "ViroHub leaderboard · 89 viral DMS assays",
         "description": (
             "89 viral DMS substitution assays with zero ProteinGym overlap, "
             "covering immune escape, cell entry, and receptor binding."

@@ -103,15 +103,11 @@ Named singles that were missing from the three-benchmark logit caches:
 | `carp-600k` / `carp-38m` / `carp-76m` | `carp_600k` / `carp_38m` / `carp_76m` | Size variants. `carp` / `carp_640m` already cached. |
 | `esm1b` (`wt` or `mask`) | `esm1b_wt` / `esm1b_mask` | Re-dump into the new layout; skip if that folder is already complete. |
 
-Caches:
-
-- ProteinGym / VenusMutHub → `experiments/full_recipe_wc0/extra_seq_gnn_variants/{pg,vmh}/cache/logits/{key}/` (same `.pt` payload as `extra_structure_models`)
-- VenusViroHub → `experiments/viro_clinvar/cache/logits/viro90/{key}/` via `dump_logits.py`
+Caches live under the logits-cache directory chosen by `script/baseline/dump_logits_cache.sh`.
 
 ```bash
 BENCHMARK=pg bash script/baseline/dump_logits_cache.sh carp-600k
 BENCHMARK=vmh bash script/baseline/dump_logits_cache.sh protssn-k20-h512
 BENCHMARK=viro bash script/baseline/dump_logits_cache.sh carp_38m
-bash experiments/full_recipe_wc0/extra_seq_gnn_variants/scripts/dump_only.sh
 ```
 

@@ -1,12 +1,12 @@
 {
   "id": "venusvirohub",
-  "benchmark": "VenusViroHub",
-  "label": "VenusViroHub",
-  "title": "VenusViroHub substitutions",
+  "benchmark": "ViroHub",
+  "label": "ViroHub",
+  "title": "ViroHub substitutions",
   "status": "ready",
   "assays": 89,
   "n": 89,
-  "source": "VenusViroHub Feishu leaderboard \u00b7 89 viral DMS assays",
+  "source": "ViroHub leaderboard \u00b7 89 viral DMS assays",
   "description": "89 viral DMS substitution assays with zero ProteinGym overlap, covering immune escape, cell entry, and receptor binding.",
   "metrics": [
     {

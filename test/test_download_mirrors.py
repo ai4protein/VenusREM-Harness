@@ -8,6 +8,7 @@ import pytest
 from vrh.data.download import normalize_dataset
 from vrh.data.mirrors import (
     call_with_hf_retry,
+    data_repos,
     download_from_venusrem2,
     first_venusrem2_repo,
     hf_endpoint_trusted,
@@ -38,32 +39,38 @@ def test_hf_token_reads_cli_file(monkeypatch, tmp_path):
     assert hf_token() == "hf_from_file"
 
 
-def test_first_repo_prefers_ai4protein():
+def test_first_repo_empty_by_default(monkeypatch):
+    monkeypatch.delenv("VRH_HF_DATA_REPOS", raising=False)
+    assert data_repos() == ()
+    assert first_venusrem2_repo("VenusMutHub/pdbs.tar.gz", available=lambda *_: True) is None
+
+
+def test_first_repo_uses_env(monkeypatch):
+    monkeypatch.setenv("VRH_HF_DATA_REPOS", "review/data-mirror")
     hits = []
 
     def available(repo, filename):
         hits.append((repo, filename))
-        return repo.startswith("AI4Protein")
+        return repo == "review/data-mirror"
 
     repo = first_venusrem2_repo("VenusMutHub/pdbs.tar.gz", available=available)
-    assert repo == "AI4Protein/VenusREM2"
-    assert hits[0][0] == "AI4Protein/VenusREM2"
+    assert repo == "review/data-mirror"
+    assert hits[0][0] == "review/data-mirror"
 
 
-def test_first_repo_falls_back_to_tyang816():
-    def available(repo, filename):
-        return repo.startswith("tyang816")
-
-    repo = first_venusrem2_repo("VenusViroHub/aa_seq.tar.gz", available=available)
-    assert repo == "tyang816/VenusREM2"
+def test_first_repo_returns_none_when_missing(monkeypatch):
+    monkeypatch.setenv("VRH_HF_DATA_REPOS", "review/data-mirror")
+    repo = first_venusrem2_repo("ViroHub/aa_seq.tar.gz", available=lambda *_: False)
+    assert repo is None
 
 
 def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
     calls = []
+    monkeypatch.setenv("VRH_HF_DATA_REPOS", "review/data-mirror")
 
     monkeypatch.setattr(
         "vrh.data.mirrors.hf_file_available",
-        lambda repo, filename: repo.startswith("tyang816"),
+        lambda repo, filename: repo == "review/data-mirror",
     )
 
     def fake_download(repo, filename, dest, force=False, **_kwargs):
@@ -75,7 +82,7 @@ def test_download_from_venusrem2_uses_first_working(monkeypatch, tmp_path):
     dest = tmp_path / "aa_seq.tar.gz"
     got = download_from_venusrem2("ProteinGym/aa_seq.tar.gz", dest, log=lambda *_: None)
     assert got == dest
-    assert calls == ["tyang816/VenusREM2"]
+    assert calls == ["review/data-mirror"]
     assert dest.read_text() == "ok"
 
 
@@ -170,7 +177,8 @@ def test_dataset_aliases():
     assert normalize_dataset("muthub") == "muthub"
     assert normalize_dataset("MutHub") == "muthub"
     assert normalize_dataset("venus_mut_hub") == "muthub"
-    assert normalize_dataset("VenusViroHub") == "virohub"
+    assert normalize_dataset("ViroHub") == "virohub"
+    assert normalize_dataset("ViroHub") == "virohub"
     assert normalize_dataset("virohub") == "virohub"
     assert normalize_dataset("vvh") == "virohub"
     assert normalize_dataset("ALL") == "all"

@@ -1,9 +1,9 @@
 {
   "defaults": {
-    "workspace": "可上网GPU资源",
-    "project": "VenusArena-Benchmark-of-Protein-Engineering-AI-Agents",
-    "compute_group": "4090-cuda12.8-2",
-    "image": "docker.sii.shaipower.online/inspire-studio/dhyu-wan-torch29:0.4",
+    "workspace": "gpu",
+    "project": "vrh-logits-cache",
+    "compute_group": "gpu",
+    "image": "pytorch:2.9",
     "instances": 1,
     "shm": 64,
     "priority": 3

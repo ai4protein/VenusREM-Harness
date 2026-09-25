@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from vrh.data.mirrors import VENUSREM2_REPOS, download_from_venusrem2
+from vrh.data.mirrors import data_repos, download_from_venusrem2, format_data_repos
 from vrh.download.progress import format_bytes, print_plan
 
 # ProteinGym substitution assay (Tsuboyama 2023, PDB 2L6Q, 55 aa).
@@ -105,7 +105,11 @@ def ensure_demo_dataset(
         example_plan_rows(out if _example_complete(out) else (bundled or out)),
         log=log,
     )
-    log(f"VenusREM2 mirrors: {' then '.join(VENUSREM2_REPOS)}")
+    repos = data_repos()
+    log(
+        "dataset mirrors: "
+        + (" then ".join(repos) if repos else "none (set VRH_HF_DATA_REPOS)")
+    )
     if dry_run:
         return out
     if (not force) and _example_complete(out):
@@ -147,7 +151,7 @@ def ensure_demo_dataset(
         return bundled
     raise SystemExit(
         "Could not download the vrh demo example from "
-        f"{' or '.join(VENUSREM2_REPOS)} ({EXAMPLE_PREFIX}/). "
+        f"{format_data_repos()} ({EXAMPLE_PREFIX}/). "
         f"Missing: {', '.join(failed) or 'download failed'}. "
         "Private repos need a token: export HF_TOKEN=... "
         "or run `hf auth login` (saved at ~/.cache/huggingface/token)."

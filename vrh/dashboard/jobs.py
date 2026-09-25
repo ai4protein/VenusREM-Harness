@@ -16,7 +16,7 @@ import pandas as pd
 
 from vrh.dashboard.recipes import recipe_argv
 from vrh.dashboard.store import RunStore
-from vrh.naming import is_venusrem_v1
+from vrh.naming import is_legacy_fixed_alpha
 
 ExecuteFn = Callable[[dict[str, Any], RunStore], None]
 
@@ -703,7 +703,7 @@ def build_argv(
 
     extra: list[str] = list(recipe_argv(recipe))
     extra += ["--auto_download", "--disable_tqdm"]
-    if is_venusrem_v1(model):
+    if is_legacy_fixed_alpha(model):
         extra += ["--alpha", "0.8", "--scoring_mode", "log_odds"]
     if scoring_strategy:
         extra += ["--scoring_strategy", scoring_strategy]

@@ -142,10 +142,11 @@ def test_resolve_prosst_static_uses_cache_then_hf(tmp_path, monkeypatch):
         dest.write_bytes(b"ae")
         return str(dest)
 
+    monkeypatch.setenv("VRH_PROSST_STATIC_REPO", "review/prosst-static")
     monkeypatch.setattr("vrh.models.weights.resolve_existing_weight", lambda *a, **k: None)
     monkeypatch.setattr("vrh.models.weights.default_cache_dir", lambda explicit=None: str(tmp_path / "empty"))
     monkeypatch.setattr("vrh.models.weights._hf_download", fake_hf)
     path = resolve_prosst_static_file("AE.pt", cache_dir=str(tmp_path / "empty"))
-    assert called["repo"] == "tyang816/ProSST"
+    assert called["repo"] == "review/prosst-static"
     assert called["filename"] == "static/AE.pt"
     assert path.endswith("AE.pt")
