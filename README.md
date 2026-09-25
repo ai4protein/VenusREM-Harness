@@ -5,7 +5,7 @@
 [![GitHub](https://img.shields.io/badge/github-tyang816%2FVenusREM--Harness-black)](https://github.com/tyang816/VenusREM-Harness)
 ![Status](https://img.shields.io/badge/dashboard-preview-orange)
 
-From Global Priors to Local Mutation Rankings: An Evolution-Guided Harness for Any Protein Foundation Model
+A General Harness for Protein Foundation Model Fitness Prediction
 
 **VenusREM-Harness** (`vrh` / `remharness`) is a frozen-PLM readout that recalibrates substitution scores (no fine-tuning).
 
@@ -362,7 +362,7 @@ VenusREM2:
 
 ```bibtex
 @article{tan2026venusrem2,
-    title={From Global Priors to Local Mutation Rankings: An Evolution-Guided Harness for Any Protein Foundation Model},
+    title={A General Harness for Protein Foundation Model Fitness Prediction},
 }
 ```
 
