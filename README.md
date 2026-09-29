@@ -26,6 +26,7 @@ Python import: `vrh`. Default backbone: ESM-2 650M.
 
 ## News
 
+- **2026.09** VenusREM2 reaches a ProteinGym Average Spearman of **0.556**, the highest score on the [substitution leaderboard](https://proteingym.org/benchmarks). See the [preprint](https://arxiv.org/abs/2609.34654).
 - **2026.09** Local dashboard preview (`vrh dashboard`) at http://127.0.0.1:8765.
 - **2026.09** Package and CLI released as `vrh` (`remharness` is the same command).
 - **2026.07** VenusREM frozen on `v1.0.0`.
