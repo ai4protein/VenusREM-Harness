@@ -1,4 +1,4 @@
-"""ViroHub product-benchmark snapshot loaded by the vrh dashboard."""
+"""VenusViroHub product-benchmark snapshot loaded by the vrh dashboard."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def test_virohub_catalog_ready():
     assert virohub["status"] == "ready"
     assert virohub["n"] == 89
     assert len(virohub["pairs"]) == 71
-    assert "ViroHub" not in catalog["planned_benchmarks"]
+    assert "VenusViroHub" not in catalog["planned_benchmarks"]
 
 
 def test_virohub_public_recipe_labels_hide_rem2_suffix():

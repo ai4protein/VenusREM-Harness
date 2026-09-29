@@ -20,7 +20,7 @@ def test_example_dry_run(capsys):
     assert f"example/{assay}/substitutions/{assay}.csv" in out
     assert f"example/{assay}/pdbs/{assay}.pdb" in out
     assert f"example/{assay}/aa_seq_aln_a2m/{assay}.a2m" in out
-    assert "VRH_HF_DATA_REPOS" in out
+    assert "tyang816/VenusREM2" in out
 
 
 def test_ensure_demo_uses_cache_then_hf(tmp_path, monkeypatch):

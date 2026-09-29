@@ -1,7 +1,11 @@
 """
 Vendored EGNN network for ProtSSN inference.
 
-Minimal extraction from the upstream ProtSSN EGNN modules.
+Minimal extraction from:
+- VenusFactory/src/mutation/models/egnn/egnn_pytorch.py
+- VenusFactory/src/mutation/models/egnn/egnn_pytorch_geometric.py
+- VenusFactory/src/mutation/models/egnn/network.py
+- VenusFactory/src/mutation/models/egnn/utils.py
 """
 
 import torch

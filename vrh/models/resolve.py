@@ -13,7 +13,7 @@ from vrh.naming import (
     fill_model_out_names,
     is_ensemble_model_key,
     is_prosst_key,
-    is_legacy_fixed_alpha,
+    is_venusrem_v1,
 )
 
 
@@ -70,7 +70,7 @@ def apply_model_defaults(
     if is_prosst_key(model_name) and getattr(args, "backbone_mode", "auto") == "auto":
         args.backbone_mode = "prosst"
 
-    if is_legacy_fixed_alpha(model_name):
+    if is_venusrem_v1(model_name):
         if getattr(args, "alpha", "entropy") in (None, "entropy"):
             args.alpha = "0.8"
         if getattr(args, "scoring_mode", "calibrated_margin") in (None, "calibrated_margin"):

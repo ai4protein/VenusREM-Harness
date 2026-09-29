@@ -5,8 +5,10 @@
 #   BENCHMARK=vmh MODELS="carp-600k esm1b" bash script/baseline/dump_logits_cache.sh
 #   BENCHMARK=viro bash script/baseline/dump_logits_cache.sh carp_600k
 #
-# BENCHMARK=pg|vmh|viro (default pg). Writes under
-# experiments/logits_cache/{pg,vmh,viro}/{key}/ unless VARIANT_EXP is set.
+# BENCHMARK=pg|vmh|viro (default pg). ProteinGym / VenusMutHub write into
+# experiments/full_recipe_wc0/extra_seq_gnn_variants/{pg,vmh}/cache/logits/{key}/
+# (same layout as extra_structure_models). Viro90 writes into
+# experiments/viro_clinvar/cache/logits/viro90/{key}/ via dump_logits.py.
 #
 # Cluster:
 #   bash script/cluster/submit_logits_cache.sh
@@ -14,7 +16,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EXP="${VARIANT_EXP:-$ROOT/experiments/logits_cache}"
+EXP="${VARIANT_EXP:-$ROOT/experiments/full_recipe_wc0/extra_seq_gnn_variants}"
 VRH="${VRH:-vrh}"
 PROTSSN_DIR="${PROTSSN_MODEL_DIR:-$ROOT/data/protssn_weights}"
 BENCHMARK="${BENCHMARK:-pg}"
@@ -137,7 +139,7 @@ dump_viro() {
   key="$(to_catalog_key "$job")"
   local py="${PY:-python}"
   echo "=== dump viro90 ${key} ==="
-  "$py" -u "${VIRO_DUMP:-$ROOT/script/baseline/dump_logits.py}" --dataset viro90 --model "$key"
+  "$py" -u "$ROOT/experiments/viro_clinvar/scripts/dump_logits.py" --dataset viro90 --model "$key"
 }
 
 echo "Logits dump"

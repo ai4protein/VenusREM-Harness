@@ -46,17 +46,13 @@ def test_venusrem_v1_downloads_prosst_2048_only():
     assert "AI4Protein/ProSST-20" not in repos
 
 
-def test_venusrem2_artifacts_cover_six_prosst(monkeypatch):
-    monkeypatch.delenv("VRH_PROSST_STATIC_REPO", raising=False)
+def test_venusrem2_artifacts_cover_six_prosst():
     arts = model_artifacts("venusrem2")
     repos = [a.source for a in arts if a.kind == "hf_repo"]
     assert "AI4Protein/ProSST-20" in repos
     assert "AI4Protein/ProSST-4096" in repos
     assert len(repos) == 6
-    assert [a for a in arts if a.kind == "prosst_static"] == []
-
-    monkeypatch.setenv("VRH_PROSST_STATIC_REPO", "review/prosst-static")
-    names = [a.extra.get("name") for a in model_artifacts("venusrem2") if a.kind == "prosst_static"]
+    names = [a.extra.get("name") for a in arts if a.kind == "prosst_static"]
     assert "AE.pt" in names
     assert "2048.joblib" in names
 
@@ -68,13 +64,7 @@ def test_s3f_artifact_uses_zenodo():
     assert arts[0].source.endswith("s3f.pth?download=1") or "s3f.pth" in arts[0].source
 
 
-def test_protssn_single_downloads_one_gnn(monkeypatch):
-    monkeypatch.delenv("VRH_PROTSSN_REPO", raising=False)
-    assert [a.label for a in model_artifacts("protssn-k20-h512")] == [
-        "ESM-2 650M (ProtSSN encoder)"
-    ]
-
-    monkeypatch.setenv("VRH_PROTSSN_REPO", "review/protssn")
+def test_protssn_single_downloads_one_gnn():
     arts = model_artifacts("protssn-k20-h512")
     labels = [a.label for a in arts]
     assert "protssn_k20_h512.pt" in labels

@@ -1,4 +1,4 @@
-"""ProteinGym boards used by the local dashboard."""
+"""ProteinGym boards from the REM2 paper (docs/0overleaf Table 1 + staged VenusREM2)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-# Official 217-assay Average Spearman and the five ProteinGym function types
-# (ranked public rows from proteingym.org/benchmarks).
+# Official 217-assay Average Spearman and the five ProteinGym function types.
+# Source: docs/0overleaf/table1_leaderboard.tex and table1_leaderboard_full.tex
+# (ranked public rows from proteingym.org/benchmarks; VenusREM2 is the paper result).
 _PAPER_ROWS = [
     {
         "name": "VenusREM2",
@@ -195,7 +196,7 @@ _PAPER_ROWS = [
     },
 ]
 
-# VenusREM2 staged ProteinGym scores (3-decimal paper values).
+# docs/0overleaf/table_staged_per_config.tex — VenusREM2 row, 3-decimal paper values.
 _VENUSREM2_STAGES = [
     {"name": "VenusREM2 · vrh", "score": 0.556, "note": "+ pLDDT (full)", "highlight": True},
     {"name": "VenusREM2 · + RSA", "score": 0.554, "note": "gated CCD + RSA"},
@@ -250,14 +251,14 @@ _MUTHUB_DEFAULT = {
 }
 _VIROHUB_DEFAULT = {
     "id": "venusvirohub",
-    "label": "ViroHub",
-    "title": "ViroHub substitutions",
+    "label": "VenusViroHub",
+    "title": "VenusViroHub substitutions",
     "description": "89 viral DMS substitution assays with zero ProteinGym overlap, covering immune escape, cell entry, and receptor binding.",
     "status": "catalog",
     "n": 89,
     "setting": "Zero-shot · substitutions",
     "metric": "Average Spearman",
-    "source": "ViroHub · 89 viral DMS assays",
+    "source": "VenusViroHub · 89 viral DMS assays",
     "properties": [
         {"id": "overall", "label": "Overall", "n": 89},
         {"id": "activity", "label": "Activity", "n": 1},
@@ -411,7 +412,7 @@ def _proteingym_product_benchmark() -> dict[str, Any]:
         "n": 217,
         "setting": "Zero-shot · substitutions",
         "metric": "Average Spearman",
-        "source": "PG_Raw_vs_REM2 · snapshot revision 461",
+        "source": "PG_Raw_vs_REM2 · Feishu revision 461",
         "source_url": "https://proteingym.org/benchmarks",
         "model_count": len(pairs),
         "properties": properties,

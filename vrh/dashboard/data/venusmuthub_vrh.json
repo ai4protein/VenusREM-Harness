@@ -6,7 +6,7 @@
   "status": "ready",
   "assays": 905,
   "n": 905,
-  "source": "VenusMutHub paper tables \u00b7 905 assays",
+  "source": "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
   "setting": "Zero-shot \u00b7 substitutions",
   "description": "905 substitution assays across stability, activity, PPI binding, selectivity, and DTI binding. Same-backbone comparison of raw model scores and the full vrh recipe.",
   "metrics": [
@@ -9685,6 +9685,6 @@
   },
   "n_mutants": 27846,
   "median_seq_len": 226,
-  "paired_score_table": "VenusMutHub paper tables",
+  "paired_score_table": "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
   "manifest": "data/VenusMutHub/assay_manifest.csv"
 }

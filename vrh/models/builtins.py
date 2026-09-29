@@ -84,15 +84,15 @@ _make_adapter(
 _make_adapter(
     "venusrem",
     "auto",
-    description="ProSST-2048 with fixed α=0.8 (legacy recipe)",
+    description="VenusREM v1 (ProSST-2048, fixed α=0.8)",
     default_model_id="AI4Protein/ProSST-2048",
     extras="prosst",
     needs_pdb=True,
     notes="wt only; ProSST-2048 + fixed α=0.8 + log_odds (not VenusREM2)",
-    aliases=(),
+    aliases=("venusrem1", "venus-rem", "venusrem-v1"),
 )
 for _k in (20, 128, 512, 1024, 2048, 4096):
-    _v1 = "wt only; ProSST-2048 fixed-α recipe" if _k == 2048 else "wt-marginals only"
+    _v1 = "wt only; VenusREM v1 backbone" if _k == 2048 else "wt-marginals only"
     _make_adapter(
         f"prosst-{_k}",
         "auto",

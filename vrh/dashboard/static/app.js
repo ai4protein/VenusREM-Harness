@@ -130,7 +130,7 @@
   };
   var FALLBACK_MODELS = [
     { name: "venusrem2", description: "Official ProSST ensemble", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
-    { name: "venusrem", description: "ProSST-2048, fixed α=0.8 (legacy recipe)", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
+    { name: "venusrem", description: "VenusREM v1 (ProSST-2048, fixed α=0.8)", supports_mask: false, needs_pdb: true, needs_msa: false, input_kind: "structure" },
     { name: "esm2-8m", description: "ESM-2 8M", supports_mask: true, input_kind: "sequence", size_hint: "first download ~30 MB" },
     { name: "esm2-35m", description: "ESM-2 35M", supports_mask: true, input_kind: "sequence" },
     { name: "esm2-150m", description: "ESM-2 150M", supports_mask: true, input_kind: "sequence" },
@@ -309,11 +309,11 @@
       status: "ready",
       n: 905,
       setting: "Zero-shot · substitutions",
-      source: "VenusMutHub paper tables · 905 assays",
+      source: "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
       manifest: "data/VenusMutHub/assay_manifest.csv",
       n_mutants: 27846,
       median_seq_len: 226,
-      paired_score_table: "VenusMutHub paper tables",
+      paired_score_table: "docs/figure/data/fig4_venusmuthub_multimetric.csv; docs/0overleaf/tables/table_leaderboard_vmh_category.tex",
       properties: [
         { id: "overall", label: "Overall", n: 905 },
         { id: "stability", label: "Stability", n: 540 },
@@ -338,8 +338,8 @@
     },
     {
       id: "venusvirohub",
-      label: "ViroHub",
-      title: "ViroHub substitutions",
+      label: "VenusViroHub",
+      title: "VenusViroHub substitutions",
       description: "89 viral DMS substitution assays with zero ProteinGym overlap, covering immune escape, cell entry, and receptor binding. Leaderboard unavailable offline — reconnect to load paired scores.",
       status: "offline",
       n: 89,

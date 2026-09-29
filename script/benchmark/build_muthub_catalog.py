@@ -5,7 +5,7 @@ Sources (never invent scores):
 
 * ``docs/figure/data/fig4_venusmuthub_multimetric.csv`` — overall Spearman /
   NDCG / AUC / MCC / Top recall for each of the 59 configurations.
-* ``docs/paper_tables/table_leaderboard_vmh_category.tex`` — assay-macro
+* ``docs/0overleaf/tables/table_leaderboard_vmh_category.tex`` — assay-macro
   Spearman for Overall + the five MutHub tasks (Raw and VRH rows).
 * ``data/VenusMutHub/assay_manifest.csv`` — assay / property counts.
 
@@ -14,6 +14,8 @@ dashboard matches the paper table. Non-Spearman metrics are overall-only
 from the Fig.4 CSV, rounded to 3 decimals like ProteinGym. Per-task
 NDCG / AUC / MCC / Top recall are omitted because the tex table does not
 print them.
+
+Orbit ``Leaderboard_Compare.csv`` (Accuracy / F1) is not used.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 MANIFEST = REPO / "data" / "VenusMutHub" / "assay_manifest.csv"
 FIG4_CSV = REPO / "docs" / "figure" / "data" / "fig4_venusmuthub_multimetric.csv"
-VMH_TEX = REPO / "docs" / "paper_tables" / "table_leaderboard_vmh_category.tex"
+VMH_TEX = REPO / "docs" / "0overleaf" / "tables" / "table_leaderboard_vmh_category.tex"
 DASHBOARD_DATA = REPO / "vrh" / "dashboard" / "data"
 CATALOG_PATH = DASHBOARD_DATA / "venusmuthub_catalog.json"
 VRH_PATH = DASHBOARD_DATA / "venusmuthub_vrh.json"

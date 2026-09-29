@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vrh"
 version = "0.1.0"
-description = "REM-Harness (vrh): training-free calibration for protein language models on variant effect prediction"
+description = "VenusREM-Harness (vrh): training-free calibration for protein language models on variant effect prediction"
 readme = "README.md"
-license = "LicenseRef-REM-Harness-Academic"
+license = "LicenseRef-VenusREM2-Academic"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
-authors = [{ name = "Anonymous Authors" }]
-keywords = ["protein", "PLM", "variant-effect", "DMS", "vrh", "REM-Harness"]
+authors = [{ name = "Yang Tan", email = "ty_ang@163.com" }]
+keywords = ["protein", "PLM", "variant-effect", "DMS", "vrh", "VenusREM-Harness", "VenusREM2", "VenusREM"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
@@ -44,8 +44,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# ProSST structure-token pipeline. Tokenizer weights download on first
-# --model prosst / venusrem2 use.
+# ProSST structure-token pipeline. Tokenizer weights download from
+# tyang816/ProSST on first --model prosst / venusrem2 use.
 prosst = [
   "torch-geometric>=2.4",
   "torch-scatter>=2.1",
@@ -127,8 +127,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://anonymous.4open.science/r/REM-Harness-9C1C/"
-Repository = "https://anonymous.4open.science/r/REM-Harness-9C1C/"
+Homepage = "https://github.com/tyang816/VenusREM-Harness"
+Repository = "https://github.com/tyang816/VenusREM-Harness"
+Issues = "https://github.com/tyang816/VenusREM-Harness/issues"
+Changelog = "https://github.com/tyang816/VenusREM-Harness/releases"
 
 [project.scripts]
 vrh = "vrh.cli:main"

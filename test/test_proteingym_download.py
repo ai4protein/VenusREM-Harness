@@ -108,9 +108,11 @@ def test_safe_extract_tar(tmp_path):
 def test_cli_download_dry_run(tmp_path, capsys):
     main(["download", "--dry-run", "--dest", str(tmp_path / "pg")])
     out = capsys.readouterr().out
-    assert "VRH_HF_DATA_REPOS" in out
+    assert "AI4Protein/VenusREM2" in out
+    assert "tyang816/VenusREM2" in out
     assert "ProteinGym/aa_seq_aln_a2m_af2cf.tar.gz" in out
     assert "ProteinGym/aa_seq_aln_a2m.tar.gz" not in out
+    assert "AI4Protein/VenusREM" in out
     assert "DMS_ProteinGym_substitutions.zip" in out
     assert "ProteinGym_AF2_structures.zip" in out
 
@@ -119,14 +121,15 @@ def test_cli_download_muthub_dry_run(tmp_path, capsys):
     main(["download", "VenusMutHub", "--dry-run", "--dest", str(tmp_path / "vmh")])
     out = capsys.readouterr().out
     assert "VenusMutHub/substitutions.tar.gz" in out
-    assert "VRH_HF_DATA_REPOS" in out
+    assert "AI4Protein/VenusREM2" in out
+    assert "tyang816/VenusREM2" in out
 
 
 def test_cli_download_virohub_dry_run(tmp_path, capsys):
     main(["download", "virohub", "--dry-run", "--dest", str(tmp_path / "vvh")])
     out = capsys.readouterr().out
-    assert "ViroHub/aa_seq.tar.gz" in out
-    assert "ViroHub/DMS_substitutions.csv" in out
+    assert "VenusViroHub/aa_seq.tar.gz" in out
+    assert "VenusViroHub/DMS_substitutions.csv" in out
 
 
 def test_cli_download_unknown_dataset():
@@ -145,7 +148,7 @@ def test_cli_download_benchmark_all_dry_run(tmp_path, capsys):
     assert "virohub" in out
     assert "ProteinGym/aa_seq.tar.gz" in out
     assert "VenusMutHub/substitutions.tar.gz" in out
-    assert "ViroHub/aa_seq.tar.gz" in out
+    assert "VenusViroHub/aa_seq.tar.gz" in out
 
 
 def test_cli_download_all_still_means_benchmarks(capsys):

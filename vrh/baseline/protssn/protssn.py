@@ -4,7 +4,7 @@ ProtSSN baseline adapter for VenusREM2.
 ProtSSN = frozen ESM2 embeddings + trainable EGNN on protein structure kNN graph.
 Outputs [L, 20] logits over amino acids, projected to ESM2 vocab for VenusREM2 compatibility.
 
-Reference: "Semantical and geometrical protein encoding toward enhanced
+Reference: Tan et al., "Semantical and geometrical protein encoding toward enhanced
 bioactivity and thermostability", eLife 2025.
 """
 
@@ -56,7 +56,7 @@ ROUND_ERROR = 1e-14
 
 
 # ---------------------------------------------------------------------------
-# Math utilities (vendored)
+# Math utilities (from VenusFactory)
 # ---------------------------------------------------------------------------
 
 def _safe_index(lst, e):
@@ -142,7 +142,7 @@ class NormalizeProtein:
 
 
 # ---------------------------------------------------------------------------
-# Protein graph building (vendored ProtSSN helpers)
+# Protein graph building (from VenusFactory ProtSSN class)
 # ---------------------------------------------------------------------------
 
 class ProteinGraphBuilder:
@@ -579,23 +579,16 @@ def _ensure_protssn_weights(model_dir: str, configs: List[Tuple[int, int]], logg
             "place files in --protssn_model_dir / --cache_dir, or allow download."
         )
     from vrh.models.download_policy import confirm_download
-    from vrh.models.weights import protssn_hf_repo
 
-    repo = protssn_hf_repo()
-    if not repo:
-        raise FileNotFoundError(
-            f"Missing ProtSSN weights: {names}. Place files in "
-            "--protssn_model_dir / --cache_dir, or set VRH_PROTSSN_REPO."
-        )
     confirm_download(
         name="ProtSSN (" + ", ".join(names) + ")",
         dest=model_dir,
-        source=f"hf://{repo}",
+        source="hf://tyang816/ProtSSN",
         looked_in=[model_dir],
         logger=logger,
     )
     for k, h, fname in missing:
-        hf_hub_download(repo_id=repo, filename=fname, local_dir=model_dir)
+        hf_hub_download(repo_id="tyang816/ProtSSN", filename=fname, local_dir=model_dir)
 
 
 def load_protssn_models(

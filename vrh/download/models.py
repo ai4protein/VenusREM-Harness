@@ -24,15 +24,14 @@ from vrh.models.hf import hf_repo_cached
 from vrh.models.weights import (
     ESM_IF_URL,
     FOLDSEEK_HF_FILE,
+    FOLDSEEK_HF_REPO,
+    PROSST_STATIC_REPO,
     S3F_HF_FILE,
+    S3F_HF_REPO,
     S3F_ZENODO_URL,
     default_cache_dir,
-    foldseek_hf_repo,
-    prosst_static_repo,
-    protssn_hf_repo,
     resolve_existing_weight,
     resolve_prosst_static_file,
-    s3f_hf_repo,
 )
 from vrh.models.variant_ids import PROTSSN_CONFIGS, parse_protssn_config
 from vrh.naming import (
@@ -211,28 +210,19 @@ def model_artifacts(model_key: str) -> list[Artifact]:
 
     key = str(model_key).strip().lower()
     if is_ensemble_model_key(key):
-        static_repo = prosst_static_repo()
-        arts: list[Artifact] = []
-        if static_repo:
+        arts: list[Artifact] = [
+            Artifact("prosst_static", "ProSST AE.pt", f"hf://{PROSST_STATIC_REPO}/static/AE.pt", extra={"name": "AE.pt"})
+        ]
+        for size, repo in zip(PROSST_ENSEMBLE_SIZES, PROSST_ENSEMBLE_IDS):
+            arts.append(Artifact("hf_repo", f"ProSST-{size}", repo, extra={"repo": repo}))
             arts.append(
                 Artifact(
                     "prosst_static",
-                    "ProSST AE.pt",
-                    f"hf://{static_repo}/static/AE.pt",
-                    extra={"name": "AE.pt"},
+                    f"ProSST {size}.joblib",
+                    f"hf://{PROSST_STATIC_REPO}/static/{size}.joblib",
+                    extra={"name": f"{size}.joblib"},
                 )
             )
-        for size, repo in zip(PROSST_ENSEMBLE_SIZES, PROSST_ENSEMBLE_IDS):
-            arts.append(Artifact("hf_repo", f"ProSST-{size}", repo, extra={"repo": repo}))
-            if static_repo:
-                arts.append(
-                    Artifact(
-                        "prosst_static",
-                        f"ProSST {size}.joblib",
-                        f"hf://{static_repo}/static/{size}.joblib",
-                        extra={"name": f"{size}.joblib"},
-                    )
-                )
         return arts
 
     spec = get_model(key).spec
@@ -251,36 +241,23 @@ def model_artifacts(model_key: str) -> list[Artifact]:
         ]
     if baseline == "saprot":
         repo = default_id or "westlake-repl/SaProt_650M_AF2"
-        foldseek_repo = foldseek_hf_repo()
-        arts = [Artifact("hf_repo", spec.name, repo, extra={"repo": repo})]
-        if foldseek_repo:
-            arts.append(Artifact("foldseek", "foldseek", f"hf://{foldseek_repo}/{FOLDSEEK_HF_FILE}"))
-        else:
-            arts.append(Artifact("foldseek", "foldseek", "foldseek"))
-        return arts
-    if baseline == "prosst" or key.startswith("prosst") or key == "venusrem":
+        return [
+            Artifact("hf_repo", spec.name, repo, extra={"repo": repo}),
+            Artifact("foldseek", "foldseek", f"hf://{FOLDSEEK_HF_REPO}/{FOLDSEEK_HF_FILE}"),
+        ]
+    if baseline == "prosst" or key.startswith("prosst") or key in {"venusrem", "venusrem1", "venus-rem", "venusrem-v1"}:
         size = _prosst_k(key, default_id)
         repo = default_id or f"AI4Protein/ProSST-{size}"
-        static_repo = prosst_static_repo()
-        arts = [Artifact("hf_repo", f"ProSST-{size}", repo, extra={"repo": repo})]
-        if static_repo:
-            arts.extend(
-                [
-                    Artifact(
-                        "prosst_static",
-                        "ProSST AE.pt",
-                        f"hf://{static_repo}/static/AE.pt",
-                        extra={"name": "AE.pt"},
-                    ),
-                    Artifact(
-                        "prosst_static",
-                        f"ProSST {size}.joblib",
-                        f"hf://{static_repo}/static/{size}.joblib",
-                        extra={"name": f"{size}.joblib"},
-                    ),
-                ]
-            )
-        return arts
+        return [
+            Artifact("hf_repo", f"ProSST-{size}", repo, extra={"repo": repo}),
+            Artifact("prosst_static", "ProSST AE.pt", f"hf://{PROSST_STATIC_REPO}/static/AE.pt", extra={"name": "AE.pt"}),
+            Artifact(
+                "prosst_static",
+                f"ProSST {size}.joblib",
+                f"hf://{PROSST_STATIC_REPO}/static/{size}.joblib",
+                extra={"name": f"{size}.joblib"},
+            ),
+        ]
     if baseline == "protein_mpnn":
         folder, remote, local = _mpnn_spec(key, default_id)
         url = MPNN_URL.format(folder=folder, remote=remote)
@@ -289,23 +266,16 @@ def model_artifacts(model_key: str) -> list[Artifact]:
         configs = [parse_protssn_config(key) or parse_protssn_config(default_id)]
         if configs == [None]:
             configs = list(PROTSSN_CONFIGS)
-        protssn_repo = protssn_hf_repo()
-        arts = []
-        if protssn_repo:
-            arts = [
-                Artifact(
-                    "hf_file",
-                    f"protssn_k{k}_h{h}.pt",
-                    f"hf://{protssn_repo}/protssn_k{k}_h{h}.pt",
-                    dest_hint=f"protssn/protssn_k{k}_h{h}.pt",
-                    extra={
-                        "repo": protssn_repo,
-                        "filename": f"protssn_k{k}_h{h}.pt",
-                        "rel": ("protssn", f"protssn_k{k}_h{h}.pt"),
-                    },
-                )
-                for k, h in configs
-            ]
+        arts = [
+            Artifact(
+                "hf_file",
+                f"protssn_k{k}_h{h}.pt",
+                f"hf://tyang816/ProtSSN/protssn_k{k}_h{h}.pt",
+                dest_hint=f"protssn/protssn_k{k}_h{h}.pt",
+                extra={"repo": "tyang816/ProtSSN", "filename": f"protssn_k{k}_h{h}.pt", "rel": ("protssn", f"protssn_k{k}_h{h}.pt")},
+            )
+            for k, h in configs
+        ]
         arts.append(
             Artifact("hf_repo", "ESM-2 650M (ProtSSN encoder)", "facebook/esm2_t33_650M_UR50D", extra={"repo": "facebook/esm2_t33_650M_UR50D"})
         )
@@ -339,7 +309,7 @@ def model_artifacts(model_key: str) -> list[Artifact]:
                 S3F_HF_FILE,
                 S3F_ZENODO_URL,
                 dest_hint=f"s3f/{S3F_HF_FILE}",
-                extra={"rel": ("s3f", S3F_HF_FILE), "hf_repo": s3f_hf_repo()},
+                extra={"rel": ("s3f", S3F_HF_FILE), "hf_repo": S3F_HF_REPO},
             )
         ]
     if baseline == "esm_if":

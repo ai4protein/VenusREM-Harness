@@ -4,24 +4,25 @@
 #   bash script/cluster/submit_logits_cache.sh --dry-run
 #   bash script/cluster/submit_logits_cache.sh
 #
-# Job keys are {pg|vmh|viro}__{model}. Set VRH_CLUSTER_CLI to the batch client.
+# Job keys are {pg|vmh|viro}__{model}. Requires qzcli login.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ROOT="${VRH_ROOT:-$ROOT}"
-TEMPLATE="${VRH_CLUSTER_BATCH_CONFIG:-$ROOT/script/cluster/logits_cache.json}"
-CLI="${VRH_CLUSTER_CLI:-}"
+TEMPLATE="${QZCLI_BATCH_CONFIG:-$ROOT/script/cluster/qzcli_logits_cache.json}"
+QZCLI="${QZCLI:-qzcli}"
 export PATH="${HOME}/.local/bin:${PATH}"
 export VRH_ROOT="$ROOT"
 
-if [[ -z "$CLI" ]]; then
-  echo "set VRH_CLUSTER_CLI to the cluster submission client" >&2
+if ! command -v "$QZCLI" >/dev/null 2>&1; then
+  echo "qzcli not found on PATH" >&2
   exit 1
 fi
 
-if ! command -v "$CLI" >/dev/null 2>&1; then
-  echo "cluster client not found on PATH: $CLI" >&2
+if ! "$QZCLI" ws >/dev/null 2>&1; then
+  echo "qzcli cookie expired or missing. Run: qzcli login" >&2
+  "$QZCLI" ws || true
   exit 1
 fi
 
@@ -42,4 +43,4 @@ Path(dest).write_text(text.replace("__VRH_ROOT__", root), encoding="utf-8")
 PY
 
 echo "Submitting logits-dump batch: $TEMPLATE (VRH_ROOT=$ROOT)"
-"$CLI" batch "$WORK" --delay 3 --continue-on-error "${extra[@]}"
+"$QZCLI" batch "$WORK" --delay 3 --continue-on-error "${extra[@]}"

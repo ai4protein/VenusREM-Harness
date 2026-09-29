@@ -103,12 +103,16 @@ design-qa.md
 .claude/
 .qoder/
 .cursor/
+.sii/
 .tmp/
 .codex/
 _local/
 
-# Local auth leftovers
+# Personal auth / chat leftovers (QR logins, Lark dumps)
+feishu_auth*
 *_auth_qr*
+*feishu_auth*
+lark_*auth*
 
 # Crash dumps / editor backups
 core
@@ -163,7 +167,8 @@ src/
 vrh/legacy/
 venusrem2/legacy/
 
-# leftover local trees
+# VenusREM-Orbit leftovers (old package name / scripts / local dumps)
+venusrem_orbit/
 *orbit*
 
 # Model tensor caches / checkpoints

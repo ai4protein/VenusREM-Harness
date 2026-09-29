@@ -1,7 +1,6 @@
 """Hugging Face mirrors for vrh download.
 
-Dataset repos come from ``VRH_HF_DATA_REPOS`` (comma-separated). The review
-snapshot leaves that unset; ProteinGym still falls back to official v1.3 URLs.
+Dataset repos: try ``AI4Protein/VenusREM2`` first, then ``tyang816/VenusREM2``.
 Hub endpoints: ``huggingface.co`` first, then ``hf-mirror.com`` (or ``HF_MIRROR`` /
 ``HF_ENDPOINT``) for up to three network retries. Private repos need ``HF_TOKEN``.
 
@@ -19,33 +18,13 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 from urllib.parse import urlparse
 
+VENUSREM2_REPOS = ("AI4Protein/VenusREM2", "tyang816/VenusREM2")
+LEGACY_PROTEINGYM_REPO = "AI4Protein/VenusREM"
 HF_OFFICIAL_ENDPOINT = "https://huggingface.co"
 HF_DEFAULT_MIRROR = "https://hf-mirror.com"
 HF_DOWNLOAD_ATTEMPTS = 3
 HF_OFFICIAL_HOSTS = frozenset({"huggingface.co", "www.huggingface.co"})
 HF_PUBLIC_MIRROR_HOSTS = frozenset({"hf-mirror.com", "www.hf-mirror.com"})
-
-
-def _csv_env(name: str) -> tuple[str, ...]:
-    raw = (os.environ.get(name) or "").strip()
-    if not raw:
-        return ()
-    return tuple(item.strip() for item in raw.split(",") if item.strip())
-
-
-def data_repos() -> tuple[str, ...]:
-    """Optional Hugging Face dataset mirrors from ``VRH_HF_DATA_REPOS``."""
-    return _csv_env("VRH_HF_DATA_REPOS")
-
-
-def legacy_proteingym_repo() -> str:
-    """Optional ProteinGym MSA dataset from ``VRH_LEGACY_PROTEINGYM_REPO``."""
-    return (os.environ.get("VRH_LEGACY_PROTEINGYM_REPO") or "").strip()
-
-
-def format_data_repos(repos: Optional[tuple[str, ...]] = None) -> str:
-    items = repos if repos is not None else data_repos()
-    return " or ".join(items) if items else "VRH_HF_DATA_REPOS"
 
 
 def hf_token_paths() -> tuple[Path, ...]:
@@ -310,10 +289,10 @@ def _download_url(url: str, dest: Path, force: bool = False) -> Path:
 
 def first_venusrem2_repo(
     filename: str,
-    repos: Optional[tuple[str, ...]] = None,
+    repos: tuple[str, ...] = VENUSREM2_REPOS,
     available: Callable[[str, str], bool] = hf_file_available,
 ) -> Optional[str]:
-    for repo in (repos if repos is not None else data_repos()):
+    for repo in repos:
         if available(repo, filename):
             return repo
     return None
@@ -323,13 +302,13 @@ def download_from_venusrem2(
     filename: str,
     dest: Path,
     force: bool = False,
-    repos: Optional[tuple[str, ...]] = None,
+    repos: tuple[str, ...] = VENUSREM2_REPOS,
     log=print,
     *,
     progress: bool = False,
     desc: Optional[str] = None,
 ) -> Optional[Path]:
-    """Download ``filename`` from the first working dataset mirror."""
+    """Download ``filename`` from the first working VenusREM2 mirror."""
     dest = Path(dest)
     if dest.is_file() and dest.stat().st_size > 0 and not force:
         if progress:
@@ -338,7 +317,6 @@ def download_from_venusrem2(
             with tqdm_bar(f"{(desc or dest.name)} (cached)", dest.stat().st_size) as bar:
                 bar.update(dest.stat().st_size)
         return dest
-    repos = data_repos() if repos is None else repos
     errors: list[str] = []
     for repo in repos:
         if not hf_file_available(repo, filename):
@@ -359,5 +337,5 @@ def download_from_venusrem2(
             errors.append(f"{repo}: {exc}")
             log(f"{repo}/{filename} failed ({exc}); trying next mirror")
     if errors:
-        log("dataset mirrors unavailable: " + "; ".join(errors))
+        log("VenusREM2 mirrors unavailable: " + "; ".join(errors))
     return None

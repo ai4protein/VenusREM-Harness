@@ -1,8 +1,8 @@
 """``vrh download``: benchmarks and model weights.
 
-Optional dataset archives come from ``VRH_HF_DATA_REPOS``. ProteinGym
-falls back to official ProteinGym v1.3 (and optional
-``VRH_LEGACY_PROTEINGYM_REPO`` for MSA tarballs).
+Archives are fetched from ``AI4Protein/VenusREM2``, then
+``tyang816/VenusREM2``. ProteinGym still falls back to
+``AI4Protein/VenusREM`` and official ProteinGym v1.3.
 
 Model checkpoints go to the Hugging Face hub cache and
 ``~/.cache/vrh/weights``.
@@ -15,10 +15,9 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from vrh.data.mirrors import (
-    data_repos,
+    LEGACY_PROTEINGYM_REPO,
+    VENUSREM2_REPOS,
     download_from_venusrem2,
-    format_data_repos,
-    legacy_proteingym_repo,
 )
 from vrh.data import proteingym as pg
 from vrh.download.progress import print_plan
@@ -68,7 +67,7 @@ DATASETS = {
     },
     "virohub": {
         "dest": "data/venusvirohub",
-        "folder": "ViroHub",
+        "folder": "VenusViroHub",
         "expected": 89,
         "archives": {
             "aa_seq": ("aa_seq.tar.gz", (".fasta", ".fa")),
@@ -88,14 +87,14 @@ def _fold_name(name: str) -> str:
 def normalize_dataset(name: str) -> str:
     key = _fold_name(name)
     if key not in ALIASES:
-        known = "ProteinGym | VenusMutHub | ViroHub | benchmark-all"
+        known = "ProteinGym | VenusMutHub | VenusViroHub | benchmark-all"
         raise SystemExit(f"Unknown dataset {name!r}. Use: vrh download [{known}]")
     return ALIASES[key]
 
 
 def _known_targets_text() -> str:
     return (
-        "benchmarks: ProteinGym | VenusMutHub | ViroHub | benchmark-all\n"
+        "benchmarks: ProteinGym | VenusMutHub | VenusViroHub | benchmark-all\n"
         "example:    vrh download example  (ProteinGym HCP_LAMBD_Tsuboyama_2023_2L6Q)\n"
         "models:     esm2 | venusrem2 | saprot | … | model-all\n"
         "            vrh download --help"
@@ -202,21 +201,15 @@ def download_hub_dataset(
 
     if dry_run:
         log(f"dataset: {dataset}  dest: {dest}")
-        repos = data_repos()
-        if repos:
-            log("dataset mirrors (first that has the file):")
-            for repo in repos:
-                log(f"  {repo}")
-        else:
-            log("dataset mirrors: none (set VRH_HF_DATA_REPOS)")
+        log("VenusREM2 mirrors (first that has the file):")
+        for repo in VENUSREM2_REPOS:
+            log(f"  {repo}")
         for folder, (archive_name, _suf) in archives.items():
             log(f"  {venusrem2_path(dataset, archive_name)}")
         for name in spec["sidecar"]:
             log(f"  {venusrem2_path(dataset, name)}")
         if dataset == "proteingym":
-            legacy = legacy_proteingym_repo()
-            if legacy:
-                log(f"optional ProteinGym MSA dataset: {legacy}")
+            log(f"legacy ProteinGym MSA: {LEGACY_PROTEINGYM_REPO}")
             log(f"fallback substitutions: {pg.PG_SUBSTITUTIONS}")
             log(f"fallback AF2 PDBs: {pg.PG_STRUCTURES}")
         return counts
@@ -245,7 +238,7 @@ def download_hub_dataset(
                 continue
             raise SystemExit(
                 f"Could not download {venusrem2_path(dataset, archive_name)} "
-                f"from {format_data_repos()}. "
+                f"from {' or '.join(VENUSREM2_REPOS)}. "
                 "Private repos: export HF_TOKEN=... or run `hf auth login`."
             )
         counts[folder] = n
@@ -306,8 +299,9 @@ def build_download_parser() -> argparse.ArgumentParser:
         description=(
             "Fetch a benchmark into a vrh --base_dir, or prefetch model weights. "
             "Benchmarks: vrh download benchmark-all "
-            "(optional VRH_HF_DATA_REPOS; private repos need HF_TOKEN; "
-            "ProteinGym falls back to official ProteinGym v1.3). "
+            "(AI4Protein/VenusREM2 then tyang816/VenusREM2; "
+            "private repos need HF_TOKEN; ProteinGym still falls back to "
+            "AI4Protein/VenusREM and official ProteinGym v1.3). "
             "Models: vrh download model-all "
             "(Hugging Face hub cache + ~/.cache/vrh/weights)."
         ),
@@ -317,7 +311,7 @@ def build_download_parser() -> argparse.ArgumentParser:
         nargs="?",
         default="proteingym",
         help=(
-            "ProteinGym | VenusMutHub | ViroHub | benchmark-all | "
+            "ProteinGym | VenusMutHub | VenusViroHub | benchmark-all | "
             "example | esm2 | venusrem2 | saprot | … | model-all "
             "(default: ProteinGym)"
         ),

@@ -17,7 +17,7 @@ vrh / remharness — calibrate a protein language model for variant effect predi
   vrh download                 ProteinGym 217 → data/proteingym_v1
   vrh download ProteinGym      same
   vrh download VenusMutHub     or muthub → data/VenusMutHub
-  vrh download ViroHub    or virohub → data/venusvirohub
+  vrh download VenusViroHub    or virohub → data/venusvirohub
   vrh download benchmark-all   ProteinGym + MutHub + ViroHub
   vrh download example         same ProteinGym assay as vrh demo
   vrh download esm2            prefetch ESM-2 650M into the default cache
@@ -49,10 +49,10 @@ MODEL_SIZE_HINTS = {
     "esm1b": "first download: ESM-1b 650M, about 2.5 GB",
     "esm1v": "first download: ESM-1v 5-seed ensemble, about 5 × 650M",
     "venusrem2": "first download: 6 ProSST checkpoints, several GB",
-    "venusrem": "first download: ProSST-2048 from Hugging Face (legacy fixed-α recipe)",
+    "venusrem": "first download: ProSST-2048 from Hugging Face (VenusREM v1)",
     "prosst_ensemble": "first download: 6 ProSST checkpoints, several GB",
     "prosst": "first download: ProSST-2048 from Hugging Face",
-    "prosst-2048": "first download: ProSST-2048 from Hugging Face",
+    "prosst-2048": "first download: ProSST-2048 from Hugging Face (VenusREM v1 backbone)",
     "prosst-4096": "first download: ProSST-4096 from Hugging Face",
     "progen2-xl": "first download: ProGen2-xlarge from Hugging Face",
     "progen3-3b": "first download: ProGen3-3B from Hugging Face",

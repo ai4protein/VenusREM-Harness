@@ -142,11 +142,11 @@ z-score is over mutants of that protein.
 | `--calibrate_on_raw` | on |
 | `--rsa_decay_mode` / `--plddt_decay_mode` | `above_mean` |
 
-Legacy ProSST-2048 fixed-α recipe on this tree: `--model prosst-2048 --alpha 0.8 --scoring_mode log_odds`.
+VenusREM v1 on this tree: `--model prosst-2048 --alpha 0.8 --scoring_mode log_odds`.
 
 ## ProteinGym (217 proteins)
 
-Numbers are mean Spearman on the 217 ProteinGym substitution assays (`pg_*` columns). Full vrh = entropy \(\alpha\), \(\beta=1-\alpha\), gated CCD, RSA + pLDDT `above_mean`.
+Numbers are mean Spearman from `experiments/rem2_iclr_20260823/summaries_beta1ma/staged_ablation_59.csv` (`pg_*` columns). Full vrh = entropy \(\alpha\), \(\beta=1-\alpha\), gated CCD, RSA + pLDDT `above_mean`.
 
 ### VenusREM2 (ProSST ensemble)
 
