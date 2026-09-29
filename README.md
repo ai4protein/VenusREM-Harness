@@ -363,6 +363,12 @@ VenusREM2:
 ```bibtex
 @article{tan2026venusrem2,
     title={A General Harness for Protein Foundation Model Fitness Prediction},
+    author={Tan, Yang and Tian, Qijia and Sun, Gangyu and Zhong, Bozitao and Li, Mingchen and Yu, Yuanxi and Dong, Nanqing and Hong, Liang},
+    year={2026},
+    eprint={2609.34654},
+    archivePrefix={arXiv},
+    primaryClass={cs.AI},
+    url={https://arxiv.org/abs/2609.34654},
 }
 ```
 
